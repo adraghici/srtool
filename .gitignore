@@ -3,6 +3,7 @@
 # IntelliJ
 out/
 .idea/
+srtool.iml
 
 # Mobile Tools for Java (J2ME)
 .mtj.tmp/
