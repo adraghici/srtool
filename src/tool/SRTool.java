@@ -1,18 +1,15 @@
 package tool;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-
 import parser.SimpleCLexer;
 import parser.SimpleCParser;
 import parser.SimpleCParser.ProcedureDeclContext;
 import parser.SimpleCParser.ProgramContext;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
+
+import java.io.FileInputStream;
+import java.io.IOException;
 
 public class SRTool {
 

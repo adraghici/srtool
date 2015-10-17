@@ -1,14 +1,13 @@
 package example;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
-
 import parser.SimpleCLexer;
 import parser.SimpleCParser;
 import parser.SimpleCParser.ProgramContext;
+
+import java.io.FileInputStream;
+import java.io.IOException;
 
 public class Count42s {
 
