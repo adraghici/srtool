@@ -26,6 +26,10 @@ public class VCGeneratorVisitor extends SimpleCBaseVisitor<StringBuilder> {
 
     @Override
     public StringBuilder visitProcedureDecl(ProcedureDeclContext ctx) {
+        for (StmtContext stmtContext : ctx.stmt()) {
+            visit(stmtContext);
+        }
+
         return null;
     }
 
@@ -61,6 +65,9 @@ public class VCGeneratorVisitor extends SimpleCBaseVisitor<StringBuilder> {
 
     @Override
     public StringBuilder visitStmt(StmtContext ctx) {
+        if (ctx.varDecl() != null) {
+            visit(ctx.varDecl());
+        }
         return null;
     }
 
