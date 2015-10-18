@@ -3,9 +3,6 @@ package tool;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.*;
 
-/**
- * Created by costica1234 on 18/10/15.
- */
 public class VCGeneratorVisitor extends SimpleCBaseVisitor<StringBuilder> {
 
     private SSAMap ssaMap;
