@@ -18,16 +18,29 @@ public class VCGeneratorVisitor extends SimpleCBaseVisitor<StringBuilder> {
 
     @Override
     public StringBuilder visitVarDecl(VarDeclContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        String varName = ctx.ident.name.getText();
+        Integer varID = ssaMap.getNextID(varName);
+
+        result.append("(declare-fun " + varName + varID + " () (_ BitVec 32))\n");
+
+        return result;
     }
 
     @Override
     public StringBuilder visitProcedureDecl(ProcedureDeclContext ctx) {
+        StringBuilder result = new StringBuilder();
+
+        result.append("(set-logic QF_BV)\n\n");
+
         for (StmtContext stmtContext : ctx.stmt()) {
-            visit(stmtContext);
+            result.append(visit(stmtContext));
         }
 
-        return null;
+        result.append("\n(check-sat)\n");
+
+        return result;
     }
 
     @Override
@@ -63,19 +76,44 @@ public class VCGeneratorVisitor extends SimpleCBaseVisitor<StringBuilder> {
     @Override
     public StringBuilder visitStmt(StmtContext ctx) {
         if (ctx.varDecl() != null) {
-            visit(ctx.varDecl());
+            return visit(ctx.varDecl());
         }
+
+        if (ctx.assignStmt() != null) {
+            return visit(ctx.assignStmt());
+        }
+
+        if (ctx.assertStmt() != null) {
+            return visit(ctx.assertStmt());
+        }
+
         return null;
     }
 
     @Override
     public StringBuilder visitAssignStmt(AssignStmtContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        String varName = ctx.lhs.ident.name.getText();
+        Integer varID = ssaMap.getNextID(varName);
+        StringBuilder rhsExpr = visit(ctx.rhs);
+
+        // First declare the new variable.
+        result.append("(declare-fun " + varName + varID + " () (_ BitVec 32))\n");
+
+        // Then state the assignment.
+        result.append("(assert (= " + varName + varID + " " + rhsExpr + "))\n");
+
+        return result;
     }
 
     @Override
     public StringBuilder visitAssertStmt(AssertStmtContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        result.append("(assert (not " + visit(ctx.expr()) + "))\n");
+
+        return result;
     }
 
     @Override
@@ -125,82 +163,295 @@ public class VCGeneratorVisitor extends SimpleCBaseVisitor<StringBuilder> {
 
     @Override
     public StringBuilder visitExpr(ExprContext ctx) {
+        if (ctx.ternExpr() != null) {
+            return visit(ctx.ternExpr());
+        }
+
         return null;
     }
 
     @Override
     public StringBuilder visitTernExpr(TernExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.args != null) {
+            for (LorExprContext lorExprContext : ctx.args) {
+                result.append(visit(lorExprContext));
+            }
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitLorExpr(LorExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.args != null) {
+            for (LandExprContext landExprContext : ctx.args) {
+                result.append(visit(landExprContext));
+            }
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitLandExpr(LandExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.args != null) {
+            for (BorExprContext borExprContext : ctx.args) {
+                result.append(visit(borExprContext));
+            }
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitBorExpr(BorExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.args != null) {
+            for (BxorExprContext bxorExprContext : ctx.args) {
+                result.append(visit(bxorExprContext));
+            }
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitBxorExpr(BxorExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.args != null) {
+            for (BandExprContext bandExprContext : ctx.args) {
+                result.append(visit(bandExprContext));
+            }
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitBandExpr(BandExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.args != null) {
+            for (EqualityExprContext equalityExprContext : ctx.args) {
+                result.append(visit(equalityExprContext));
+            }
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitEqualityExpr(EqualityExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.args != null) {
+            result.append("(");
+            int opIndex = 0;
+
+            for ( ; opIndex < ctx.ops.size(); ++opIndex) {
+                switch (ctx.ops.get(opIndex).getText()) {
+                    case "==":
+                        result.append("= ");
+                        break;
+                    case "!=":
+                        result.append("distinct ");
+                        break;
+                    default:
+                        break;
+                }
+
+                result.append(visit(ctx.args.get(opIndex)));
+                result.append(" ");
+            }
+
+            // Append the last expression.
+            result.append(visit(ctx.args.get(opIndex)));
+            result.append(")");
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitRelExpr(RelExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.args != null) {
+            for (ShiftExprContext shiftExprContext : ctx.args) {
+                result.append(visit(shiftExprContext));
+            }
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitShiftExpr(ShiftExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.args != null) {
+            for (AddExprContext addExprContext : ctx.args) {
+                result.append(visit(addExprContext));
+            }
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitAddExpr(AddExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.args != null) {
+            result.append("(");
+            int opIndex = 0;
+
+            for ( ; opIndex < ctx.ops.size(); ++opIndex) {
+                switch (ctx.ops.get(opIndex).getText()) {
+                    case "+":
+                        result.append("bvadd ");
+                        break;
+                    case "-":
+                        result.append("bvsub ");
+                        break;
+                    default:
+                        break;
+                }
+
+                result.append(visit(ctx.args.get(opIndex)));
+                result.append(" ");
+            }
+
+            // Append the last expression.
+            result.append(visit(ctx.args.get(opIndex)));
+            result.append(")");
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitMulExpr(MulExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.args != null) {
+            result.append("(");
+            int opIndex = 0;
+
+            for ( ; opIndex < ctx.ops.size(); ++opIndex) {
+                switch (ctx.ops.get(opIndex).getText()) {
+                    case "*":
+                        result.append("bvmul ");
+                        break;
+                    case "/":
+                        result.append("bvsdiv ");
+                        break;
+                    case "%":
+                        result.append("bvmod ");
+                    default:
+                        break;
+                }
+
+                result.append(visit(ctx.args.get(opIndex)));
+                result.append(" ");
+            }
+
+            // Append the last expression.
+            result.append(visit(ctx.args.get(opIndex)));
+            result.append(")");
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitUnaryExpr(UnaryExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.single != null) {
+            result = visit(ctx.single);
+        } else if (ctx.arg != null) {
+            result = visit(ctx.arg);
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitAtomExpr(AtomExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        if (ctx.numberExpr() != null) {
+            result.append("(_ bv" + visit(ctx.numberExpr()) + " 32)");
+        }
+
+        if (ctx.varrefExpr() != null) {
+            result.append(visit(ctx.varrefExpr()));
+        }
+
+        if (ctx.parenExpr() != null) {
+            // TODO:
+        }
+
+        if (ctx.resultExpr() != null) {
+            // TODO:
+        }
+
+        if (ctx.oldExpr() != null) {
+            // TODO:
+        }
+
+        return result;
     }
 
     @Override
     public StringBuilder visitNumberExpr(NumberExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+        result.append(ctx.NUMBER());
+
+        return result;
     }
 
     @Override
     public StringBuilder visitVarrefExpr(VarrefExprContext ctx) {
-        return null;
+        StringBuilder result = new StringBuilder();
+
+        String varName = ctx.var.ident.name.getText();
+        Integer varID = ssaMap.getCurrentID(varName);
+
+        result.append(varName + varID);
+
+        return result;
     }
 
     @Override
