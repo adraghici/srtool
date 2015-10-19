@@ -20,10 +20,10 @@ public class VCGeneratorVisitor extends SimpleCBaseVisitor<StringBuilder> {
     public StringBuilder visitVarDecl(VarDeclContext ctx) {
         StringBuilder result = new StringBuilder();
 
-        String varName = ctx.ident.name.getText();
-        Integer varID = ssaMap.getNextID(varName);
+        // String varName = ctx.ident.name.getText();
+        // Integer varID = ssaMap.getNextID(varName);
 
-        result.append("(declare-fun " + varName + varID + " () (_ BitVec 32))\n");
+        // result.append("(declare-fun " + varName + varID + " () (_ BitVec 32))\n");
 
         return result;
     }
@@ -365,6 +365,7 @@ public class VCGeneratorVisitor extends SimpleCBaseVisitor<StringBuilder> {
         if (ctx.single != null) {
             result = visit(ctx.single);
         } else if (ctx.args != null) {
+
             result.append("(");
             int opIndex = 0;
 
