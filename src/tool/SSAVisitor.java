@@ -3,6 +3,10 @@ package tool;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.*;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class SSAVisitor extends SimpleCBaseVisitor<String> {
     private final SSAMap ssaMap;
 
@@ -313,28 +317,9 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         if (ctx.single != null) {
             result.append(visit(ctx.single));
         } else if (ctx.args != null) {
-            result.append("(");
-            int opIndex = 0;
-
-            for ( ; opIndex < ctx.ops.size(); ++opIndex) {
-                switch (ctx.ops.get(opIndex).getText()) {
-                    case "+":
-                        result.append("bvadd ");
-                        break;
-                    case "-":
-                        result.append("bvsub ");
-                        break;
-                    default:
-                        break;
-                }
-
-                result.append(visit(ctx.args.get(opIndex)));
-                result.append(" ");
-            }
-
-            // Append the last expression.
-            result.append(visit(ctx.args.get(opIndex)));
-            result.append(")");
+            List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
+            List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertOperator(op.getText())).collect(Collectors.toList());
+            return SMTUtil.expression(args, operators);
         }
 
         return result.toString();
