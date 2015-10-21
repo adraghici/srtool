@@ -15,7 +15,9 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitProgram(ProgramContext ctx) {
-        return null;
+        List<String> globals = ctx.globals.stream().map(this::visit).collect(Collectors.toList());
+        List<String> procedures = ctx.procedures.stream().map(this::visit).collect(Collectors.toList());
+        return String.join("", globals) + String.join("", procedures);
     }
 
     @Override
@@ -98,7 +100,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitAssertStmt(AssertStmtContext ctx) {
-        return SMTUtil.assertion("not", visitExpr(ctx.expr()));
+        return SMTUtil.assertion("not", visit(ctx.expr()));
     }
 
     @Override
@@ -148,11 +150,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitExpr(ExprContext ctx) {
-        if (ctx.ternExpr() != null) {
-            return visit(ctx.ternExpr());
-        }
-
-        return null;
+        return visit(ctx.ternExpr());
     }
 
     @Override
@@ -247,36 +245,13 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitEqualityExpr(EqualityExprContext ctx) {
-        StringBuilder result = new StringBuilder();
-
         if (ctx.single != null) {
-            result.append(visit(ctx.single));
-        } else if (ctx.args != null) {
-            result.append("(");
-            int opIndex = 0;
-
-            for ( ; opIndex < ctx.ops.size(); ++opIndex) {
-                switch (ctx.ops.get(opIndex).getText()) {
-                    case "==":
-                        result.append("= ");
-                        break;
-                    case "!=":
-                        result.append("distinct ");
-                        break;
-                    default:
-                        break;
-                }
-
-                result.append(visit(ctx.args.get(opIndex)));
-                result.append(" ");
-            }
-
-            // Append the last expression.
-            result.append(visit(ctx.args.get(opIndex)));
-            result.append(")");
+            return visit(ctx.single);
         }
 
-        return result.toString();
+        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
+        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertOperator(op.getText())).collect(Collectors.toList());
+        return SMTUtil.expression(args, operators);
     }
 
     @Override
@@ -346,29 +321,23 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitAtomExpr(AtomExprContext ctx) {
-        StringBuilder result = new StringBuilder();
-
         if (ctx.numberExpr() != null) {
-            result.append("(_ bv" + visit(ctx.numberExpr()) + " 32)");
+            return SMTUtil.number(visit(ctx.numberExpr()));
         }
 
         if (ctx.varrefExpr() != null) {
-            result.append(visit(ctx.varrefExpr()));
+            return visit(ctx.varrefExpr());
         }
 
         if (ctx.parenExpr() != null) {
-            // TODO:
+            return visit(ctx.parenExpr());
         }
 
         if (ctx.resultExpr() != null) {
-            // TODO:
+            return visit(ctx.resultExpr());
         }
 
-        if (ctx.oldExpr() != null) {
-            // TODO:
-        }
-
-        return result.toString();
+        return visit(ctx.oldExpr());
     }
 
     @Override
@@ -390,7 +359,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitParenExpr(ParenExprContext ctx) {
-        return null;
+        return visit(ctx.expr());
     }
 
     @Override

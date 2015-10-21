@@ -1,12 +1,13 @@
 package tool;
-import parser.SimpleCParser.ProcedureDeclContext;
+
+import parser.SimpleCParser.ProgramContext;
 
 public class VCGenerator {
-    private final ProcedureDeclContext procedure;
+    private final ProgramContext program;
     private final SSAVisitor visitor;
 
-    public VCGenerator(ProcedureDeclContext procedure) {
-        this.procedure = procedure;
+    public VCGenerator(ProgramContext program) {
+        this.program = program;
         this.visitor = new SSAVisitor();
     }
 
@@ -18,10 +19,10 @@ public class VCGenerator {
         result.append("(define-fun bvdiv ((x (_ BitVec 32)) (y (_ BitVec 32))) (_ BitVec 32) " +
                       "  (ite (not (= y (_ bv0 32))) " +
 				            "(bvsdiv x y) " +
-			            	"x))");
+			            	"x))\n");
 
-        // Start the visitor from the single procedure node (for Part I).
-        String smtProcedure = visitor.visit(this.procedure);
+        // Start the visitor from the single program node (for Part I).
+        String smtProcedure = visitor.visit(this.program);
         result.append(smtProcedure);
 
         result.append("\n(check-sat)\n");

@@ -19,6 +19,10 @@ public class SMTUtil {
         return "(" + operator + " " + lhs + " " + rhs + ")";
     }
 
+    public static String number(String number) {
+        return "(_ bv" + number + " 32)";
+    }
+
     /**
      * Generate SMT code for an expression with given 'args' and 'ops'.
      * Size of 'args' must always be 1 larger than the size of 'ops'.
@@ -46,6 +50,10 @@ public class SMTUtil {
                 return "bvmul";
             case "/":
                 return "bvdiv";
+            case "==":
+                return "=";
+            case "!=":
+                return "distinct";
             default:
                 throw new IllegalArgumentException();
         }
