@@ -3,7 +3,6 @@ package tool;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -312,54 +311,24 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitAddExpr(AddExprContext ctx) {
-        StringBuilder result = new StringBuilder();
-
         if (ctx.single != null) {
-            result.append(visit(ctx.single));
-        } else if (ctx.args != null) {
-            List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-            List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertOperator(op.getText())).collect(Collectors.toList());
-            return SMTUtil.expression(args, operators);
+            return visit(ctx.single);
         }
 
-        return result.toString();
+        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
+        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertOperator(op.getText())).collect(Collectors.toList());
+        return SMTUtil.expression(args, operators);
     }
 
     @Override
     public String visitMulExpr(MulExprContext ctx) {
-        StringBuilder result = new StringBuilder();
-
         if (ctx.single != null) {
-            result.append(visit(ctx.single));
-        } else if (ctx.args != null) {
-
-            result.append("(");
-            int opIndex = 0;
-
-            for ( ; opIndex < ctx.ops.size(); ++opIndex) {
-                switch (ctx.ops.get(opIndex).getText()) {
-                    case "*":
-                        result.append("bvmul ");
-                        break;
-                    case "/":
-                        result.append("bvsdiv ");
-                        break;
-                    case "%":
-                        result.append("bvmod ");
-                    default:
-                        break;
-                }
-
-                result.append(visit(ctx.args.get(opIndex)));
-                result.append(" ");
-            }
-
-            // Append the last expression.
-            result.append(visit(ctx.args.get(opIndex)));
-            result.append(")");
+            return visit(ctx.single);
         }
 
-        return result.toString();
+        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
+        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertOperator(op.getText())).collect(Collectors.toList());
+        return SMTUtil.expression(args, operators);
     }
 
     @Override
