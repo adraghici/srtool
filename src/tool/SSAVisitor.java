@@ -5,7 +5,7 @@ import parser.SimpleCParser.*;
 
 public class SSAVisitor extends SimpleCBaseVisitor<StringBuilder> {
 
-    private SSAMap ssaMap;
+    private final SSAMap ssaMap;
 
     public SSAVisitor() {
         ssaMap = new SSAMap();

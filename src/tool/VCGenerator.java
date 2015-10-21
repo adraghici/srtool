@@ -2,9 +2,8 @@ package tool;
 import parser.SimpleCParser.ProcedureDeclContext;
 
 public class VCGenerator {
-
-	private ProcedureDeclContext procedure;
-	private SSAVisitor visitor;
+	private final ProcedureDeclContext procedure;
+	private final SSAVisitor visitor;
 
 	public VCGenerator(ProcedureDeclContext procedure) {
 		this.procedure = procedure;
