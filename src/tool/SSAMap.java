@@ -4,28 +4,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SSAMap {
-
-    private Map<String, Integer> nextIDMap;
-    private final Integer DEFAULT_ID = 0;
+    private static final Integer DEFAULT_ID = 0;
+    private final Map<String, Integer> nextID;
 
     public SSAMap() {
-        nextIDMap = new HashMap<>();
+        nextID = new HashMap<>();
     }
 
-    public Integer getNextID(String var) {
-        Integer nextID = DEFAULT_ID;
-
-        if (nextIDMap.containsKey(var)) {
-            nextID = nextIDMap.get(var) + 1;
-            nextIDMap.replace(var, nextID);
-        } else {
-            nextIDMap.put(var, nextID);
+    public int id(String var) {
+        if (nextID.containsKey(var)) {
+            return nextID.get(var);
         }
-
-        return nextID;
+        return DEFAULT_ID;
     }
 
-    public Integer getCurrentID(String var) {
-        return nextIDMap.get(var);
+    public int fresh(String var) {
+        return id(var) + 1;
+    }
+
+    public void update(String var, int id) {
+        nextID.put(var, id);
     }
 }

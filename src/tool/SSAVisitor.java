@@ -3,8 +3,7 @@ package tool;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.*;
 
-public class SSAVisitor extends SimpleCBaseVisitor<StringBuilder> {
-
+public class SSAVisitor extends SimpleCBaseVisitor<String> {
     private final SSAMap ssaMap;
 
     public SSAVisitor() {
@@ -12,65 +11,59 @@ public class SSAVisitor extends SimpleCBaseVisitor<StringBuilder> {
     }
 
     @Override
-    public StringBuilder visitProgram(ProgramContext ctx) {
+    public String visitProgram(ProgramContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitVarDecl(VarDeclContext ctx) {
-        StringBuilder result = new StringBuilder();
-
-        // String varName = ctx.ident.name.getText();
-        // Integer varID = ssaMap.getNextID(varName);
-
-        // result.append("(declare-fun " + varName + varID + " () (_ BitVec 32))\n");
-
-        return result;
+    public String visitVarDecl(VarDeclContext ctx) {
+        String var = ctx.ident.name.getText();
+        return SMTUtil.declare(var, ssaMap.fresh(var));
     }
 
     @Override
-    public StringBuilder visitProcedureDecl(ProcedureDeclContext ctx) {
+    public String visitProcedureDecl(ProcedureDeclContext ctx) {
         StringBuilder result = new StringBuilder();
 
         for (StmtContext stmtContext : ctx.stmt()) {
             result.append(visit(stmtContext));
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitFormalParam(FormalParamContext ctx) {
+    public String visitFormalParam(FormalParamContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitPrepost(PrepostContext ctx) {
+    public String visitPrepost(PrepostContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitRequires(RequiresContext ctx) {
+    public String visitRequires(RequiresContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitEnsures(EnsuresContext ctx) {
+    public String visitEnsures(EnsuresContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitCandidateRequires(CandidateRequiresContext ctx) {
+    public String visitCandidateRequires(CandidateRequiresContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitCandidateEnsures(CandidateEnsuresContext ctx) {
+    public String visitCandidateEnsures(CandidateEnsuresContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitStmt(StmtContext ctx) {
+    public String visitStmt(StmtContext ctx) {
         if (ctx.varDecl() != null) {
             return visit(ctx.varDecl());
         }
@@ -87,78 +80,69 @@ public class SSAVisitor extends SimpleCBaseVisitor<StringBuilder> {
     }
 
     @Override
-    public StringBuilder visitAssignStmt(AssignStmtContext ctx) {
+    public String visitAssignStmt(AssignStmtContext ctx) {
+        String var = ctx.lhs.ident.name.getText();
+        int id = ssaMap.fresh(var);
+        String rhs = visit(ctx.rhs);
+
         StringBuilder result = new StringBuilder();
-
-        String varName = ctx.lhs.ident.name.getText();
-        Integer varID = ssaMap.getNextID(varName);
-        StringBuilder rhsExpr = visit(ctx.rhs);
-
-        // First declare the new variable.
-        result.append("(declare-fun " + varName + varID + " () (_ BitVec 32))\n");
-
-        // Then state the assignment.
-        result.append("(assert (= " + varName + varID + " " + rhsExpr + "))\n");
-
-        return result;
+        result.append(SMTUtil.declare(var, id));
+        result.append(SMTUtil.assertion("=", var + id, rhs));
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitAssertStmt(AssertStmtContext ctx) {
-        StringBuilder result = new StringBuilder();
-
-        result.append("(assert (not " + visit(ctx.expr()) + "))\n");
-
-        return result;
+    public String visitAssertStmt(AssertStmtContext ctx) {
+        return SMTUtil.assertion("not", visitExpr(ctx.expr()));
     }
 
     @Override
-    public StringBuilder visitAssumeStmt(AssumeStmtContext ctx) {
+    public String visitAssumeStmt(AssumeStmtContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitHavocStmt(HavocStmtContext ctx) {
+    public String visitHavocStmt(HavocStmtContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitCallStmt(CallStmtContext ctx) {
+    public String visitCallStmt(CallStmtContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitIfStmt(IfStmtContext ctx) {
+    public String visitIfStmt(IfStmtContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitWhileStmt(WhileStmtContext ctx) {
+    public String visitWhileStmt(WhileStmtContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitBlockStmt(BlockStmtContext ctx) {
+    public String visitBlockStmt(BlockStmtContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitLoopInvariant(LoopInvariantContext ctx) {
+    public String visitLoopInvariant(LoopInvariantContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitInvariant(InvariantContext ctx) {
+    public String visitInvariant(InvariantContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitCandidateInvariant(CandidateInvariantContext ctx) {
+    public String visitCandidateInvariant(CandidateInvariantContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitExpr(ExprContext ctx) {
+    public String visitExpr(ExprContext ctx) {
         if (ctx.ternExpr() != null) {
             return visit(ctx.ternExpr());
         }
@@ -167,101 +151,101 @@ public class SSAVisitor extends SimpleCBaseVisitor<StringBuilder> {
     }
 
     @Override
-    public StringBuilder visitTernExpr(TernExprContext ctx) {
+    public String visitTernExpr(TernExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.args != null) {
             for (LorExprContext lorExprContext : ctx.args) {
                 result.append(visit(lorExprContext));
             }
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitLorExpr(LorExprContext ctx) {
+    public String visitLorExpr(LorExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.args != null) {
             for (LandExprContext landExprContext : ctx.args) {
                 result.append(visit(landExprContext));
             }
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitLandExpr(LandExprContext ctx) {
+    public String visitLandExpr(LandExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.args != null) {
             for (BorExprContext borExprContext : ctx.args) {
                 result.append(visit(borExprContext));
             }
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitBorExpr(BorExprContext ctx) {
+    public String visitBorExpr(BorExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.args != null) {
             for (BxorExprContext bxorExprContext : ctx.args) {
                 result.append(visit(bxorExprContext));
             }
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitBxorExpr(BxorExprContext ctx) {
+    public String visitBxorExpr(BxorExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.args != null) {
             for (BandExprContext bandExprContext : ctx.args) {
                 result.append(visit(bandExprContext));
             }
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitBandExpr(BandExprContext ctx) {
+    public String visitBandExpr(BandExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.args != null) {
             for (EqualityExprContext equalityExprContext : ctx.args) {
                 result.append(visit(equalityExprContext));
             }
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitEqualityExpr(EqualityExprContext ctx) {
+    public String visitEqualityExpr(EqualityExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.args != null) {
             result.append("(");
             int opIndex = 0;
@@ -287,45 +271,45 @@ public class SSAVisitor extends SimpleCBaseVisitor<StringBuilder> {
             result.append(")");
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitRelExpr(RelExprContext ctx) {
+    public String visitRelExpr(RelExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.args != null) {
             for (ShiftExprContext shiftExprContext : ctx.args) {
                 result.append(visit(shiftExprContext));
             }
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitShiftExpr(ShiftExprContext ctx) {
+    public String visitShiftExpr(ShiftExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.args != null) {
             for (AddExprContext addExprContext : ctx.args) {
                 result.append(visit(addExprContext));
             }
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitAddExpr(AddExprContext ctx) {
+    public String visitAddExpr(AddExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.args != null) {
             result.append("(");
             int opIndex = 0;
@@ -351,15 +335,15 @@ public class SSAVisitor extends SimpleCBaseVisitor<StringBuilder> {
             result.append(")");
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitMulExpr(MulExprContext ctx) {
+    public String visitMulExpr(MulExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.args != null) {
 
             result.append("(");
@@ -388,24 +372,24 @@ public class SSAVisitor extends SimpleCBaseVisitor<StringBuilder> {
             result.append(")");
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitUnaryExpr(UnaryExprContext ctx) {
+    public String visitUnaryExpr(UnaryExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.single != null) {
-            result = visit(ctx.single);
+            result.append(visit(ctx.single));
         } else if (ctx.arg != null) {
-            result = visit(ctx.arg);
+            result.append(visit(ctx.arg));
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitAtomExpr(AtomExprContext ctx) {
+    public String visitAtomExpr(AtomExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         if (ctx.numberExpr() != null) {
@@ -428,52 +412,48 @@ public class SSAVisitor extends SimpleCBaseVisitor<StringBuilder> {
             // TODO:
         }
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitNumberExpr(NumberExprContext ctx) {
-        StringBuilder result = new StringBuilder();
-        result.append(ctx.NUMBER());
-
-        return result;
+    public String visitNumberExpr(NumberExprContext ctx) {
+        return ctx.NUMBER().toString();
     }
 
     @Override
-    public StringBuilder visitVarrefExpr(VarrefExprContext ctx) {
+    public String visitVarrefExpr(VarrefExprContext ctx) {
         StringBuilder result = new StringBuilder();
 
         String varName = ctx.var.ident.name.getText();
-        Integer varID = ssaMap.getCurrentID(varName);
+        Integer varID = ssaMap.id(varName);
 
         result.append(varName + varID);
 
-        return result;
+        return result.toString();
     }
 
     @Override
-    public StringBuilder visitParenExpr(ParenExprContext ctx) {
+    public String visitParenExpr(ParenExprContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitResultExpr(ResultExprContext ctx) {
+    public String visitResultExpr(ResultExprContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitOldExpr(OldExprContext ctx) {
+    public String visitOldExpr(OldExprContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitVarref(VarrefContext ctx) {
+    public String visitVarref(VarrefContext ctx) {
         return null;
     }
 
     @Override
-    public StringBuilder visitVarIdentifier(VarIdentifierContext ctx) {
+    public String visitVarIdentifier(VarIdentifierContext ctx) {
         return null;
     }
-
 }
