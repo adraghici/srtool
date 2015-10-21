@@ -32,13 +32,9 @@ public class VCGeneratorVisitor extends SimpleCBaseVisitor<StringBuilder> {
     public StringBuilder visitProcedureDecl(ProcedureDeclContext ctx) {
         StringBuilder result = new StringBuilder();
 
-        result.append("(set-logic QF_BV)\n\n");
-
         for (StmtContext stmtContext : ctx.stmt()) {
             result.append(visit(stmtContext));
         }
-
-        result.append("\n(check-sat)\n");
 
         return result;
     }
