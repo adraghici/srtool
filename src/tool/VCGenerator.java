@@ -17,7 +17,7 @@ public class VCGenerator {
 		result.append("(define-fun tobool ((p (_ BitVec 32))) Bool (ite (= p (_ bv0 32)) false true))\n");
 
 		// Start the visitor from the single procedure node (for Part I).
-		StringBuilder smtProcedure = visitor.visit(this.procedure);
+		String smtProcedure = visitor.visit(this.procedure);
 		result.append(smtProcedure);
 
 		result.append("\n(check-sat)\n");

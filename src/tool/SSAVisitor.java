@@ -18,7 +18,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitVarDecl(VarDeclContext ctx) {
         String var = ctx.ident.name.getText();
-        return SMTUtil.declare(var, ssaMap.fresh(var));
+        return SMTUtil.declare(var, ssaMap.id(var));
     }
 
     @Override
@@ -88,6 +88,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         StringBuilder result = new StringBuilder();
         result.append(SMTUtil.declare(var, id));
         result.append(SMTUtil.assertion("=", var + id, rhs));
+        ssaMap.update(var, id);
+
         return result.toString();
     }
 
