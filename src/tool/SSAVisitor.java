@@ -3,11 +3,11 @@ package tool;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.*;
 
-public class VCGeneratorVisitor extends SimpleCBaseVisitor<StringBuilder> {
+public class SSAVisitor extends SimpleCBaseVisitor<StringBuilder> {
 
     private SSAMap ssaMap;
 
-    public VCGeneratorVisitor() {
+    public SSAVisitor() {
         ssaMap = new SSAMap();
     }
 

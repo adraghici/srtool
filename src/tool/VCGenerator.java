@@ -4,11 +4,11 @@ import parser.SimpleCParser.ProcedureDeclContext;
 public class VCGenerator {
 
 	private ProcedureDeclContext procedure;
-	private VCGeneratorVisitor visitor;
+	private SSAVisitor visitor;
 
 	public VCGenerator(ProcedureDeclContext procedure) {
 		this.procedure = procedure;
-		this.visitor = new VCGeneratorVisitor();
+		this.visitor = new SSAVisitor();
 	}
 
 	public StringBuilder generateVC() {
