@@ -45,7 +45,7 @@ public class SMTUtil {
             case "*":
                 return "bvmul";
             case "/":
-                return "bvsdiv";
+                return "bvdiv";
             default:
                 throw new IllegalArgumentException();
         }
