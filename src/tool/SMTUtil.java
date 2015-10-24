@@ -16,6 +16,10 @@ public class SMTUtil {
         return "(assert (" + operator + " " + lhs + " " + rhs + "))\n";
     }
 
+    public static String unaryOperator(String operator, String arg) {
+        return "(" + operator + " " + arg + ")";
+    }
+
     public static String binaryOperator(String operator, String lhs, String rhs, boolean toBool) {
         return (toBool) ? toBV32("(" + operator + " " + toBool(lhs) + " " + toBool(rhs) + ")")
                         : "(" + operator + " " + lhs + " " + rhs + ")";
@@ -49,6 +53,17 @@ public class SMTUtil {
         }
     }
 
+    public static String unaryExpression(String arg, List<String> ops) {
+        Collections.reverse(ops);
+        String result = unaryOperator(ops.get(0), arg);
+
+        for (int i = 1; i < ops.size(); ++i) {
+            result = unaryOperator(ops.get(i), result);
+        }
+
+        return result;
+    }
+
     /**
      * Generate SMT code for a binary expression with the given arguments and operators.
      * Size of args must always be 1 larger than the size of ops.
@@ -79,7 +94,22 @@ public class SMTUtil {
             ternaryExpression(args.subList(2, args.size())));
     }
 
-    public static String convertOperator(String operator) {
+    public static String convertUnaryOp(String operator) {
+        switch (operator) {
+            case "+":
+                return "bvid";
+            case "-":
+                return "bvneg";
+            case "!":
+                return "bvtobinary";
+            case "~":
+                return "bvnot";
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
+
+    public static String convertBinaryOp(String operator) {
         switch (operator) {
             case "+":
                 return "bvadd";
