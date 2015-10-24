@@ -21,12 +21,14 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     public String visitProgram(ProgramContext ctx) {
         List<String> globals = ctx.globals.stream().map(this::visit).collect(Collectors.toList());
         List<String> procedures = ctx.procedures.stream().map(this::visit).collect(Collectors.toList());
-        return String.join("", globals)
-             + String.join("", procedures)
-             + SMTUtil.assertion("not", SMTUtil.binaryExpression(
-                                            asserts,
-                                            Collections.nCopies(asserts.size() - 1, "and"),
-                                            true));
+        String condition = (asserts.size() == 1) ?
+            asserts.get(0) :
+            SMTUtil.binaryExpression(
+                asserts,
+                Collections.nCopies(asserts.size() - 1, "and"),
+                true);
+
+        return String.join("", globals) + String.join("", procedures) + SMTUtil.assertion("not", condition);
     }
 
     @Override
