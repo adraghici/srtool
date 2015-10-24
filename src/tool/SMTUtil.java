@@ -4,6 +4,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class SMTUtil {
+
+    public enum Type { BOOL, INT };
+
     public static String declare(String var, int id) {
         return "(declare-fun " + var + id + " () (_ BitVec 32))\n";
     }
@@ -20,9 +23,14 @@ public class SMTUtil {
         return "(" + operator + " " + arg + ")";
     }
 
-    public static String binaryOperator(String operator, String lhs, String rhs, boolean toBool) {
-        return (toBool) ? toBV32("(" + operator + " " + toBool(lhs) + " " + toBool(rhs) + ")")
-                        : "(" + operator + " " + lhs + " " + rhs + ")";
+    public static String binaryOperator(String operator, String lhs, String rhs, Type argsType, Type opType) {
+        if (argsType == Type.BOOL && opType == Type.BOOL) {
+            return toBV32("(" + operator + " " + toBool(lhs) + " " + toBool(rhs) + ")");
+        } else if (argsType == Type.INT && opType == Type.BOOL) {
+            return toBV32("(" + operator + " " + lhs + " " + rhs + ")");
+        } else {
+            return "(" + operator + " " + lhs + " " + rhs + ")";
+        }
     }
 
     public static String ternaryOperator(String cond, String lhs, String rhs) {
@@ -49,7 +57,7 @@ public class SMTUtil {
                 return assertion("not", asserts.get(0));
             default:
                 return assertion("not", SMTUtil.binaryExpression(
-                    asserts, Collections.nCopies(asserts.size() - 1, "and"), true));
+                    asserts, Collections.nCopies(asserts.size() - 1, "and"), Type.BOOL, Type.BOOL));
         }
     }
 
@@ -68,16 +76,17 @@ public class SMTUtil {
      * Generate SMT code for a binary expression with the given arguments and operators.
      * Size of args must always be 1 larger than the size of ops.
      */
-    public static String binaryExpression(List<String> args, List<String> ops, boolean toBool) {
+    public static String binaryExpression(List<String> args, List<String> ops, Type argsType, Type opType) {
         if (ops.size() == 1) {
-            return binaryOperator(ops.get(0), args.get(0), args.get(1), toBool);
+            return binaryOperator(ops.get(0), args.get(0), args.get(1), argsType, opType);
         }
 
         return binaryOperator(
             ops.get(ops.size() - 1),
-            binaryExpression(args.subList(0, args.size() - 1), ops.subList(0, ops.size() - 1), toBool),
+            binaryExpression(args.subList(0, args.size() - 1), ops.subList(0, ops.size() - 1), argsType, opType),
             args.get(args.size() - 1),
-            toBool);
+            argsType,
+            opType);
     }
 
     /**
@@ -133,6 +142,14 @@ public class SMTUtil {
                 return "=";
             case "!=":
                 return "distinct";
+            case "<":
+                return "bvslt";
+            case "<=":
+                return "bvsle";
+            case ">":
+                return "bvsgt";
+            case ">=":
+                return "bvsge";
             default:
                 throw new IllegalArgumentException();
         }
