@@ -8,15 +8,16 @@ public class SMTUtil {
     }
 
     public static String assertion(String operator, String expr) {
-        return "(assert (" + operator + " " + expr + "))\n";
+        return "(assert (" + operator + " " + toBool(expr) + "))\n";
     }
 
     public static String assertion(String operator, String lhs, String rhs) {
         return "(assert (" + operator + " " + lhs + " " + rhs + "))\n";
     }
 
-    public static String binaryOperator(String operator, String lhs, String rhs) {
-        return "(" + operator + " " + lhs + " " + rhs + ")";
+    public static String binaryOperator(String operator, String lhs, String rhs, boolean toBool) {
+        return (toBool) ? toBV32("(" + operator + " " + toBool(lhs) + " " + toBool(rhs) + ")")
+                        : "(" + operator + " " + lhs + " " + rhs + ")";
     }
 
     public static String ternaryOperator(String cond, String lhs, String rhs) {
@@ -31,19 +32,31 @@ public class SMTUtil {
         return "(tobool " + bv + ")";
     }
 
+    public static String toBV32(String bool) {
+        return "(tobv32 " + bool + ")";
+    }
+
     /**
      * Generate SMT code for a binary expression with the given arguments and operators.
      * Size of args must always be 1 larger than the size of ops.
      */
-    public static String binaryExpression(List<String> args, List<String> ops) {
+    public static String binaryExpression(List<String> args, List<String> ops, boolean toBool) {
         if (ops.size() == 1) {
-            return binaryOperator(ops.get(0), args.get(0), args.get(1));
+            return binaryOperator(
+                ops.get(0),
+                args.get(0),
+                args.get(1),
+                toBool);
         }
 
         return binaryOperator(
             ops.get(ops.size() - 1),
-            binaryExpression(args.subList(0, args.size() - 1), ops.subList(0, ops.size() - 1)),
-            args.get(args.size() - 1));
+            binaryExpression(
+                args.subList(0, args.size() - 1),
+                ops.subList(0, ops.size() - 1),
+                toBool),
+            args.get(args.size() - 1),
+            toBool);
     }
 
     /**
@@ -51,7 +64,7 @@ public class SMTUtil {
      */
     public static String ternaryExpression(List<String> args) {
         if (args.size() == 3) {
-            return ternaryOperator(args.get(0), args.get(1), args.get(2));
+            return ternaryOperator(toBool(args.get(0)), args.get(1), args.get(2));
         }
 
         return ternaryOperator(
