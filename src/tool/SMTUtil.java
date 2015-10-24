@@ -55,9 +55,11 @@ public class SMTUtil {
             return binaryOperator(ops.get(0), args.get(0), args.get(1), toBool);
         }
 
-        return binaryOperator(ops.get(ops.size() - 1),
-            binaryExpression(args.subList(0, args.size() - 1), ops.subList(0, ops.size() - 1),
-                toBool), args.get(args.size() - 1), toBool);
+        return binaryOperator(
+            ops.get(ops.size() - 1),
+            binaryExpression(args.subList(0, args.size() - 1), ops.subList(0, ops.size() - 1), toBool),
+            args.get(args.size() - 1),
+            toBool);
     }
 
     /**
@@ -68,7 +70,9 @@ public class SMTUtil {
             return ternaryOperator(toBool(args.get(0)), args.get(1), args.get(2));
         }
 
-        return ternaryOperator(args.get(0), args.get(1),
+        return ternaryOperator(
+            args.get(0),
+            args.get(1),
             ternaryExpression(args.subList(2, args.size())));
     }
 
