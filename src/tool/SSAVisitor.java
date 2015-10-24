@@ -86,7 +86,27 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
             return visit(ctx.assertStmt());
         }
 
-        return null;
+        if (ctx.assumeStmt() != null) {
+            return visit(ctx.assumeStmt());
+        }
+
+        if (ctx.havocStmt() != null) {
+            return visit(ctx.havocStmt());
+        }
+
+        if (ctx.callStmt() != null) {
+            return visit(ctx.callStmt());
+        }
+
+        if (ctx.ifStmt() != null) {
+            return visit(ctx.ifStmt());
+        }
+
+        if (ctx.whileStmt() != null) {
+            return visit(ctx.whileStmt());
+        }
+
+        return visit(ctx.blockStmt());
     }
 
     @Override
@@ -116,7 +136,14 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitHavocStmt(HavocStmtContext ctx) {
-        return null;
+        String var = ctx.var.ident.name.getText();
+        int id = ssaMap.fresh(var);
+
+        StringBuilder result = new StringBuilder();
+        result.append(SMTUtil.declare(var, id));
+        ssaMap.update(var, id);
+
+        return result.toString();
     }
 
     @Override

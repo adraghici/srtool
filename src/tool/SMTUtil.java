@@ -38,12 +38,15 @@ public class SMTUtil {
     }
 
     public static String generateCondition(List<String> asserts) {
-        return assertion("not", (asserts.size() == 1)
-                                    ? asserts.get(0)
-                                    : SMTUtil.binaryExpression(
-                                        asserts,
-                                        Collections.nCopies(asserts.size() - 1, "and"),
-                                        true));
+        switch (asserts.size()) {
+            case 0:
+                return "";
+            case 1:
+                return assertion("not", asserts.get(0));
+            default:
+                return assertion("not", SMTUtil.binaryExpression(
+                    asserts, Collections.nCopies(asserts.size() - 1, "and"), true));
+        }
     }
 
     /**
