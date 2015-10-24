@@ -226,7 +226,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
         List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertOperator(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, true);
+        return SMTUtil.binaryExpression(args, operators, false);
     }
 
     @Override
@@ -237,7 +237,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
         List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertOperator(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, true);
+        return SMTUtil.binaryExpression(args, operators, false);
     }
 
     @Override
@@ -248,7 +248,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
         List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertOperator(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, true);
+        return SMTUtil.binaryExpression(args, operators, false);
     }
 
     @Override
@@ -264,32 +264,24 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitRelExpr(RelExprContext ctx) {
-        StringBuilder result = new StringBuilder();
-
         if (ctx.single != null) {
-            result.append(visit(ctx.single));
-        } else if (ctx.args != null) {
-            for (ShiftExprContext shiftExprContext : ctx.args) {
-                result.append(visit(shiftExprContext));
-            }
+            return visit(ctx.single);
         }
 
-        return result.toString();
+        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
+        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertOperator(op.getText())).collect(Collectors.toList());
+        return SMTUtil.binaryExpression(args, operators, false);
     }
 
     @Override
     public String visitShiftExpr(ShiftExprContext ctx) {
-        StringBuilder result = new StringBuilder();
-
         if (ctx.single != null) {
-            result.append(visit(ctx.single));
-        } else if (ctx.args != null) {
-            for (AddExprContext addExprContext : ctx.args) {
-                result.append(visit(addExprContext));
-            }
+            return visit(ctx.single);
         }
 
-        return result.toString();
+        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
+        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertOperator(op.getText())).collect(Collectors.toList());
+        return SMTUtil.binaryExpression(args, operators, false);
     }
 
     @Override

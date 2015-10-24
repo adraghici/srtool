@@ -96,9 +96,9 @@ public class SMTUtil {
             case "|":
                 return "bvor";
             case "^":
-                return "bxor";
+                return "bvxor";
             case "&":
-                return "band";
+                return "bvand";
             case "==":
                 return "=";
             case "!=":
