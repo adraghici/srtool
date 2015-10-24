@@ -4,7 +4,6 @@ import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.*;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,14 +20,9 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     public String visitProgram(ProgramContext ctx) {
         List<String> globals = ctx.globals.stream().map(this::visit).collect(Collectors.toList());
         List<String> procedures = ctx.procedures.stream().map(this::visit).collect(Collectors.toList());
-        String condition = (asserts.size() == 1) ?
-            asserts.get(0) :
-            SMTUtil.binaryExpression(
-                asserts,
-                Collections.nCopies(asserts.size() - 1, "and"),
-                true);
+        String condition = SMTUtil.generateCondition(asserts);
 
-        return String.join("", globals) + String.join("", procedures) + SMTUtil.assertion("not", condition);
+        return String.join("", globals) + String.join("", procedures) + condition;
     }
 
     @Override
