@@ -120,14 +120,6 @@ public class SMTUtil {
 
     public static String convertBinaryOp(String operator) {
         switch (operator) {
-            case "+":
-                return "bvadd";
-            case "-":
-                return "bvsub";
-            case "*":
-                return "bvmul";
-            case "/":
-                return "bvdiv";
             case "||":
                 return "or";
             case "&&":
@@ -150,6 +142,20 @@ public class SMTUtil {
                 return "bvsgt";
             case ">=":
                 return "bvsge";
+            case "<<":
+                return "bvshl";
+            case ">>":
+                return "bvashr";
+            case "+":
+                return "bvadd";
+            case "-":
+                return "bvsub";
+            case "*":
+                return "bvmul";
+            case "/":
+                return "bvdiv";
+            case "%":
+                return "bvsrem";
             default:
                 throw new IllegalArgumentException();
         }
