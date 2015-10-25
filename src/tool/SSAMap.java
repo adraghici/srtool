@@ -23,20 +23,11 @@ public class SSAMap {
     }
 
     public int fresh(String var) {
-        return id(var) + 1;
+        nextID.put(var, id(var) + 1);
+        return id(var);
     }
 
-    public void update(String var, int id) {
-        nextID.put(var, id);
-    }
-
-    @Override
-    public SSAMap clone() {
-        Map<String, Integer> nextIDCopy = new HashMap<>();
-        for (String s : nextID.keySet()) {
-            nextIDCopy.put(s, nextID.get(s));
-        }
-
-        return new SSAMap(nextIDCopy);
+    public Map<String, Integer> getMap() {
+        return nextID;
     }
 }
