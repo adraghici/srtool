@@ -43,7 +43,10 @@ public class SRTool {
 		VCGenerator vcgen = new VCGenerator(ctx);
 		String vc = vcgen.generateVC().toString();
 
-		ProcessExec process = new ProcessExec("./z3", "-smt2", "-in");
+		String dir = System.getProperty("user.dir");
+		String tool = "srtool";
+		dir = dir.substring(0, dir.lastIndexOf(tool) + tool.length());
+		ProcessExec process = new ProcessExec(dir + "/z3", "-smt2", "-in");
 		String queryResult = "";
 		try {
 			queryResult = process.execute(vc, TIMEOUT);

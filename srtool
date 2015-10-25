@@ -1,3 +1,8 @@
 #!/bin/bash
 
-java -cp ./src:antlr-4.5.1-complete.jar tool.SRTool $@
+# Get the directory the script was run from and find the corresponding 
+# directory containing binaries.
+dir=`dirname $0`
+bin="$dir/bin/"
+antlr="$dir/antlr-4.5.1-complete.jar"
+java -cp $bin:$antlr tool.SRTool $1

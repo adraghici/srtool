@@ -1,3 +1,6 @@
+// RUN: %tool "%s" > "%t"
+// RUN: %diff %CORRECT "%t"
+
 int main() {
 	int a;
 	a = 4 & 7;

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+mkdir -p bin
+
+javac -cp antlr-4.5.1-complete.jar -s bin -d bin src/*/*.java 

@@ -1,4 +1,12 @@
+# Class files
 *.class
+
+# lit output files
+tests/correct/Output/
+tests/incorrect/Output/
+
+# Command line build
+bin/
 
 # IntelliJ
 out/
