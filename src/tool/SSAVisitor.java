@@ -2,19 +2,42 @@ package tool;
 
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.*;
-import tool.SMTUtil.*;
+import tool.SMTUtil.Type;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class SSAVisitor extends SimpleCBaseVisitor<String> {
     private final SSAMap ssaMap;
     private final List<String> asserts;
+    private final Stack<Tuple> ifStmtStack;
+
+    public class Tuple {
+        private String condition;
+        private SSAMap thenBlockMap;
+        private SSAMap elseBlockMap;
+
+        public Tuple(String condition) {
+            this.condition = condition;
+            this.thenBlockMap = new SSAMap();
+            this.elseBlockMap = new SSAMap();
+        }
+
+        public void setThenBlockMap(SSAMap thenBlockMap) {
+            this.thenBlockMap = thenBlockMap;
+        }
+
+        public void setElseBlockMap(SSAMap elseBlockMap) {
+            this.elseBlockMap = elseBlockMap;
+        }
+    }
 
     public SSAVisitor() {
         ssaMap = new SSAMap();
         asserts = new ArrayList<>();
+        ifStmtStack = new Stack<>();
     }
 
     @Override
@@ -154,6 +177,20 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitIfStmt(IfStmtContext ctx) {
+        String condition = visit(ctx.condition);
+        ifStmtStack.push(new Tuple(condition));
+        
+        String thenBlock = visit(ctx.thenBlock);
+        String elseBlock = visit(ctx.elseBlock);
+
+        System.out.println("=======================");
+        System.out.println(condition);
+        System.out.println("=======================");
+        System.out.println(thenBlock);
+        System.out.println("=======================");
+        System.out.println(elseBlock);
+        System.out.println("=======================");
+
         return null;
     }
 
@@ -164,7 +201,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitBlockStmt(BlockStmtContext ctx) {
-        return null;
+        List<String> statements = ctx.stmt().stream().map(this::visit).collect(Collectors.toList());
+        return String.join("", statements);
     }
 
     @Override

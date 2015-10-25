@@ -8,7 +8,11 @@ public class SSAMap {
     private final Map<String, Integer> nextID;
 
     public SSAMap() {
-        nextID = new HashMap<>();
+        this.nextID = new HashMap<>();
+    }
+
+    public SSAMap(Map<String, Integer> nextID) {
+        this.nextID = nextID;
     }
 
     public int id(String var) {
@@ -24,5 +28,15 @@ public class SSAMap {
 
     public void update(String var, int id) {
         nextID.put(var, id);
+    }
+
+    @Override
+    public SSAMap clone() {
+        Map<String, Integer> nextIDCopy = new HashMap<>();
+        for (String s : nextID.keySet()) {
+            nextIDCopy.put(s, nextID.get(s));
+        }
+
+        return new SSAMap(nextIDCopy);
     }
 }
