@@ -23,7 +23,11 @@ public class SMTUtil {
         return "(" + operator + " " + arg + ")";
     }
 
-    public static String binaryOperator(String operator, String lhs, String rhs, Type argsType, Type opType) {
+    public static String binaryOperator(String operator, String lhs, String rhs) {
+        return toBV32("(" + operator + " " + lhs + " " + rhs + ")");
+    }
+
+    private static String binaryOperator(String operator, String lhs, String rhs, Type argsType, Type opType) {
         if (argsType == Type.BOOL && opType == Type.BOOL) {
             return toBV32("(" + operator + " " + toBool(lhs) + " " + toBool(rhs) + ")");
         } else if (argsType == Type.INT && opType == Type.BOOL) {

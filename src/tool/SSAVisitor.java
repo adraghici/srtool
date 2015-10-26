@@ -1,20 +1,23 @@
 package tool;
 
+import com.google.common.collect.Sets;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.*;
-import tool.SMTUtil.*;
+import tool.SMTUtil.Type;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SSAVisitor extends SimpleCBaseVisitor<String> {
-    private final SSAMap ssaMap;
     private final List<String> asserts;
+    private final Stack<IfTuple> ifs;
+    private final SSAMap ssaMap;
 
     public SSAVisitor() {
-        ssaMap = new SSAMap();
         asserts = new ArrayList<>();
+        ifs = new Stack<>();
+        ifs.push(new IfTuple());
+        ssaMap = new SSAMap();
     }
 
     @Override
@@ -29,7 +32,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitVarDecl(VarDeclContext ctx) {
         String var = ctx.ident.name.getText();
-        return SMTUtil.declare(var, ssaMap.id(var));
+        return SMTUtil.declare(var, getCurrent(var));
     }
 
     @Override
@@ -112,21 +115,26 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitAssignStmt(AssignStmtContext ctx) {
+        String rhs = visit(ctx.rhs);
+
         String var = ctx.lhs.ident.name.getText();
         int id = ssaMap.fresh(var);
-        String rhs = visit(ctx.rhs);
+        updateCurrent(var, id);
 
         StringBuilder result = new StringBuilder();
         result.append(SMTUtil.declare(var, id));
         result.append(SMTUtil.assertion("=", var + id, rhs));
-        ssaMap.update(var, id);
-
         return result.toString();
     }
 
     @Override
     public String visitAssertStmt(AssertStmtContext ctx) {
-        asserts.add(visit(ctx.expr()));
+        String expr = visit(ctx.expr());
+        if (ifs.peek().pred.isEmpty()) {
+            asserts.add(expr);
+        } else {
+            asserts.add(SMTUtil.binaryOperator("=>", ifs.peek().pred, SMTUtil.toBool(expr)));
+        }
         return "";
     }
 
@@ -139,12 +147,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     public String visitHavocStmt(HavocStmtContext ctx) {
         String var = ctx.var.ident.name.getText();
         int id = ssaMap.fresh(var);
-
-        StringBuilder result = new StringBuilder();
-        result.append(SMTUtil.declare(var, id));
-        ssaMap.update(var, id);
-
-        return result.toString();
+        updateCurrent(var, id);
+        return SMTUtil.declare(var, id);
     }
 
     @Override
@@ -154,7 +158,49 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitIfStmt(IfStmtContext ctx) {
-        return null;
+        String pred = SMTUtil.toBool(visit(ctx.condition));
+        Map<String, Integer> currentMap = ifs.peek().ssaMap;
+
+        Map<String, Integer> thenMap = new HashMap<>(currentMap);
+        if (ifs.peek().pred.isEmpty()) {
+            ifs.push(new IfTuple(pred, thenMap));
+        } else {
+            ifs.push(new IfTuple(SMTUtil.toBool(
+                SMTUtil.binaryOperator("and", ifs.peek().pred, pred)), thenMap));
+        }
+        String thenBlock = visit(ctx.thenBlock);
+        ifs.pop();
+
+        Map<String, Integer> elseMap = new HashMap<>(currentMap);
+        String elseBlock = "";
+        if (ctx.elseBlock != null) {
+            if (ifs.peek().pred.isEmpty()) {
+                ifs.push(new IfTuple(SMTUtil.unaryOperator("not", pred), elseMap));
+            } else {
+                ifs.push(
+                    new IfTuple(SMTUtil.toBool(SMTUtil.binaryOperator(
+                        "and", ifs.peek().pred, SMTUtil.unaryOperator("not", pred))), elseMap));
+            }
+            elseBlock = visit(ctx.elseBlock);
+            ifs.pop();
+        }
+
+        StringBuilder endIf = new StringBuilder();
+        Set<String> thenModset = modset(currentMap, thenMap);
+        Set<String> elseModset = modset(currentMap, elseMap);
+        for (String var : Sets.union(thenModset, elseModset).immutableCopy()) {
+            int thenId = thenModset.contains(var) ? thenMap.get(var) : getCurrent(var);
+            int elseId  = elseModset.contains(var) ? elseMap.get(var) : getCurrent(var);
+            int id = ssaMap.fresh(var);
+            updateCurrent(var, id);
+            endIf.append(SMTUtil.declare(var, id));
+            endIf.append(SMTUtil.assertion(
+                "=",
+                var + getCurrent(var),
+                SMTUtil.ternaryOperator(pred, var + thenId, var + elseId)));
+        }
+
+        return thenBlock + elseBlock + endIf;
     }
 
     @Override
@@ -164,7 +210,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitBlockStmt(BlockStmtContext ctx) {
-        return null;
+        List<String> statements = ctx.stmt().stream().map(this::visit).collect(Collectors.toList());
+        return String.join("", statements);
     }
 
     @Override
@@ -347,14 +394,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitVarrefExpr(VarrefExprContext ctx) {
-        StringBuilder result = new StringBuilder();
-
-        String varName = ctx.var.ident.name.getText();
-        Integer varID = ssaMap.id(varName);
-
-        result.append(varName + varID);
-
-        return result.toString();
+        return visit(ctx.var);
     }
 
     @Override
@@ -374,11 +414,44 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitVarref(VarrefContext ctx) {
-        return null;
+        String var = ctx.ident.name.getText();
+        Integer id = getCurrent(var);
+        return var + id;
     }
 
     @Override
     public String visitVarIdentifier(VarIdentifierContext ctx) {
         return null;
+    }
+
+    private void updateCurrent(String var, Integer id) {
+        ifs.peek().ssaMap.put(var, id);
+    }
+
+    private Integer getCurrent(String var) {
+        return ifs.peek().ssaMap.getOrDefault(var, 0);
+    }
+
+    private static Set<String> modset(Map<String, Integer> oldMap, Map<String, Integer> newMap) {
+        return newMap.entrySet().stream()
+            .filter(entry ->
+                !oldMap.containsKey(entry.getKey())
+                || oldMap.get(entry.getKey()) != entry.getValue())
+            .map(Map.Entry::getKey).collect(Collectors.toSet());
+    }
+
+    private static class IfTuple {
+        private String pred;
+        private Map<String, Integer> ssaMap;
+
+        public IfTuple() {
+            this.pred = "";
+            this.ssaMap = new HashMap<>();
+        }
+
+        public IfTuple(String pred, Map<String, Integer> ssaMap) {
+            this.pred = pred;
+            this.ssaMap = ssaMap;
+        }
     }
 }

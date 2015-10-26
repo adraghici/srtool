@@ -8,7 +8,11 @@ public class SSAMap {
     private final Map<String, Integer> nextID;
 
     public SSAMap() {
-        nextID = new HashMap<>();
+        this.nextID = new HashMap<>();
+    }
+
+    public SSAMap(Map<String, Integer> nextID) {
+        this.nextID = nextID;
     }
 
     public int id(String var) {
@@ -19,10 +23,11 @@ public class SSAMap {
     }
 
     public int fresh(String var) {
-        return id(var) + 1;
+        nextID.put(var, id(var) + 1);
+        return id(var);
     }
 
-    public void update(String var, int id) {
-        nextID.put(var, id);
+    public Map<String, Integer> getMap() {
+        return nextID;
     }
 }

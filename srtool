@@ -5,4 +5,5 @@
 dir=`dirname $0`
 bin="$dir/bin/"
 antlr="$dir/antlr-4.5.1-complete.jar"
-java -cp $bin:$antlr tool.SRTool $1
+guava="$dir/guava-18.0.jar"
+java -cp $bin:$antlr:$guava tool.SRTool $1
