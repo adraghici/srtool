@@ -1,19 +1,24 @@
+// RUN: %tool "%s" > "%t"
+// RUN: %diff %CORRECT "%t"
+
 int main() {
 
-	int x;
-	int y;
-	int z;
+    int x;
+    int y;
 
-	x = y;
+    x = 4;
+    y = 3;
 
-	if (x > z) {
-		x = x + 1;
-		assert x > y;
-		y = y + 1;
-	} else {
-		x = x + y;
-		assert x != y;
-	}
+    if (x == 4) {
+        x = x + 2;
+        assert x == 6;
+        if (y == 2) {
+            assert y == 2;
+        } else {
+            y = y * 2 + y;
+            assert 9 == y;
+        }
+    }
 
-	return 0;
+    return 0;
 }

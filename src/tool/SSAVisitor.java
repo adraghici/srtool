@@ -1,5 +1,6 @@
 package tool;
 
+import com.google.common.collect.Sets;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.*;
 import tool.SMTUtil.Type;
@@ -158,39 +159,48 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitIfStmt(IfStmtContext ctx) {
         String pred = SMTUtil.toBool(visit(ctx.condition));
-        String thenBlock = "";
-        String elseBlock = "";
+        Map<String, Integer> currentMap = ifs.peek().ssaMap;
 
-        Map<String, Integer> thenMap = new HashMap<>(ifs.peek().ssaMap);
-
+        Map<String, Integer> thenMap = new HashMap<>(currentMap);
         if (ifs.peek().pred.isEmpty()) {
             ifs.push(new IfTuple(pred, thenMap));
         } else {
-            ifs.push(new IfTuple(SMTUtil.binaryOperator("and", ifs.peek().pred, pred), thenMap));
+            ifs.push(new IfTuple(SMTUtil.toBool(
+                SMTUtil.binaryOperator("and", ifs.peek().pred, pred)), thenMap));
         }
-
-        thenBlock = visit(ctx.thenBlock);
+        String thenBlock = visit(ctx.thenBlock);
         ifs.pop();
 
+        Map<String, Integer> elseMap = new HashMap<>(currentMap);
+        String elseBlock = "";
         if (ctx.elseBlock != null) {
-            Map<String, Integer> elseMap = new HashMap<>(ifs.peek().ssaMap);
-
             if (ifs.peek().pred.isEmpty()) {
                 ifs.push(new IfTuple(SMTUtil.unaryOperator("not", pred), elseMap));
             } else {
                 ifs.push(
-                    new IfTuple(SMTUtil.binaryOperator("and", ifs.peek().pred,
-                    SMTUtil.unaryOperator("not", pred)), elseMap));
+                    new IfTuple(SMTUtil.toBool(SMTUtil.binaryOperator(
+                        "and", ifs.peek().pred, SMTUtil.unaryOperator("not", pred))), elseMap));
             }
-
             elseBlock = visit(ctx.elseBlock);
             ifs.pop();
         }
 
-        // TODO: Implement modset tomorrow. Good night! :).
-        // String endIf = SMTUtil.ternaryOperator(pred, );
+        StringBuilder endIf = new StringBuilder();
+        Set<String> thenModset = modset(currentMap, thenMap);
+        Set<String> elseModset = modset(currentMap, elseMap);
+        for (String var : Sets.union(thenModset, elseModset).immutableCopy()) {
+            int thenId = thenModset.contains(var) ? thenMap.get(var) : getCurrent(var);
+            int elseId  = elseModset.contains(var) ? elseMap.get(var) : getCurrent(var);
+            int id = ssaMap.fresh(var);
+            updateCurrent(var, id);
+            endIf.append(SMTUtil.declare(var, id));
+            endIf.append(SMTUtil.assertion(
+                "=",
+                var + getCurrent(var),
+                SMTUtil.ternaryOperator(pred, var + thenId, var + elseId)));
+        }
 
-        return thenBlock + elseBlock;
+        return thenBlock + elseBlock + endIf;
     }
 
     @Override
@@ -420,6 +430,14 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     private Integer getCurrent(String var) {
         return ifs.peek().ssaMap.getOrDefault(var, 0);
+    }
+
+    private static Set<String> modset(Map<String, Integer> oldMap, Map<String, Integer> newMap) {
+        return newMap.entrySet().stream()
+            .filter(entry ->
+                !oldMap.containsKey(entry.getKey())
+                || oldMap.get(entry.getKey()) != entry.getValue())
+            .map(Map.Entry::getKey).collect(Collectors.toSet());
     }
 
     private static class IfTuple {
