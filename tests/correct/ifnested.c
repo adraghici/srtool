@@ -149,7 +149,7 @@ int main() {
 								} else {
 									assert (x6 == 666);
 								}
-							} else {
+
 								assert (x6 == 666);
 								assert (x6 == 666);
 
@@ -184,13 +184,13 @@ int main() {
 																		int e;
 
 																		if (e % 3 == 0) {
-																			assert ((d + e) % 3 == 0);
+																			assert ((d + e - 3) % 3 == 0);
 																		} else {
 																			if (e % 3 == 1) {
-																				assert ((d + e) % 3 == 1);
+																				assert ((d + e - 3) % 3 == 1);
 																			} else {
 																				if (e % 3 == 2) {
-																					assert ((d + e) % 3 == 2);
+																					assert ((d + e - 3) % 3 == 2);
 																				}
 																			}
 																		}
