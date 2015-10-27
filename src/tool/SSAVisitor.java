@@ -2,6 +2,7 @@ package tool;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.antlr.v4.runtime.Token;
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.AddExprContext;
 import parser.SimpleCParser.AssertStmtContext;
@@ -178,7 +179,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         if (ifs.peek().pred.isEmpty()) {
             asserts.add(expr);
         } else {
-            asserts.add(SMTUtil.binaryOperator("=>", ifs.peek().pred, SMTUtil.toBool(expr)));
+            asserts.add(SMTUtil.binaryOp("=>", ifs.peek().pred, SMTUtil.toBool(expr)));
         }
         return "";
     }
@@ -211,7 +212,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
             ifs.push(new IfTuple(pred, thenMap));
         } else {
             ifs.push(new IfTuple(SMTUtil.toBool(
-                SMTUtil.binaryOperator("and", ifs.peek().pred, pred)), thenMap));
+                SMTUtil.binaryOp("and", ifs.peek().pred, pred)), thenMap));
         }
         String thenBlock = visit(ctx.thenBlock);
         ifs.pop();
@@ -220,11 +221,11 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         String elseBlock = "";
         if (ctx.elseBlock != null) {
             if (ifs.peek().pred.isEmpty()) {
-                ifs.push(new IfTuple(SMTUtil.unaryOperator("not", pred), elseMap));
+                ifs.push(new IfTuple(SMTUtil.unaryOp("not", pred), elseMap));
             } else {
                 ifs.push(
-                    new IfTuple(SMTUtil.toBool(SMTUtil.binaryOperator(
-                        "and", ifs.peek().pred, SMTUtil.unaryOperator("not", pred))), elseMap));
+                    new IfTuple(SMTUtil.toBool(SMTUtil.binaryOp("and", ifs.peek().pred,
+                        SMTUtil.unaryOp("not", pred))), elseMap));
             }
             elseBlock = visit(ctx.elseBlock);
             ifs.pop();
@@ -242,7 +243,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
             endIf.append(SMTUtil.assertion(
                 "=",
                 var + getCurrent(var),
-                SMTUtil.ternaryOperator(pred, var + thenId, var + elseId)));
+                SMTUtil.ternaryOp(pred, var + thenId, var + elseId)));
         }
 
         return thenBlock + elseBlock + endIf;
@@ -286,7 +287,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        return SMTUtil.ternaryExpression(args);
+        return SMTUtil.ternaryExpr(args);
     }
 
     @Override
@@ -296,8 +297,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertBinaryOp(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, Type.BOOL, Type.BOOL);
+        List<String> operators = ctx.ops.stream().map(SSAVisitor::binaryOp).collect(Collectors.toList());
+        return SMTUtil.binaryExpr(args, operators, Type.BOOL, Type.BOOL);
     }
 
     @Override
@@ -307,8 +308,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertBinaryOp(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, Type.BOOL, Type.BOOL);
+        List<String> operators = ctx.ops.stream().map(SSAVisitor::binaryOp).collect(Collectors.toList());
+        return SMTUtil.binaryExpr(args, operators, Type.BOOL, Type.BOOL);
     }
 
     @Override
@@ -318,8 +319,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertBinaryOp(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, Type.INT, Type.INT);
+        List<String> operators = ctx.ops.stream().map(SSAVisitor::binaryOp).collect(Collectors.toList());
+        return SMTUtil.binaryExpr(args, operators, Type.INT, Type.INT);
     }
 
     @Override
@@ -329,8 +330,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertBinaryOp(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, Type.INT, Type.INT);
+        List<String> operators = ctx.ops.stream().map(SSAVisitor::binaryOp).collect(Collectors.toList());
+        return SMTUtil.binaryExpr(args, operators, Type.INT, Type.INT);
     }
 
     @Override
@@ -340,8 +341,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertBinaryOp(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, Type.INT, Type.INT);
+        List<String> operators = ctx.ops.stream().map(SSAVisitor::binaryOp).collect(Collectors.toList());
+        return SMTUtil.binaryExpr(args, operators, Type.INT, Type.INT);
     }
 
     @Override
@@ -351,8 +352,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertBinaryOp(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, Type.INT, Type.BOOL);
+        List<String> operators = ctx.ops.stream().map(SSAVisitor::binaryOp).collect(Collectors.toList());
+        return SMTUtil.binaryExpr(args, operators, Type.INT, Type.BOOL);
     }
 
     @Override
@@ -362,8 +363,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertBinaryOp(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, Type.INT, Type.BOOL);
+        List<String> operators = ctx.ops.stream().map(SSAVisitor::binaryOp).collect(Collectors.toList());
+        return SMTUtil.binaryExpr(args, operators, Type.INT, Type.BOOL);
     }
 
     @Override
@@ -373,8 +374,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertBinaryOp(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, Type.INT, Type.INT);
+        List<String> operators = ctx.ops.stream().map(SSAVisitor::binaryOp).collect(Collectors.toList());
+        return SMTUtil.binaryExpr(args, operators, Type.INT, Type.INT);
     }
 
     @Override
@@ -384,8 +385,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertBinaryOp(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, Type.INT, Type.INT);
+        List<String> operators = ctx.ops.stream().map(SSAVisitor::binaryOp).collect(Collectors.toList());
+        return SMTUtil.binaryExpr(args, operators, Type.INT, Type.INT);
     }
 
     @Override
@@ -395,8 +396,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertBinaryOp(op.getText())).collect(Collectors.toList());
-        return SMTUtil.binaryExpression(args, operators, Type.INT, Type.INT);
+        List<String> operators = ctx.ops.stream().map(SSAVisitor::binaryOp).collect(Collectors.toList());
+        return SMTUtil.binaryExpr(args, operators, Type.INT, Type.INT);
     }
 
     @Override
@@ -406,9 +407,9 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         }
 
         String arg = visit(ctx.arg);
-        List<String> operators = ctx.ops.stream().map(op -> SMTUtil.convertUnaryOp(op.getText())).collect(Collectors.toList());
+        List<String> operators = ctx.ops.stream().map(SSAVisitor::unaryOp).collect(Collectors.toList());
 
-        return SMTUtil.unaryExpression(arg, operators);
+        return SMTUtil.unaryExpr(arg, operators);
     }
 
     @Override
@@ -482,9 +483,17 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     }
 
     private static Set<String> modset(Map<String, Integer> oldMap, Map<String, Integer> newMap) {
-        return newMap.entrySet().stream()
-            .filter(entry -> oldMap.containsKey(entry.getKey()) && oldMap.get(entry.getKey()) != entry.getValue())
-            .map(Map.Entry::getKey).collect(Collectors.toSet());
+        return newMap.keySet().stream()
+            .filter(key -> oldMap.containsKey(key) && oldMap.get(key) != newMap.get(key))
+            .collect(Collectors.toSet());
+    }
+
+    private static String unaryOp(Token op) {
+        return SMTUtil.unaryOp(op.getText());
+    }
+
+    private static String binaryOp(Token op) {
+        return SMTUtil.binaryOp(op.getText());
     }
 
     private static class IfTuple {
