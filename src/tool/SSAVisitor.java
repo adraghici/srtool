@@ -56,11 +56,14 @@ import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class SSAVisitor extends SimpleCBaseVisitor<String> {
+    private static final String RESULT_PLACEHOLDER = "RESULT?!";
+    private final List<String> postconditions;
     private final List<String> asserts;
     private final Stack<State> states;
     private final SSAMap ssaMap;
 
     public SSAVisitor() {
+        postconditions = Lists.newArrayList();
         asserts = Lists.newArrayList();
         states = new Stack<>();
         states.push(new State());
@@ -95,6 +98,12 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         for (StmtContext stmt : ctx.stmts) {
             result.append(visit(stmt));
         }
+
+        String returnExpr = visit(ctx.returnExpr);
+        for (String postcondition : postconditions) {
+            assertion(postcondition.replace(RESULT_PLACEHOLDER, returnExpr));
+        }
+
         return result.toString();
     }
 
@@ -127,6 +136,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitEnsures(EnsuresContext ctx) {
+        postconditions.add(visit(ctx.condition));
         return "";
     }
 
@@ -194,22 +204,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitAssertStmt(AssertStmtContext ctx) {
         String expr = visit(ctx.expr());
-        State state = states.peek();
-        if (state.pred.isEmpty()) {
-            if (state.ass.isEmpty()) {
-                asserts.add(expr);
-            } else {
-                asserts.add(SMTUtil.binaryOp("=>", SMTUtil.toBool(state.ass), SMTUtil.toBool(expr)));
-            }
-        } else {
-            if (state.ass.isEmpty()) {
-                asserts.add(SMTUtil.binaryOp("=>", state.pred, SMTUtil.toBool(expr)));
-            } else {
-                asserts.add(SMTUtil
-                    .binaryOp("=>", SMTUtil.binaryOp("and", state.pred, state.ass), SMTUtil.toBool(expr)));
-            }
-        }
-        return "";
+        return assertion(expr);
     }
 
     @Override
@@ -480,7 +475,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitResultExpr(ResultExprContext ctx) {
-        return null;
+        return RESULT_PLACEHOLDER;
     }
 
     @Override
@@ -498,6 +493,25 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitVarIdentifier(VarIdentifierContext ctx) {
         return null;
+    }
+
+    private String assertion(String expr) {
+        State state = states.peek();
+        if (state.pred.isEmpty()) {
+            if (state.ass.isEmpty()) {
+                asserts.add(expr);
+            } else {
+                asserts.add(SMTUtil.binaryOp("=>", SMTUtil.toBool(state.ass), SMTUtil.toBool(expr)));
+            }
+        } else {
+            if (state.ass.isEmpty()) {
+                asserts.add(SMTUtil.binaryOp("=>", state.pred, SMTUtil.toBool(expr)));
+            } else {
+                asserts.add(SMTUtil
+                    .binaryOp("=>", SMTUtil.binaryOp("and", state.pred, state.ass), SMTUtil.toBool(expr)));
+            }
+        }
+        return "";
     }
 
     private String assume(String expr) {
