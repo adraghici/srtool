@@ -151,7 +151,7 @@ public class SMTUtil {
     public static String generateCondition(List<String> asserts) {
         switch (asserts.size()) {
             case 0:
-                return "";
+                return "(assert false)";
             case 1:
                 return assertion("not", asserts.get(0));
             default:
