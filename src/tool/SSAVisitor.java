@@ -84,32 +84,50 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitProcedureDecl(ProcedureDeclContext ctx) {
         StringBuilder result = new StringBuilder();
+        for (FormalParamContext formal : ctx.formals) {
+            result.append(visit(formal));
+        }
 
-        for (StmtContext stmtContext : ctx.stmt()) {
-            result.append(visit(stmtContext));
+        for (PrepostContext prepost : ctx.contract) {
+            result.append(visit(prepost));
+        }
+
+        for (StmtContext stmt : ctx.stmts) {
+            result.append(visit(stmt));
+        }
+        return result.toString();
+    }
+
+    @Override
+    public String visitFormalParam(FormalParamContext ctx) {
+        String var = ctx.ident.getText();
+        int id = ssaMap.fresh(var);
+        updateCurrent(var, id);
+        return SMTUtil.declare(var, id);
+    }
+
+    @Override
+    public String visitPrepost(PrepostContext ctx) {
+        StringBuilder result = new StringBuilder();
+        if (ctx.requires() != null) {
+            result.append(visit(ctx.requires()));
+        }
+
+        if (ctx.ensures() != null) {
+            visit(ctx.ensures());
         }
 
         return result.toString();
     }
 
     @Override
-    public String visitFormalParam(FormalParamContext ctx) {
-        return null;
-    }
-
-    @Override
-    public String visitPrepost(PrepostContext ctx) {
-        return null;
-    }
-
-    @Override
     public String visitRequires(RequiresContext ctx) {
-        return null;
+        return assume(visit(ctx.expr()));
     }
 
     @Override
     public String visitEnsures(EnsuresContext ctx) {
-        return null;
+        return "";
     }
 
     @Override
@@ -197,25 +215,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitAssumeStmt(AssumeStmtContext ctx) {
         String expr = visit(ctx.expr());
-        State state = states.peek();
-        if (state.ass.isEmpty()) {
-            if (state.pred.isEmpty()) {
-                state.ass = expr;
-            } else {
-                state.ass = SMTUtil.binaryOp("=>", SMTUtil.toBool(state.pred), SMTUtil.toBool(expr));
-            }
-        } else {
-            if (state.pred.isEmpty()) {
-                state.ass =
-                    SMTUtil.binaryOp("and", SMTUtil.toBool(state.ass), SMTUtil.toBool(expr));
-            } else {
-                state.ass = SMTUtil.binaryOp(
-                    "and",
-                    SMTUtil.toBool(state.ass),
-                    SMTUtil.binaryOp("=>", SMTUtil.toBool(state.pred), SMTUtil.toBool(expr)));
-            }
-        }
-        return "";
+        return assume(expr);
     }
 
     @Override
@@ -498,6 +498,28 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitVarIdentifier(VarIdentifierContext ctx) {
         return null;
+    }
+
+    private String assume(String expr) {
+        State state = states.peek();
+        if (state.ass.isEmpty()) {
+            if (state.pred.isEmpty()) {
+                state.ass = expr;
+            } else {
+                state.ass = SMTUtil.binaryOp("=>", SMTUtil.toBool(state.pred), SMTUtil.toBool(expr));
+            }
+        } else {
+            if (state.pred.isEmpty()) {
+                state.ass =
+                    SMTUtil.binaryOp("and", SMTUtil.toBool(state.ass), SMTUtil.toBool(expr));
+            } else {
+                state.ass = SMTUtil.binaryOp(
+                    "and",
+                    SMTUtil.toBool(state.ass),
+                    SMTUtil.binaryOp("=>", SMTUtil.toBool(state.pred), SMTUtil.toBool(expr)));
+            }
+        }
+        return "";
     }
 
     private void updateCurrent(String var, Integer id) {
