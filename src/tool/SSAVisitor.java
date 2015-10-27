@@ -57,13 +57,13 @@ import java.util.stream.Collectors;
 
 public class SSAVisitor extends SimpleCBaseVisitor<String> {
     private final List<String> asserts;
-    private final Stack<IfTuple> ifs;
+    private final Stack<State> states;
     private final SSAMap ssaMap;
 
     public SSAVisitor() {
         asserts = Lists.newArrayList();
-        ifs = new Stack<>();
-        ifs.push(new IfTuple());
+        states = new Stack<>();
+        states.push(new State());
         ssaMap = new SSAMap();
     }
 
@@ -176,17 +176,46 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitAssertStmt(AssertStmtContext ctx) {
         String expr = visit(ctx.expr());
-        if (ifs.peek().pred.isEmpty()) {
-            asserts.add(expr);
+        State state = states.peek();
+        if (state.pred.isEmpty()) {
+            if (state.ass.isEmpty()) {
+                asserts.add(expr);
+            } else {
+                asserts.add(SMTUtil.binaryOp("=>", SMTUtil.toBool(state.ass), SMTUtil.toBool(expr)));
+            }
         } else {
-            asserts.add(SMTUtil.binaryOp("=>", ifs.peek().pred, SMTUtil.toBool(expr)));
+            if (state.ass.isEmpty()) {
+                asserts.add(SMTUtil.binaryOp("=>", state.pred, SMTUtil.toBool(expr)));
+            } else {
+                asserts.add(SMTUtil
+                    .binaryOp("=>", SMTUtil.binaryOp("and", state.pred, state.ass), SMTUtil.toBool(expr)));
+            }
         }
         return "";
     }
 
     @Override
     public String visitAssumeStmt(AssumeStmtContext ctx) {
-        return null;
+        String expr = visit(ctx.expr());
+        State state = states.peek();
+        if (state.ass.isEmpty()) {
+            if (state.pred.isEmpty()) {
+                state.ass = expr;
+            } else {
+                state.ass = SMTUtil.binaryOp("=>", SMTUtil.toBool(state.pred), SMTUtil.toBool(expr));
+            }
+        } else {
+            if (state.pred.isEmpty()) {
+                state.ass =
+                    SMTUtil.binaryOp("and", SMTUtil.toBool(state.ass), SMTUtil.toBool(expr));
+            } else {
+                state.ass = SMTUtil.binaryOp(
+                    "and",
+                    SMTUtil.toBool(state.ass),
+                    SMTUtil.binaryOp("=>", SMTUtil.toBool(state.pred), SMTUtil.toBool(expr)));
+            }
+        }
+        return "";
     }
 
     @Override
@@ -205,30 +234,31 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitIfStmt(IfStmtContext ctx) {
         String pred = SMTUtil.toBool(visit(ctx.condition));
-        Map<String, Integer> currentMap = ifs.peek().ssaMap;
+        State state = states.peek();
+        String ass = state.ass;
+        Map<String, Integer> currentMap = state.ssaMap;
 
         Map<String, Integer> thenMap = new HashMap<>(currentMap);
-        if (ifs.peek().pred.isEmpty()) {
-            ifs.push(new IfTuple(pred, thenMap));
+        if (state.pred.isEmpty()) {
+            states.push(new State(pred, ass, thenMap));
         } else {
-            ifs.push(new IfTuple(SMTUtil.toBool(
-                SMTUtil.binaryOp("and", ifs.peek().pred, pred)), thenMap));
+            states.push(
+                new State(SMTUtil.toBool(SMTUtil.binaryOp("and", state.pred, pred)), ass, thenMap));
         }
         String thenBlock = visit(ctx.thenBlock);
-        ifs.pop();
+        states.pop();
 
         Map<String, Integer> elseMap = new HashMap<>(currentMap);
         String elseBlock = "";
         if (ctx.elseBlock != null) {
-            if (ifs.peek().pred.isEmpty()) {
-                ifs.push(new IfTuple(SMTUtil.unaryOp("not", pred), elseMap));
+            if (state.pred.isEmpty()) {
+                states.push(new State(SMTUtil.unaryOp("not", pred), ass, elseMap));
             } else {
-                ifs.push(
-                    new IfTuple(SMTUtil.toBool(SMTUtil.binaryOp("and", ifs.peek().pred,
-                        SMTUtil.unaryOp("not", pred))), elseMap));
+                states.push(
+                    new State(SMTUtil.toBool(SMTUtil.binaryOp("and", state.pred, SMTUtil.unaryOp("not", pred))), ass, elseMap));
             }
             elseBlock = visit(ctx.elseBlock);
-            ifs.pop();
+            states.pop();
         }
 
         StringBuilder endIf = new StringBuilder();
@@ -471,11 +501,11 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     }
 
     private void updateCurrent(String var, Integer id) {
-        ifs.peek().ssaMap.put(var, id);
+        states.peek().ssaMap.put(var, id);
     }
 
     private Integer getCurrent(String var) {
-        Map<String, Integer> map = ifs.peek().ssaMap;
+        Map<String, Integer> map = states.peek().ssaMap;
         if (!map.containsKey(var)) {
             map.put(var, ssaMap.fresh(var));
         }
@@ -484,8 +514,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     private static Set<String> modset(Map<String, Integer> oldMap, Map<String, Integer> newMap) {
         return newMap.keySet().stream()
-            .filter(key -> oldMap.containsKey(key) && oldMap.get(key) != newMap.get(key))
-            .collect(Collectors.toSet());
+            .filter(key -> oldMap.containsKey(key) && oldMap.get(key) != newMap.get(key)).collect(Collectors.toSet());
     }
 
     private static String unaryOp(Token op) {
@@ -496,17 +525,20 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         return SMTUtil.binaryOp(op.getText());
     }
 
-    private static class IfTuple {
+    private static class State {
         private String pred;
+        private String ass;
         private Map<String, Integer> ssaMap;
 
-        public IfTuple() {
+        public State() {
             this.pred = "";
+            this.ass = "";
             this.ssaMap = new HashMap<>();
         }
 
-        public IfTuple(String pred, Map<String, Integer> ssaMap) {
+        public State(String pred, String ass, Map<String, Integer> ssaMap) {
             this.pred = pred;
+            this.ass = ass;
             this.ssaMap = ssaMap;
         }
     }
