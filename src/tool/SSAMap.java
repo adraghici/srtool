@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SSAMap {
-    private static final Integer DEFAULT_ID = 0;
+    private static final Integer START_ID = 0;
     private final Map<String, Integer> nextID;
 
     public SSAMap() {
@@ -13,7 +13,7 @@ public class SSAMap {
 
     public int fresh(String var) {
         if (!nextID.containsKey(var)) {
-            nextID.put(var, 0);
+            nextID.put(var, START_ID);
         } else {
             nextID.put(var, id(var) + 1);
         }
