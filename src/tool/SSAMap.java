@@ -11,23 +11,16 @@ public class SSAMap {
         this.nextID = new HashMap<>();
     }
 
-    public SSAMap(Map<String, Integer> nextID) {
-        this.nextID = nextID;
-    }
-
-    public int id(String var) {
-        if (nextID.containsKey(var)) {
-            return nextID.get(var);
-        }
-        return DEFAULT_ID;
-    }
-
     public int fresh(String var) {
-        nextID.put(var, id(var) + 1);
+        if (!nextID.containsKey(var)) {
+            nextID.put(var, 0);
+        } else {
+            nextID.put(var, id(var) + 1);
+        }
         return id(var);
     }
 
-    public Map<String, Integer> getMap() {
-        return nextID;
+    private int id(String var) {
+        return nextID.get(var);
     }
 }

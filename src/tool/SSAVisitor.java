@@ -429,14 +429,16 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     }
 
     private Integer getCurrent(String var) {
-        return ifs.peek().ssaMap.getOrDefault(var, 0);
+        Map<String, Integer> map = ifs.peek().ssaMap;
+        if (!map.containsKey(var)) {
+            map.put(var, ssaMap.fresh(var));
+        }
+        return map.get(var);
     }
 
     private static Set<String> modset(Map<String, Integer> oldMap, Map<String, Integer> newMap) {
         return newMap.entrySet().stream()
-            .filter(entry ->
-                !oldMap.containsKey(entry.getKey())
-                || oldMap.get(entry.getKey()) != entry.getValue())
+            .filter(entry -> oldMap.containsKey(entry.getKey()) && oldMap.get(entry.getKey()) != entry.getValue())
             .map(Map.Entry::getKey).collect(Collectors.toSet());
     }
 

@@ -5,6 +5,7 @@ int main() {
 
     int x;
     int y;
+    int z;
 
 	if (x != 5) {
         if (x < 0) {
