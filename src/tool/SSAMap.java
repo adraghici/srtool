@@ -1,33 +1,27 @@
 package tool;
 
-import java.util.HashMap;
+import com.google.common.collect.Maps;
+
 import java.util.Map;
 
 public class SSAMap {
-    private static final Integer DEFAULT_ID = 0;
-    private final Map<String, Integer> nextID;
+    private static final int START_ID = 0;
+    private final Map<String, Integer> nextId;
 
     public SSAMap() {
-        this.nextID = new HashMap<>();
-    }
-
-    public SSAMap(Map<String, Integer> nextID) {
-        this.nextID = nextID;
-    }
-
-    public int id(String var) {
-        if (nextID.containsKey(var)) {
-            return nextID.get(var);
-        }
-        return DEFAULT_ID;
+        nextId = Maps.newHashMap();
     }
 
     public int fresh(String var) {
-        nextID.put(var, id(var) + 1);
+        if (!nextId.containsKey(var)) {
+            nextId.put(var, START_ID);
+        } else {
+            nextId.put(var, id(var) + 1);
+        }
         return id(var);
     }
 
-    public Map<String, Integer> getMap() {
-        return nextID;
+    private int id(String var) {
+        return nextId.get(var);
     }
 }
