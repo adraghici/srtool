@@ -1,11 +1,57 @@
 package tool;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import parser.SimpleCBaseVisitor;
-import parser.SimpleCParser.*;
+import parser.SimpleCParser.AddExprContext;
+import parser.SimpleCParser.AssertStmtContext;
+import parser.SimpleCParser.AssignStmtContext;
+import parser.SimpleCParser.AssumeStmtContext;
+import parser.SimpleCParser.AtomExprContext;
+import parser.SimpleCParser.BandExprContext;
+import parser.SimpleCParser.BlockStmtContext;
+import parser.SimpleCParser.BorExprContext;
+import parser.SimpleCParser.BxorExprContext;
+import parser.SimpleCParser.CallStmtContext;
+import parser.SimpleCParser.CandidateEnsuresContext;
+import parser.SimpleCParser.CandidateInvariantContext;
+import parser.SimpleCParser.CandidateRequiresContext;
+import parser.SimpleCParser.EnsuresContext;
+import parser.SimpleCParser.EqualityExprContext;
+import parser.SimpleCParser.ExprContext;
+import parser.SimpleCParser.FormalParamContext;
+import parser.SimpleCParser.HavocStmtContext;
+import parser.SimpleCParser.IfStmtContext;
+import parser.SimpleCParser.InvariantContext;
+import parser.SimpleCParser.LandExprContext;
+import parser.SimpleCParser.LoopInvariantContext;
+import parser.SimpleCParser.LorExprContext;
+import parser.SimpleCParser.MulExprContext;
+import parser.SimpleCParser.NumberExprContext;
+import parser.SimpleCParser.OldExprContext;
+import parser.SimpleCParser.ParenExprContext;
+import parser.SimpleCParser.PrepostContext;
+import parser.SimpleCParser.ProcedureDeclContext;
+import parser.SimpleCParser.ProgramContext;
+import parser.SimpleCParser.RelExprContext;
+import parser.SimpleCParser.RequiresContext;
+import parser.SimpleCParser.ResultExprContext;
+import parser.SimpleCParser.ShiftExprContext;
+import parser.SimpleCParser.StmtContext;
+import parser.SimpleCParser.TernExprContext;
+import parser.SimpleCParser.UnaryExprContext;
+import parser.SimpleCParser.VarDeclContext;
+import parser.SimpleCParser.VarIdentifierContext;
+import parser.SimpleCParser.VarrefContext;
+import parser.SimpleCParser.VarrefExprContext;
+import parser.SimpleCParser.WhileStmtContext;
 import tool.SMTUtil.Type;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class SSAVisitor extends SimpleCBaseVisitor<String> {
@@ -14,7 +60,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     private final SSAMap ssaMap;
 
     public SSAVisitor() {
-        asserts = new ArrayList<>();
+        asserts = Lists.newArrayList();
         ifs = new Stack<>();
         ifs.push(new IfTuple());
         ssaMap = new SSAMap();
@@ -25,7 +71,6 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         List<String> globals = ctx.globals.stream().map(this::visit).collect(Collectors.toList());
         List<String> procedures = ctx.procedures.stream().map(this::visit).collect(Collectors.toList());
         String condition = SMTUtil.generateCondition(asserts);
-
         return String.join("", globals) + String.join("", procedures) + condition;
     }
 

@@ -1,6 +1,7 @@
 package tool;
 
-import java.util.HashMap;
+import com.google.common.collect.Maps;
+
 import java.util.Map;
 
 public class SSAMap {
@@ -8,7 +9,7 @@ public class SSAMap {
     private final Map<String, Integer> nextID;
 
     public SSAMap() {
-        this.nextID = new HashMap<>();
+        this.nextID = Maps.newHashMap();
     }
 
     public int fresh(String var) {
