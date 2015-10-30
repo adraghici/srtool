@@ -420,7 +420,7 @@ public class SRToolShadowing extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitVarref(VarrefContext ctx) {
-        return ctx.ident.getText();
+        return visit(ctx.ident);
     }
 
     @Override
