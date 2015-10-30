@@ -48,6 +48,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
+    private final Scopes scopes;
+
+    public ShadowingVisitor() {
+        scopes = new Scopes();
+    }
 
     @Override
     public String visitProgram(ProgramContext ctx) {
@@ -58,7 +63,9 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitVarDecl(VarDeclContext ctx) {
-        return "int " + ctx.ident.name.getText() + ";";
+        String var = ctx.ident.name.getText();
+        scopes.declareVar(var);
+        return "int " + scopes.getVar(var) + ";";
     }
 
     @Override
@@ -213,7 +220,9 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitBlockStmt(BlockStmtContext ctx) {
+        scopes.enterScope();
         List<String> statements = ctx.stmt().stream().map(this::visit).collect(Collectors.toList());
+        scopes.exitScope();
         return "{\n" + String.join("\n", statements) + "\n}";
     }
 
@@ -421,7 +430,7 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitVarIdentifier(VarIdentifierContext ctx) {
-        return ctx.name.getText();
+        return scopes.getVar(ctx.name.getText());
     }
 
     private String unaryOp(List<String> ops, String arg) {
