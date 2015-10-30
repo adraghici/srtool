@@ -20,7 +20,18 @@ int blarp() {
         }
 
         x = x + 2;
-        //assert x == 6;
+        assert x == 7;
+
+        {
+            x = x + 2;
+            // assert x == 8;
+            int x;
+            x = 1000;
+            // assert x == 1000;
+        }
+
+        x = x + 2;
+        // assert x == 8;
     }
 
     return 0;

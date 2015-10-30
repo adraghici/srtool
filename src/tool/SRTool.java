@@ -23,7 +23,7 @@ public class SRTool {
         // Second pass through the file after renaming shadow variables.
         ShadowingVisitor shadowingVisitor = new ShadowingVisitor();
         String content = shadowingVisitor.visit(ctx);
-        System.out.println(content);
+        // System.out.println(content);
         input = new ANTLRInputStream(content);
         ctx = getProgramContext(input, filename);
 
