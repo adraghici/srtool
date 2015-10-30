@@ -16,17 +16,11 @@ public class Scopes {
     }
 
     public void enterScope() {
-        // System.out.println("PUSH()");
         scopes.add(new HashMap<>(scopes.peek()));
     }
 
     public void exitScope() {
-        // System.out.println("POP()");
         scopes.pop();
-        // for (Map.Entry entry : scopes.peek().entrySet()) {
-        //     System.out.println("==>>> " + entry.getKey() + " : " + entry.getValue());
-        // }
-
     }
 
     public void declareVar(String var) {
