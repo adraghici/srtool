@@ -15,28 +15,15 @@ public class SRTool {
     private static final int TIMEOUT = 30;
 
 	public static void main(String[] args) throws IOException, InterruptedException {
-        String filename = args[0];
+        // First pass through initial SimpleC file.
+		String filename = args[0];
 		ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
-        SimpleCLexer lexer = new SimpleCLexer(input);
-		CommonTokenStream tokens = new CommonTokenStream(lexer);
-		SimpleCParser parser = new SimpleCParser(tokens);
-		ProgramContext ctx = parser.program();
+		ProgramContext ctx = getProgramContext(input, filename);
 
-		if(parser.getNumberOfSyntaxErrors() > 0) {
-			System.exit(1);
-		}
-
-		Typechecker tc = new Typechecker();
-		tc.visit(ctx);
-		tc.resolve();
-
-		if(tc.hasErrors()) {
-			System.err.println("Errors were detected when typechecking " + filename + ":");
-			for(String err : tc.getErrors()) {
-				System.err.println("  " + err);
-			}
-			System.exit(1);
-		}
+		// Second pass through the file after renaming shadow variables.
+		SRToolShadowing srToolShadowing = new SRToolShadowing();
+		input = new ANTLRInputStream(srToolShadowing.visit(ctx));
+		// ctx = getProgramContext(input, filename);
 		
 		assert ctx.procedures.size() == 1; // For Part 1 of the coursework, this can be assumed
 
@@ -71,4 +58,29 @@ public class SRTool {
 		System.exit(0);
 		
     }
+
+	private static ProgramContext getProgramContext(ANTLRInputStream input, String filename) {
+		SimpleCLexer lexer = new SimpleCLexer(input);
+		CommonTokenStream tokens = new CommonTokenStream(lexer);
+		SimpleCParser parser = new SimpleCParser(tokens);
+		ProgramContext ctx = parser.program();
+
+		if(parser.getNumberOfSyntaxErrors() > 0) {
+			System.exit(1);
+		}
+
+		Typechecker tc = new Typechecker();
+		tc.visit(ctx);
+		tc.resolve();
+
+		if(tc.hasErrors()) {
+			System.err.println("Errors were detected when typechecking " + filename + ":");
+			for(String err : tc.getErrors()) {
+				System.err.println("  " + err);
+			}
+			System.exit(1);
+		}
+
+		return ctx;
+	}
 }

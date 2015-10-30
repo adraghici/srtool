@@ -480,7 +480,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitOldExpr(OldExprContext ctx) {
-        return null;
+        return ctx.varref().getText() + "0";
     }
 
     @Override
@@ -548,6 +548,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         return map.get(var);
     }
 
+    // TODO: havoc(x) modifies modset. New declaration of int x also alters the modset.
     private static Set<String> modset(Map<String, Integer> oldMap, Map<String, Integer> newMap) {
         return newMap.keySet().stream()
             .filter(key -> oldMap.containsKey(key) && oldMap.get(key) != newMap.get(key)).collect(Collectors.toSet());
