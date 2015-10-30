@@ -5,7 +5,6 @@ import java.io.IOException;
 
 public class ProcessExec {
 
-	private static long TO_MILLI = 1000;
 	private static int initialBufferLength = 2048;
 	
 	private ProcessBuilder processBuilder;
@@ -27,7 +26,7 @@ public class ProcessExec {
 	 * The stdout is also returned.
 	 * 
 	 * @param stdin Piped to the process.
-	 * @param timeout Time to wait in seconds.
+	 * @param timeout Time to wait in milliseconds.
 	 * @return The stdout of the process. 
 	 * @throws ProcessTimeoutException If timeout occurs. 
 	 * @throws IOException
@@ -57,7 +56,7 @@ public class ProcessExec {
 		worker.start();
 		boolean timedout = false;
 		try {
-			worker.join(timeout * TO_MILLI);
+			worker.join(timeout);
 			if(worker.exit == null)
 			{
 				timedout = true;
