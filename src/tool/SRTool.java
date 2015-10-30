@@ -23,8 +23,7 @@ public class SRTool {
         // Second pass through the file after renaming shadow variables.
         SRToolShadowing srToolShadowing = new SRToolShadowing();
         String content = srToolShadowing.visit(ctx);
-        System.out.println(content);
-
+        // System.out.println(content);
         input = new ANTLRInputStream(content);
         ctx = getProgramContext(input, filename);
 

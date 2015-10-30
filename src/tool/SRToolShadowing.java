@@ -57,7 +57,7 @@ public class SRToolShadowing extends SimpleCBaseVisitor<String> {
     public String visitProgram(ProgramContext ctx) {
         List<String> globals = ctx.globals.stream().map(this::visit).collect(Collectors.toList());
         List<String> procedures = ctx.procedures.stream().map(this::visit).collect(Collectors.toList());
-        return String.join("", globals) + String.join("", procedures);
+        return String.join("\n", globals) + "\n" + String.join("\n", procedures);
     }
 
     @Override
@@ -247,7 +247,8 @@ public class SRToolShadowing extends SimpleCBaseVisitor<String> {
             return visit(ctx.single);
         }
 
-        return "";
+        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
+        return ternaryExpr(args);
     }
 
     @Override
@@ -414,7 +415,7 @@ public class SRToolShadowing extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitOldExpr(OldExprContext ctx) {
-        return ctx.oldTok.getText();
+        return ctx.oldTok.getText() + "(" + visit(ctx.arg) + ")";
     }
 
     @Override
@@ -445,4 +446,13 @@ public class SRToolShadowing extends SimpleCBaseVisitor<String> {
         return result.toString();
     }
 
+    private static String ternaryExpr(List<String> args) {
+        StringBuilder result = new StringBuilder();
+        int i = 0;
+        for ( ; i < args.size() - 1; i+=2) {
+            result.append(args.get(i) + " ? " + args.get(i+1) + " : ");
+        }
+        result.append(args.get(i));
+        return result.toString();
+    }
 }
