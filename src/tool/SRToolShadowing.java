@@ -175,7 +175,7 @@ public class SRToolShadowing extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitAssignStmt(AssignStmtContext ctx) {
-        return ctx.lhs.ident.name.getText() + " = " + visit(ctx.rhs) + ";";
+        return visit(ctx.lhs) + " = " + visit(ctx.rhs) + ";";
     }
 
     @Override
