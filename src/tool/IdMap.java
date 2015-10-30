@@ -4,11 +4,11 @@ import com.google.common.collect.Maps;
 
 import java.util.Map;
 
-public class SSAMap {
+public class IdMap {
     private static final int START_ID = 0;
     private final Map<String, Integer> nextId;
 
-    public SSAMap() {
+    public IdMap() {
         nextId = Maps.newHashMap();
     }
 
