@@ -21,16 +21,16 @@ public class SRTool {
         ProgramContext ctx = getProgramContext(input, filename);
 
         // Second pass through the file after renaming shadow variables.
-        SRToolShadowing srToolShadowing = new SRToolShadowing();
-        String content = srToolShadowing.visit(ctx);
+        ShadowingVisitor shadowingVisitor = new ShadowingVisitor();
+        String content = shadowingVisitor.visit(ctx);
         // System.out.println(content);
         input = new ANTLRInputStream(content);
         ctx = getProgramContext(input, filename);
 
         assert ctx.procedures.size() == 1; // For Part 1 of the coursework, this can be assumed
 
-        VCGenerator vcgen = new VCGenerator(ctx);
-        String vc = vcgen.generateVC().toString();
+        VCGenerator vcGenerator = new VCGenerator(ctx);
+        String vc = vcGenerator.generateVC().toString();
 
         String dir = System.getProperty("user.dir");
         String tool = "srtool";

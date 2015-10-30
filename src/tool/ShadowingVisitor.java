@@ -47,11 +47,7 @@ import parser.SimpleCParser.WhileStmtContext;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SRToolShadowing extends SimpleCBaseVisitor<String> {
-
-    public SRToolShadowing() {
-
-    }
+public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitProgram(ProgramContext ctx) {
