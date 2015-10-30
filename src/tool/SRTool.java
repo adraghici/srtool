@@ -12,7 +12,7 @@ import java.io.IOException;
 
 public class SRTool {
 
-    private static final int TIMEOUT = 30;
+    private static final int TIMEOUT = 5000;
 
 	public static void main(String[] args) throws IOException, InterruptedException {
         // First pass through initial SimpleC file.
