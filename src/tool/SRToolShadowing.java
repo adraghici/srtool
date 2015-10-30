@@ -431,7 +431,7 @@ public class SRToolShadowing extends SimpleCBaseVisitor<String> {
     private String unaryOp(List<String> ops, String arg) {
         StringBuilder result = new StringBuilder();
         for (String op : ops) {
-            result.append(op);
+            result.append(op + " ");
         }
         result.append(arg);
         return result.toString();
