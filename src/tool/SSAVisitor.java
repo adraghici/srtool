@@ -497,41 +497,66 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     }
 
     private String assertion(String expr) {
+        // System.out.println("ASSERT expr: " + expr);
         Scope scope = scopes.topScope();
         if (scope.getPred().isEmpty()) {
+
             if (scope.getAss().isEmpty()) {
                 asserts.add(expr);
+                // System.out.println("ASSERT: " + expr);
             } else {
-                asserts.add(SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.getAss()), SMTUtil.toBool(expr)));
+                asserts.add(SMTUtil.binaryOp("=>", scope.getAss(), SMTUtil.toBool(expr)));
+                // System.out.println("ASSERT: " + SMTUtil.binaryOp("=>", scope.getAss(), SMTUtil.toBool(expr)));
             }
+
         } else {
+
             if (scope.getAss().isEmpty()) {
+                // System.out.println("ASSERT pred1: " + scope.getPred());
+                // System.out.println("ASSERT expr1: " + expr);
                 asserts.add(SMTUtil.binaryOp("=>", scope.getPred(), SMTUtil.toBool(expr)));
+                // System.out.println("ASSERT: " + SMTUtil.binaryOp("=>", scope.getPred(), SMTUtil.toBool(expr)));
             } else {
-                asserts.add(SMTUtil
-                    .binaryOp("=>", SMTUtil.toBool(SMTUtil
-                        .binaryOp("and", scope.getPred(), SMTUtil.toBool(scope.getAss()))),
-                        SMTUtil.toBool(expr)));
+                // System.out.println("ASSERT pred2: " + scope.getPred());
+                // System.out.println("ASSERT expr2: " + expr);
+                // System.out.println(">>>>>>>>ASSERT ass2: " + scope.getAss());
+                asserts.add(SMTUtil.binaryOp("=>", SMTUtil.toBool(SMTUtil.binaryOp("and", scope.getPred(), scope.getAss())),
+                    SMTUtil.toBool(expr)));
+                // System.out.println("ASSERT: " + SMTUtil.binaryOp("=>",
+                //    SMTUtil.toBool(SMTUtil.binaryOp("and", scope.getPred(), scope.getAss())),
+                //    SMTUtil.toBool(expr)));
             }
+
         }
         return "";
     }
 
     private String assume(String expr) {
+        // System.out.println("EXPRRRRRRR: " + expr);
         Scope scope = scopes.topScope();
+
         if (scope.getAss().isEmpty()) {
+
             if (scope.getPred().isEmpty()) {
-                scope.setAss(expr);
+                scope.setAss(SMTUtil.toBool(expr));
+                // System.out.println("ASS: " + scope.getAss());
             } else {
-                scope.setAss(SMTUtil.binaryOp("=>", scope.getPred(), SMTUtil.toBool(expr)));
+                scope.setAss(SMTUtil.toBool(SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.getPred()), SMTUtil.toBool(expr))));
+                // System.out.println("ASS: " + scope.getAss());
             }
+
         } else {
+
             if (scope.getPred().isEmpty()) {
-                scope.setAss(SMTUtil.binaryOp("and", SMTUtil.toBool(scope.getAss()), SMTUtil.toBool(expr)));
+                scope.setAss(SMTUtil.toBool(SMTUtil.binaryOp("and", scope.getAss(), SMTUtil.toBool(expr))));
+                // System.out.println("ASS: " + scope.getAss());
+                // System.out.println("ASS: " + SMTUtil.toBool(expr));
             } else {
-                scope.setAss(SMTUtil.binaryOp("and", SMTUtil.toBool(scope.getAss()),
-                    SMTUtil.toBool(SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.getPred()), SMTUtil.toBool(expr)))));
+                scope.setAss(SMTUtil.toBool(SMTUtil.binaryOp("and", scope.getAss(), SMTUtil.toBool(SMTUtil.binaryOp("=>", scope.getPred(), SMTUtil.toBool(expr))))));
+                // System.out.println("ASS: " + scope.getAss());
+                // System.out.println(">>>>> ASS: " + scope.getPred());
             }
+
         }
         return "";
     }
