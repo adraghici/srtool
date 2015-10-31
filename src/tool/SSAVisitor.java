@@ -231,14 +231,14 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     public String visitIfStmt(IfStmtContext ctx) {
         Scope scope = Scope.fromScope(scopes.topScope());
         String pred = SMTUtil.toBool(visit(ctx.condition));
-        String ass = scope.getAss();
 
         Scope thenScope;
         if (scope.getPred().isEmpty()) {
-            thenScope = Scope.fromScope(scope, pred, ass);
+            thenScope = Scope.fromScope(scope, pred);
         } else {
-            thenScope =
-                Scope.fromScope(scope, SMTUtil.toBool(SMTUtil.binaryOp("and", scope.getPred(), pred)), ass);
+            thenScope = Scope.fromScope(
+                scope,
+                SMTUtil.toBool(SMTUtil.binaryOp("and", scope.getPred(), pred)));
         }
         scopes.enterScope(thenScope);
         String thenBlock = visit(ctx.thenBlock);
@@ -248,11 +248,14 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         String elseBlock = "";
         if (ctx.elseBlock != null) {
             if (scope.getPred().isEmpty()) {
-                elseScope = Scope.fromScope(scope, SMTUtil.unaryOp("not", pred), ass);
+                elseScope = Scope.fromScope(scope, SMTUtil.unaryOp("not", pred));
             } else {
                 elseScope = Scope.fromScope(
                     scope,
-                    SMTUtil.toBool(SMTUtil.binaryOp("and", scope.getPred(), SMTUtil.unaryOp("not", pred))), ass);
+                    SMTUtil.toBool(SMTUtil.binaryOp(
+                        "and",
+                        scope.getPred(),
+                        SMTUtil.unaryOp("not", pred))));
             }
             scopes.enterScope(elseScope);
             elseBlock = visit(ctx.elseBlock);
@@ -500,23 +503,24 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     private String assertion(String expr) {
         Scope scope = scopes.topScope();
-
         if (scope.getPred().isEmpty()) {
             if (assumptions.isEmpty()) {
                 asserts.add(expr);
             } else {
-                asserts.add(SMTUtil.binaryOp("=>", SMTUtil.toBool(SMTUtil.andExpressions(assumptions)),
-                    SMTUtil.toBool(expr)));
+                asserts.add(SMTUtil.binaryOp(
+                    "=>", SMTUtil.toBool(SMTUtil.andExpressions(assumptions)), SMTUtil.toBool(expr)));
             }
+        } else if (assumptions.isEmpty()) {
+            asserts.add(SMTUtil.binaryOp("=>", scope.getPred(), SMTUtil.toBool(expr)));
         } else {
-            if (assumptions.isEmpty()) {
-                asserts.add(SMTUtil.binaryOp("=>", scope.getPred(), SMTUtil.toBool(expr)));
-            } else {
-                asserts.add(SMTUtil.binaryOp("=>", SMTUtil.toBool(
-                    SMTUtil.binaryOp("and", scope.getPred(), SMTUtil.toBool(SMTUtil.andExpressions(assumptions)))), SMTUtil.toBool(expr)));
-            }
+            asserts.add(SMTUtil.binaryOp(
+                "=>",
+                SMTUtil.toBool(SMTUtil.binaryOp(
+                    "and",
+                    scope.getPred(),
+                    SMTUtil.toBool(SMTUtil.andExpressions(assumptions)))),
+                SMTUtil.toBool(expr)));
         }
-
         return "";
     }
 
