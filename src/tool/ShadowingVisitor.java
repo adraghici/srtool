@@ -51,7 +51,7 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
     private final Scopes scopes;
 
     public ShadowingVisitor() {
-        scopes = new Scopes();
+        scopes = Scopes.withDefault();
     }
 
     @Override

@@ -10,13 +10,20 @@ public class Scopes {
     private final IdMap idMap;
     private final List<Scope> scopes;
 
-    /**
-     * This will enter a default scope when created.
-     */
-    public Scopes() {
+    private Scopes(boolean withDefault) {
         idMap = new IdMap();
         scopes = new ArrayList<>();
-        scopes.add(Scope.create(idMap));
+        if (withDefault) {
+            scopes.add(Scope.create(idMap));
+        }
+    }
+
+    public static Scopes empty() {
+        return new Scopes(false);
+    }
+
+    public static Scopes withDefault() {
+        return new Scopes(true);
     }
 
     public void enterScope() {
@@ -29,10 +36,6 @@ public class Scopes {
 
     public void exitScope() {
         scopes.remove(scopes.size() - 1);
-    }
-
-    public Scope globalScope() {
-        return scopes.get(0);
     }
 
     public Scope topScope() {

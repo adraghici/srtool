@@ -57,11 +57,13 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     private final List<String> postconditions;
     private final List<String> asserts;
     private final Scopes scopes;
+    private final Scopes globals;
 
     public SSAVisitor() {
         postconditions = Lists.newArrayList();
         asserts = Lists.newArrayList();
-        scopes = new Scopes();
+        scopes = Scopes.withDefault();
+        globals = Scopes.empty();
     }
 
     @Override
@@ -82,17 +84,26 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitProcedureDecl(ProcedureDeclContext ctx) {
         scopes.enterScope();
+        globals.enterScope(Scope.fromScope(scopes.topScope()));
         StringBuilder result = new StringBuilder();
         for (FormalParamContext formal : ctx.formals) {
             result.append(visit(formal));
         }
 
         for (PrepostContext prepost : ctx.contract) {
-            result.append(visit(prepost));
+            if (prepost.requires() != null) {
+                result.append(visit(prepost));
+            }
         }
 
         for (StmtContext stmt : ctx.stmts) {
             result.append(visit(stmt));
+        }
+
+        for (PrepostContext prepost : ctx.contract) {
+            if (prepost.ensures() != null) {
+                result.append(visit(prepost));
+            }
         }
 
         String returnExpr = visit(ctx.returnExpr);
@@ -100,6 +111,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
             assertion(postcondition.replace(RESULT_PLACEHOLDER, returnExpr));
         }
         scopes.exitScope();
+        globals.exitScope();
 
         return result.toString();
     }
@@ -470,7 +482,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitOldExpr(OldExprContext ctx) {
         String var = ctx.varref().getText();
-        return var + scopes.globalScope().getId(var);
+        return var + globals.getId(var);
     }
 
     @Override
