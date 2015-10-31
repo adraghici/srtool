@@ -67,7 +67,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitProgram(ProgramContext ctx) {
         List<String> globals = ctx.globals.stream().map(this::visit).collect(Collectors.toList());
-        List<String> procedures = ctx.procedures.stream().map(this::visit).collect(Collectors.toList());
+        List<String> procedures = ctx.procedures.stream().map(this::visit).collect(
+            Collectors.toList());
         String condition = SMTUtil.generateCondition(asserts);
         return String.join("", globals) + String.join("", procedures) + condition;
     }
@@ -496,7 +497,9 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
                 asserts.add(SMTUtil.binaryOp("=>", scope.getPred(), SMTUtil.toBool(expr)));
             } else {
                 asserts.add(SMTUtil
-                    .binaryOp("=>", SMTUtil.binaryOp("and", scope.getPred(), scope.getAss()), SMTUtil.toBool(expr)));
+                    .binaryOp("=>", SMTUtil.toBool(SMTUtil
+                        .binaryOp("and", scope.getPred(), SMTUtil.toBool(scope.getAss()))),
+                        SMTUtil.toBool(expr)));
             }
         }
         return "";
@@ -508,14 +511,14 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
             if (scope.getPred().isEmpty()) {
                 scope.setAss(expr);
             } else {
-                scope.setAss(SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.getPred()), SMTUtil.toBool(expr)));
+                scope.setAss(SMTUtil.binaryOp("=>", scope.getPred(), SMTUtil.toBool(expr)));
             }
         } else {
             if (scope.getPred().isEmpty()) {
                 scope.setAss(SMTUtil.binaryOp("and", SMTUtil.toBool(scope.getAss()), SMTUtil.toBool(expr)));
             } else {
                 scope.setAss(SMTUtil.binaryOp("and", SMTUtil.toBool(scope.getAss()),
-                    SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.getPred()), SMTUtil.toBool(expr))));
+                    SMTUtil.toBool(SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.getPred()), SMTUtil.toBool(expr)))));
             }
         }
         return "";
