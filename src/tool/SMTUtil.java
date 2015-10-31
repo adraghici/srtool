@@ -41,7 +41,7 @@ public class SMTUtil {
             return ternaryOp(toBool(args.get(0)), args.get(1), args.get(2));
         }
 
-        return ternaryOp(args.get(0), args.get(1), ternaryExpr(args.subList(2, args.size())));
+        return ternaryOp(toBool(args.get(0)), args.get(1), ternaryExpr(args.subList(2, args.size())));
     }
 
     public static String unaryOp(String operator) {
@@ -155,8 +155,22 @@ public class SMTUtil {
             case 1:
                 return assertion("not", asserts.get(0));
             default:
-                return assertion("not", SMTUtil.binaryExpr(asserts,
-                    Collections.nCopies(asserts.size() - 1, "and"), Type.BOOL, Type.BOOL));
+                return assertion("not", andExpressions(asserts));
+        }
+    }
+
+    public static String andExpressions(List<String> expressions) {
+        switch (expressions.size()) {
+            case 0:
+                return "";
+            case 1:
+                return expressions.get(0);
+            default:
+                return SMTUtil.binaryExpr(
+                    expressions,
+                    Collections.nCopies(expressions.size() - 1, "and"),
+                    Type.BOOL,
+                    Type.BOOL);
         }
     }
 
