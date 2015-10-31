@@ -8,7 +8,7 @@ int foo() {
     x = 501;
     y = x - x;
     int z;
-    z = x / y;
+    z = x % y;
     assert z == 501;
     return 0;
 

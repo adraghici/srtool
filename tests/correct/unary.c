@@ -5,11 +5,11 @@ int foo() {
 
     int x;
     int y;
-    x = 501;
-    y = x - x;
     int z;
-    z = x / y;
-    assert z == 501;
+    x = +501;
+    y = - x;
+    z = x + y;
+    assert z == 0;
     return 0;
 
 }

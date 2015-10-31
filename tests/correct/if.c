@@ -1,6 +1,9 @@
 // RUN: %tool "%s" > "%t"
 // RUN: %diff %CORRECT "%t"
 
+// RUN: %tool "%s" > "%t"
+// RUN: %diff %CORRECT "%t"
+
 int iffy(int i)
   ensures \result >= i
 {
