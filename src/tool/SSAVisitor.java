@@ -468,7 +468,8 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitOldExpr(OldExprContext ctx) {
-        return ctx.varref().getText() + "0";
+        String var = ctx.varref().getText();
+        return var + scopes.globalScope().getId(var);
     }
 
     @Override

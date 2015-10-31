@@ -31,6 +31,10 @@ public class Scopes {
         scopes.remove(scopes.size() - 1);
     }
 
+    public Scope globalScope() {
+        return scopes.get(0);
+    }
+
     public Scope topScope() {
         return Iterables.getLast(scopes);
     }
