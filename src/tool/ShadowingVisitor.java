@@ -65,7 +65,7 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
     public String visitVarDecl(VarDeclContext ctx) {
         String var = ctx.ident.name.getText();
         scopes.declareVar(var);
-        return "int " + scopes.getVar(var) + ";";
+        return "int " + var + scopes.getId(var) + ";";
     }
 
     @Override
@@ -430,7 +430,8 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitVarIdentifier(VarIdentifierContext ctx) {
-        return scopes.getVar(ctx.name.getText());
+        String var = ctx.name.getText();
+        return var + scopes.getId(var);
     }
 
     private String unaryOp(List<String> ops, String arg) {

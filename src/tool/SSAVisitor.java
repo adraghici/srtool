@@ -48,26 +48,20 @@ import parser.SimpleCParser.VarrefExprContext;
 import parser.SimpleCParser.WhileStmtContext;
 import tool.SMTUtil.Type;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
 
 public class SSAVisitor extends SimpleCBaseVisitor<String> {
-    private static final String RESULT_PLACEHOLDER = "RESULT?!";
+    public static final String RESULT_PLACEHOLDER = "RESULT?!";
     private final List<String> postconditions;
     private final List<String> asserts;
-    private final Stack<Scope> scopes;
-    private final IdMap idMap;
+    private final Scopes scopes;
 
     public SSAVisitor() {
         postconditions = Lists.newArrayList();
         asserts = Lists.newArrayList();
-        scopes = new Stack<>();
-        scopes.push(new Scope());
-        idMap = new IdMap();
+        scopes = new Scopes();
     }
 
     @Override
@@ -81,11 +75,12 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitVarDecl(VarDeclContext ctx) {
         String var = ctx.ident.name.getText();
-        return SMTUtil.declare(var, getCurrent(var));
+        return SMTUtil.declare(var, scopes.getId(var));
     }
 
     @Override
     public String visitProcedureDecl(ProcedureDeclContext ctx) {
+        scopes.enterScope();
         StringBuilder result = new StringBuilder();
         for (FormalParamContext formal : ctx.formals) {
             result.append(visit(formal));
@@ -103,6 +98,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
         for (String postcondition : postconditions) {
             assertion(postcondition.replace(RESULT_PLACEHOLDER, returnExpr));
         }
+        scopes.exitScope();
 
         return result.toString();
     }
@@ -110,9 +106,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitFormalParam(FormalParamContext ctx) {
         String var = ctx.ident.getText();
-        int id = idMap.fresh(var);
-        updateCurrent(var, id);
-        return SMTUtil.declare(var, id);
+        return SMTUtil.declare(var, scopes.updateVar(var));
     }
 
     @Override
@@ -190,15 +184,9 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitAssignStmt(AssignStmtContext ctx) {
         String rhs = visit(ctx.rhs);
-
         String var = ctx.lhs.ident.name.getText();
-        int id = idMap.fresh(var);
-        updateCurrent(var, id);
-
-        StringBuilder result = new StringBuilder();
-        result.append(SMTUtil.declare(var, id));
-        result.append(SMTUtil.assertion("=", var + id, rhs));
-        return result.toString();
+        int id = scopes.updateVar(var);
+        return SMTUtil.declare(var, id) + SMTUtil.assertion("=", var + id, rhs);
     }
 
     @Override
@@ -216,9 +204,7 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitHavocStmt(HavocStmtContext ctx) {
         String var = ctx.var.ident.name.getText();
-        int id = idMap.fresh(var);
-        updateCurrent(var, id);
-        return SMTUtil.declare(var, id);
+        return SMTUtil.declare(var, scopes.updateVar(var));
     }
 
     @Override
@@ -228,46 +214,46 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitIfStmt(IfStmtContext ctx) {
+        Scope scope = Scope.fromScope(scopes.topScope());
         String pred = SMTUtil.toBool(visit(ctx.condition));
-        Scope scope = scopes.peek();
-        String ass = scope.ass;
-        Map<String, Integer> currentMap = scope.idMap;
+        String ass = scope.getAss();
 
-        Map<String, Integer> thenMap = new HashMap<>(currentMap);
-        if (scope.pred.isEmpty()) {
-            scopes.push(new Scope(pred, ass, thenMap));
+        Scope thenScope;
+        if (scope.getPred().isEmpty()) {
+            thenScope = Scope.fromScope(scope, pred, ass);
         } else {
-            scopes.push(
-                new Scope(SMTUtil.toBool(SMTUtil.binaryOp("and", scope.pred, pred)), ass, thenMap));
+            thenScope =
+                Scope.fromScope(scope, SMTUtil.toBool(SMTUtil.binaryOp("and", scope.getPred(), pred)), ass);
         }
+        scopes.enterScope(thenScope);
         String thenBlock = visit(ctx.thenBlock);
-        scopes.pop();
+        scopes.exitScope();
 
-        Map<String, Integer> elseMap = new HashMap<>(currentMap);
+        Scope elseScope = Scope.fromScope(scope);
         String elseBlock = "";
         if (ctx.elseBlock != null) {
-            if (scope.pred.isEmpty()) {
-                scopes.push(new Scope(SMTUtil.unaryOp("not", pred), ass, elseMap));
+            if (scope.getPred().isEmpty()) {
+                elseScope = Scope.fromScope(scope, SMTUtil.unaryOp("not", pred), ass);
             } else {
-                scopes.push(
-                    new Scope(SMTUtil.toBool(SMTUtil.binaryOp("and", scope.pred, SMTUtil.unaryOp("not", pred))), ass, elseMap));
+                elseScope = Scope.fromScope(
+                    scope,
+                    SMTUtil.toBool(SMTUtil.binaryOp("and", scope.getPred(), SMTUtil.unaryOp("not", pred))), ass);
             }
+            scopes.enterScope(elseScope);
             elseBlock = visit(ctx.elseBlock);
-            scopes.pop();
+            scopes.exitScope();
         }
 
         StringBuilder endIf = new StringBuilder();
-        Set<String> thenModset = modset(currentMap, thenMap);
-        Set<String> elseModset = modset(currentMap, elseMap);
+        Set<String> thenModset = scope.modset(thenScope);
+        Set<String> elseModset = scope.modset(elseScope);
         for (String var : Sets.union(thenModset, elseModset).immutableCopy()) {
-            int thenId = thenModset.contains(var) ? thenMap.get(var) : getCurrent(var);
-            int elseId  = elseModset.contains(var) ? elseMap.get(var) : getCurrent(var);
-            int id = idMap.fresh(var);
-            updateCurrent(var, id);
-            endIf.append(SMTUtil.declare(var, id));
+            int thenId = thenModset.contains(var) ? thenScope.getId(var) : scope.getId(var);
+            int elseId  = elseModset.contains(var) ? elseScope.getId(var) : scope.getId(var);
+            endIf.append(SMTUtil.declare(var, scopes.updateVar(var)));
             endIf.append(SMTUtil.assertion(
                 "=",
-                var + getCurrent(var),
+                var + scopes.getId(var),
                 SMTUtil.ternaryOp(pred, var + thenId, var + elseId)));
         }
 
@@ -281,7 +267,9 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitBlockStmt(BlockStmtContext ctx) {
+        scopes.enterScope();
         List<String> statements = ctx.stmt().stream().map(this::visit).collect(Collectors.toList());
+        scopes.exitScope();
         return String.join("", statements);
     }
 
@@ -485,73 +473,51 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitVarref(VarrefContext ctx) {
-        String var = ctx.ident.name.getText();
-        Integer id = getCurrent(var);
-        return var + id;
+        return visit(ctx.ident);
     }
 
     @Override
     public String visitVarIdentifier(VarIdentifierContext ctx) {
-        return null;
+        String var = ctx.name.getText();
+        return var + scopes.getId(var);
     }
 
     private String assertion(String expr) {
-        Scope scope = scopes.peek();
-        if (scope.pred.isEmpty()) {
-            if (scope.ass.isEmpty()) {
+        Scope scope = scopes.topScope();
+        if (scope.getPred().isEmpty()) {
+            if (scope.getAss().isEmpty()) {
                 asserts.add(expr);
             } else {
-                asserts.add(SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.ass), SMTUtil.toBool(expr)));
+                asserts.add(SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.getAss()), SMTUtil.toBool(expr)));
             }
         } else {
-            if (scope.ass.isEmpty()) {
-                asserts.add(SMTUtil.binaryOp("=>", scope.pred, SMTUtil.toBool(expr)));
+            if (scope.getAss().isEmpty()) {
+                asserts.add(SMTUtil.binaryOp("=>", scope.getPred(), SMTUtil.toBool(expr)));
             } else {
                 asserts.add(SMTUtil
-                    .binaryOp("=>", SMTUtil.binaryOp("and", scope.pred, scope.ass), SMTUtil.toBool(expr)));
+                    .binaryOp("=>", SMTUtil.binaryOp("and", scope.getPred(), scope.getAss()), SMTUtil.toBool(expr)));
             }
         }
         return "";
     }
 
     private String assume(String expr) {
-        Scope scope = scopes.peek();
-        if (scope.ass.isEmpty()) {
-            if (scope.pred.isEmpty()) {
-                scope.ass = expr;
+        Scope scope = scopes.topScope();
+        if (scope.getAss().isEmpty()) {
+            if (scope.getPred().isEmpty()) {
+                scope.setAss(expr);
             } else {
-                scope.ass = SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.pred), SMTUtil.toBool(expr));
+                scope.setAss(SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.getPred()), SMTUtil.toBool(expr)));
             }
         } else {
-            if (scope.pred.isEmpty()) {
-                scope.ass =
-                    SMTUtil.binaryOp("and", SMTUtil.toBool(scope.ass), SMTUtil.toBool(expr));
+            if (scope.getPred().isEmpty()) {
+                scope.setAss(SMTUtil.binaryOp("and", SMTUtil.toBool(scope.getAss()), SMTUtil.toBool(expr)));
             } else {
-                scope.ass = SMTUtil.binaryOp(
-                    "and",
-                    SMTUtil.toBool(scope.ass),
-                    SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.pred), SMTUtil.toBool(expr)));
+                scope.setAss(SMTUtil.binaryOp("and", SMTUtil.toBool(scope.getAss()),
+                    SMTUtil.binaryOp("=>", SMTUtil.toBool(scope.getPred()), SMTUtil.toBool(expr))));
             }
         }
         return "";
-    }
-
-    private void updateCurrent(String var, Integer id) {
-        scopes.peek().idMap.put(var, id);
-    }
-
-    private Integer getCurrent(String var) {
-        Map<String, Integer> map = scopes.peek().idMap;
-        if (!map.containsKey(var)) {
-            map.put(var, idMap.fresh(var));
-        }
-        return map.get(var);
-    }
-
-    // TODO: havoc(x) modifies modset. New declaration of int x also alters the modset.
-    private static Set<String> modset(Map<String, Integer> oldMap, Map<String, Integer> newMap) {
-        return newMap.keySet().stream()
-            .filter(key -> oldMap.containsKey(key) && oldMap.get(key) != newMap.get(key)).collect(Collectors.toSet());
     }
 
     private static String unaryOp(Token op) {
@@ -560,23 +526,5 @@ public class SSAVisitor extends SimpleCBaseVisitor<String> {
 
     private static String binaryOp(Token op) {
         return SMTUtil.binaryOp(op.getText());
-    }
-
-    private static class Scope {
-        private String pred;
-        private String ass;
-        private Map<String, Integer> idMap;
-
-        public Scope() {
-            this.pred = "";
-            this.ass = "";
-            this.idMap = new HashMap<>();
-        }
-
-        public Scope(String pred, String ass, Map<String, Integer> idMap) {
-            this.pred = pred;
-            this.ass = ass;
-            this.idMap = idMap;
-        }
     }
 }
