@@ -1,48 +1,7 @@
 package tool;
 
 import parser.SimpleCBaseVisitor;
-import parser.SimpleCParser.AddExprContext;
-import parser.SimpleCParser.AssertStmtContext;
-import parser.SimpleCParser.AssignStmtContext;
-import parser.SimpleCParser.AssumeStmtContext;
-import parser.SimpleCParser.AtomExprContext;
-import parser.SimpleCParser.BandExprContext;
-import parser.SimpleCParser.BlockStmtContext;
-import parser.SimpleCParser.BorExprContext;
-import parser.SimpleCParser.BxorExprContext;
-import parser.SimpleCParser.CallStmtContext;
-import parser.SimpleCParser.CandidateEnsuresContext;
-import parser.SimpleCParser.CandidateInvariantContext;
-import parser.SimpleCParser.CandidateRequiresContext;
-import parser.SimpleCParser.EnsuresContext;
-import parser.SimpleCParser.EqualityExprContext;
-import parser.SimpleCParser.ExprContext;
-import parser.SimpleCParser.FormalParamContext;
-import parser.SimpleCParser.HavocStmtContext;
-import parser.SimpleCParser.IfStmtContext;
-import parser.SimpleCParser.InvariantContext;
-import parser.SimpleCParser.LandExprContext;
-import parser.SimpleCParser.LoopInvariantContext;
-import parser.SimpleCParser.LorExprContext;
-import parser.SimpleCParser.MulExprContext;
-import parser.SimpleCParser.NumberExprContext;
-import parser.SimpleCParser.OldExprContext;
-import parser.SimpleCParser.ParenExprContext;
-import parser.SimpleCParser.PrepostContext;
-import parser.SimpleCParser.ProcedureDeclContext;
-import parser.SimpleCParser.ProgramContext;
-import parser.SimpleCParser.RelExprContext;
-import parser.SimpleCParser.RequiresContext;
-import parser.SimpleCParser.ResultExprContext;
-import parser.SimpleCParser.ShiftExprContext;
-import parser.SimpleCParser.StmtContext;
-import parser.SimpleCParser.TernExprContext;
-import parser.SimpleCParser.UnaryExprContext;
-import parser.SimpleCParser.VarDeclContext;
-import parser.SimpleCParser.VarIdentifierContext;
-import parser.SimpleCParser.VarrefContext;
-import parser.SimpleCParser.VarrefExprContext;
-import parser.SimpleCParser.WhileStmtContext;
+import parser.SimpleCParser.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -208,9 +167,9 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
         StringBuilder result = new StringBuilder();
         result.append(SMTUtil.indent(
             scopes.count(),
-            "if (" + visit(ctx.condition) + ") \n" + visit(ctx.thenBlock)) + "\n");
+            "if (" + visit(ctx.condition) + ") \n" + visit(ctx.thenBlock)));
         if (ctx.elseBlock != null) {
-            result.append(SMTUtil.indent(scopes.count(), "else\n"));
+            result.append("\n" + SMTUtil.indent(scopes.count(), "else\n"));
             result.append(visit(ctx.elseBlock));
         }
 
@@ -219,14 +178,50 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitWhileStmt(WhileStmtContext ctx) {
-        return "";
+        StringBuilder result = new StringBuilder();
+
+        List<String> invariants = ctx.invariantAnnotations.stream().
+            filter(i -> i.invariant() != null).map(this::visit).collect(Collectors.toList());
+        List<String> candidate_invariants = ctx.invariantAnnotations.stream().
+            filter(i -> i.candidateInvariant() != null).map(this::visit).collect(Collectors.toList());
+
+        // Generate asserts.
+        result.append("\n");
+        for (String invariant: invariants) {
+            result.append(SMTUtil.indent(scopes.count(), "assert " + invariant) + ";\n");
+        }
+
+        // TODO: Havoc modset.
+        result.append("\n");
+
+        // Generate assumes.
+        for (String invariant: invariants) {
+            result.append(SMTUtil.indent(scopes.count(), "assume " + invariant) + ";\n");
+        }
+
+        // Convert 'while' to 'if'.
+        result.append("\n" + SMTUtil.indent(scopes.count(), "if (" + visit(ctx.condition) + ")\n"));
+        result.append(visit(ctx.body));
+
+        // Generate the asserts and the 'assume false' at the end of the 'if' body.
+        // First delete the closing curly brace and then generate the new conditions.
+        result.delete(result.length() - 4 * (scopes.count() - 1) - 1, result.length());
+        result.append("\n");
+        for (String invariant: invariants) {
+            result.append(SMTUtil.indent(scopes.count() + 1, "assert " + invariant) + ";\n");
+        }
+        result.append(SMTUtil.indent(scopes.count() + 1, "assume 0;\n"));
+        result.append(SMTUtil.indent(scopes.count(), "}"));
+
+        return result.toString();
     }
 
     @Override
     public String visitBlockStmt(BlockStmtContext ctx) {
         scopes.enterScope();
-        List<String> statements = ctx.stmt().stream().map(this::visit).collect(Collectors.toList());
+        List<String> statements = ctx.stmts.stream().map(this::visit).collect(Collectors.toList());
         scopes.exitScope();
+
         return SMTUtil.indent(scopes.count(), "{") + "\n" +
             String.join("\n", statements) + "\n" +
             SMTUtil.indent(scopes.count(), "}");
@@ -234,17 +229,20 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitLoopInvariant(LoopInvariantContext ctx) {
-        return "";
+        if (ctx.invariant() != null) {
+            return visit(ctx.invariant());
+        }
+        return visit(ctx.candidateInvariant());
     }
 
     @Override
     public String visitInvariant(InvariantContext ctx) {
-        return "";
+        return visit(ctx.expr());
     }
 
     @Override
     public String visitCandidateInvariant(CandidateInvariantContext ctx) {
-        return "";
+        return visit(ctx.expr());
     }
 
     @Override
