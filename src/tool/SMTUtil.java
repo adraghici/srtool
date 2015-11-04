@@ -1,5 +1,7 @@
 package tool;
 
+import com.google.common.base.Strings;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -172,6 +174,10 @@ public class SMTUtil {
                     Type.BOOL,
                     Type.BOOL);
         }
+    }
+
+    public static String indent(int numberOfScopes, String s) {
+        return Strings.repeat("    ", numberOfScopes - 1) + s;
     }
 
     public enum Type { BOOL, INT }

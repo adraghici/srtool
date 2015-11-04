@@ -60,4 +60,8 @@ public class Scopes {
             .forEach(scope -> scope.updateVar(var, id));
         return id;
     }
+
+    public int count() {
+        return scopes.size();
+    }
 }

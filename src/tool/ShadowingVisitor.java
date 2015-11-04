@@ -65,7 +65,7 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
     public String visitVarDecl(VarDeclContext ctx) {
         String var = ctx.ident.name.getText();
         scopes.declareVar(var);
-        return "int " + var + scopes.getId(var) + ";";
+        return SMTUtil.indent(scopes.count(), "int " + var + scopes.getId(var) + ";");
     }
 
     @Override
@@ -96,9 +96,9 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
         for (StmtContext stmt : ctx.stmts) {
             result.append(visit(stmt) + "\n");
         }
+        result.append(SMTUtil.indent(scopes.count(), "return ") + visit(ctx.returnExpr) + ";\n}\n");
         scopes.exitScope();
 
-        result.append("return " + visit(ctx.returnExpr) + ";\n}");
         return result.toString();
     }
 
@@ -180,22 +180,22 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
 
     @Override
     public String visitAssignStmt(AssignStmtContext ctx) {
-        return visit(ctx.lhs) + " = " + visit(ctx.rhs) + ";";
+        return SMTUtil.indent(scopes.count(), visit(ctx.lhs) + " = " + visit(ctx.rhs) + ";");
     }
 
     @Override
     public String visitAssertStmt(AssertStmtContext ctx) {
-        return "assert " + visit(ctx.condition) + ";";
+        return SMTUtil.indent(scopes.count(), "assert " + visit(ctx.condition) + ";");
     }
 
     @Override
     public String visitAssumeStmt(AssumeStmtContext ctx) {
-        return "assume " + visit(ctx.condition) + ";";
+        return SMTUtil.indent(scopes.count(), "assume " + visit(ctx.condition) + ";");
     }
 
     @Override
     public String visitHavocStmt(HavocStmtContext ctx) {
-        return "havoc " + visit(ctx.var) + ";";
+        return SMTUtil.indent(scopes.count(), "havoc " + visit(ctx.var) + ";");
     }
 
     @Override
@@ -206,9 +206,11 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
     @Override
     public String visitIfStmt(IfStmtContext ctx) {
         StringBuilder result = new StringBuilder();
-        result.append("if (" + visit(ctx.condition) + ") " + visit(ctx.thenBlock));
+        result.append(SMTUtil.indent(
+            scopes.count(),
+            "if (" + visit(ctx.condition) + ") \n" + visit(ctx.thenBlock)) + "\n");
         if (ctx.elseBlock != null) {
-            result.append(" else ");
+            result.append(SMTUtil.indent(scopes.count(), "else\n"));
             result.append(visit(ctx.elseBlock));
         }
 
@@ -225,7 +227,9 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
         scopes.enterScope();
         List<String> statements = ctx.stmt().stream().map(this::visit).collect(Collectors.toList());
         scopes.exitScope();
-        return "{\n" + String.join("\n", statements) + "\n}";
+        return SMTUtil.indent(scopes.count(), "{") + "\n" +
+            String.join("\n", statements) + "\n" +
+            SMTUtil.indent(scopes.count(), "}");
     }
 
     @Override
