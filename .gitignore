@@ -2,8 +2,7 @@
 *.class
 
 # lit output files
-tests/correct/Output/
-tests/incorrect/Output/
+tests/*/*/Output/
 
 # Command line build
 bin/
