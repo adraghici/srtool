@@ -10,6 +10,7 @@ import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.AssignStmtContext;
 import parser.SimpleCParser.BlockStmtContext;
 import parser.SimpleCParser.CallStmtContext;
+import parser.SimpleCParser.CandidateEnsuresContext;
 import parser.SimpleCParser.EnsuresContext;
 import parser.SimpleCParser.FormalParamContext;
 import parser.SimpleCParser.HavocStmtContext;
@@ -98,6 +99,14 @@ public class Typechecker extends SimpleCBaseVisitor<Void> {
 		inEnsures = false;
 		return result;
 	}
+
+	@Override
+	public Void visitCandidateEnsures(CandidateEnsuresContext ctx) {
+		inEnsures = true;
+		Void result = super.visitCandidateEnsures(ctx);
+		inEnsures = false;
+		return result;
+	}
 	
 	@Override
 	public Void visitResultExpr(ResultExprContext ctx) {
@@ -109,7 +118,7 @@ public class Typechecker extends SimpleCBaseVisitor<Void> {
 
 	@Override
 	public Void visitOldExpr(parser.SimpleCParser.OldExprContext ctx) {
-		if(!globals.contains(ctx.arg.ident.name.getText())) {
+		if(!globals.contains(ctx.arg.ident.name.getText()) || parameters.contains(ctx.arg.ident.getText())) {
 			error("'\\old' applied to non-global variable at line " + ctx.oldTok.getLine());
 		}
 		return super.visitOldExpr(ctx);
