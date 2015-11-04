@@ -73,6 +73,7 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
         StringBuilder result = new StringBuilder();
         result.append("int " + ctx.name.getText() + "(");
 
+        scopes.enterScope();
         for (FormalParamContext formal : ctx.formals) {
             result.append(visit(formal) + ", ");
         }
@@ -95,8 +96,9 @@ public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
         for (StmtContext stmt : ctx.stmts) {
             result.append(visit(stmt) + "\n");
         }
-        result.append("return " + visit(ctx.returnExpr) + ";\n}");
+        scopes.exitScope();
 
+        result.append("return " + visit(ctx.returnExpr) + ";\n}");
         return result.toString();
     }
 
