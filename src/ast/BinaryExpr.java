@@ -5,30 +5,30 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 public class BinaryExpr implements Expr {
-    private final Expr condition;
-    private final UnaryExpr left;
-    private final UnaryExpr right;
+    private final String operator;
+    private final Expr left;
+    private final Expr right;
 
-    private BinaryExpr(Expr condition, UnaryExpr left, UnaryExpr right) {
-        this.condition = condition;
+    private BinaryExpr(String operator, Expr left, Expr right) {
+        this.operator = operator;
         this.left = left;
         this.right = right;
     }
 
-    public Expr getCondition() {
-        return condition;
+    public String getOperator() {
+        return operator;
     }
 
-    public UnaryExpr getLeft() {
+    public Expr getLeft() {
         return left;
     }
 
-    public UnaryExpr getRight() {
+    public Expr getRight() {
         return right;
     }
 
     @Override
     public List<Node> getChildren() {
-        return Lists.newArrayList(condition, left, right);
+        return Lists.newArrayList(left, right);
     }
 }

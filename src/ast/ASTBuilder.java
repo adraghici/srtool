@@ -1,4 +1,6 @@
 package ast;
 
-public class ASTBuilder {
+import parser.SimpleCBaseVisitor;
+
+public class ASTBuilder extends SimpleCBaseVisitor {
 }
