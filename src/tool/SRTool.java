@@ -1,6 +1,7 @@
 package tool;
 
 import ast.ASTBuilder;
+import ast.Program;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import parser.SimpleCLexer;
@@ -8,6 +9,7 @@ import parser.SimpleCParser;
 import parser.SimpleCParser.ProgramContext;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
+import visitor.ASTPrintVisitor;
 import visitor.ShadowingVisitor;
 
 import java.io.FileInputStream;
@@ -18,23 +20,24 @@ public class SRTool {
     private static final int TIMEOUT = 30000;
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        // First pass through initial SimpleC file.
+        // First pass through the SimpleC file.
         String filename = args[0];
         ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
         ProgramContext ctx = getProgramContext(input, filename);
-        ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
-
-        // Second pass through the file after renaming shadow variables.
         ShadowingVisitor shadowingVisitor = new ShadowingVisitor();
         String content = shadowingVisitor.visit(ctx);
         // System.out.println(content);
+
+        // Second pass through the file after renaming shadow variables.
         input = new ANTLRInputStream(content);
         ctx = getProgramContext(input, filename);
-
-        assert ctx.procedures.size() == 1; // For Part 1 of the coursework, this can be assumed
-
         VCGenerator vcGenerator = new VCGenerator(ctx);
         String vc = vcGenerator.generateVC().toString();
+
+        // Test new representation for nodes.
+        Program program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
+        ASTPrintVisitor astPrintVisitor = new ASTPrintVisitor();
+        // System.out.println(astPrintVisitor.visit(program));
 
         String dir = System.getProperty("user.dir");
         String tool = "srtool";
