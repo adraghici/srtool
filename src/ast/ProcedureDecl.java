@@ -12,7 +12,7 @@ public class ProcedureDecl implements Node {
     private final List<Stmt> stmts;
     private final Expr returnExpr;
 
-    private ProcedureDecl(String name, List<String> params, List<PrePostCondition> conditions,
+    public ProcedureDecl(String name, List<String> params, List<PrePostCondition> conditions,
         List<Stmt> stmts, Expr returnExpr) {
         this.name = name;
         this.params = params;

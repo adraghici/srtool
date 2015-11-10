@@ -5,15 +5,15 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 public class UnaryExpr implements Expr {
-    private final AtomExpr atom;
+    private final Expr atom;
     private final List<String> operators;
 
-    private UnaryExpr(AtomExpr atom, List<String> operators) {
+    public UnaryExpr(Expr atom, List<String> operators) {
         this.atom = atom;
         this.operators = operators;
     }
 
-    public AtomExpr getAtom() {
+    public Expr getAtom() {
         return atom;
     }
 

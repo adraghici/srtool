@@ -9,7 +9,7 @@ public class BinaryExpr implements Expr {
     private final Expr left;
     private final Expr right;
 
-    private BinaryExpr(String operator, Expr left, Expr right) {
+    public BinaryExpr(String operator, Expr left, Expr right) {
         this.operator = operator;
         this.left = left;
         this.right = right;

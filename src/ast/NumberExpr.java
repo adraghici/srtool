@@ -5,13 +5,13 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 public class NumberExpr implements AtomExpr {
-    private final int number;
+    private final String number;
 
-    public NumberExpr(int number) {
+    public NumberExpr(String number) {
         this.number = number;
     }
 
-    public int getNumber() {
+    public String getNumber() {
         return number;
     }
 

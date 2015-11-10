@@ -1,4 +1,6 @@
 package tool;
+
+import ast.ASTBuilder;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import parser.SimpleCLexer;
@@ -20,6 +22,7 @@ public class SRTool {
         String filename = args[0];
         ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
         ProgramContext ctx = getProgramContext(input, filename);
+        ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
 
         // Second pass through the file after renaming shadow variables.
         ShadowingVisitor shadowingVisitor = new ShadowingVisitor();

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class IfStmt implements Condition, Stmt {
-    private final Expr[] condition;
+    private final Expr condition;
     private final BlockStmt thenBlock;
     private final Optional<BlockStmt> elseBlock;
 
@@ -30,7 +30,7 @@ public class IfStmt implements Condition, Stmt {
     }
 
     @Override
-    public List<Expr> getChildren() {
+    public List<Node> getChildren() {
         List<Node> children = Lists.newArrayList(condition, thenBlock);
         elseBlock.ifPresent(children::add);
         return children;

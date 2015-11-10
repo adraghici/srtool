@@ -4,10 +4,10 @@ import com.google.common.collect.Lists;
 
 import java.util.List;
 
-public class OldExpr implements AtomExpr {
+public class VarRefExpr implements AtomExpr {
     private final String var;
 
-    public OldExpr(String var) {
+    public VarRefExpr(String var) {
         this.var = var;
     }
 
