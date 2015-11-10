@@ -1,4 +1,4 @@
-package tool;
+package ssa;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;

@@ -1,4 +1,4 @@
-package tool;
+package visitor;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -46,7 +46,10 @@ import parser.SimpleCParser.VarIdentifierContext;
 import parser.SimpleCParser.VarrefContext;
 import parser.SimpleCParser.VarrefExprContext;
 import parser.SimpleCParser.WhileStmtContext;
+import tool.SMTUtil;
 import tool.SMTUtil.Type;
+import ssa.Scope;
+import ssa.Scopes;
 
 import java.util.List;
 import java.util.Set;

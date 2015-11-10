@@ -1,7 +1,9 @@
-package tool;
+package visitor;
 
 import parser.SimpleCBaseVisitor;
 import parser.SimpleCParser.*;
+import ssa.Scopes;
+import tool.SMTUtil;
 
 import java.util.List;
 import java.util.stream.Collectors;

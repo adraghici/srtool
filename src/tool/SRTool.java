@@ -6,6 +6,7 @@ import parser.SimpleCParser;
 import parser.SimpleCParser.ProgramContext;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
+import visitor.ShadowingVisitor;
 
 import java.io.FileInputStream;
 import java.io.IOException;

@@ -1,6 +1,7 @@
 package tool;
 
 import parser.SimpleCParser.ProgramContext;
+import visitor.SSAVisitor;
 
 public class VCGenerator {
     private final ProgramContext program;

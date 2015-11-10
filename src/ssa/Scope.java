@@ -1,4 +1,4 @@
-package tool;
+package ssa;
 
 import java.util.HashMap;
 import java.util.Map;
