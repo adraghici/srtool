@@ -11,7 +11,7 @@ public class ResultExpr implements AtomExpr {
         this.token = token;
     }
 
-    private String getToken() {
+    public String getToken() {
         return token;
     }
 

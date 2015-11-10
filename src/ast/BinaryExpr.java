@@ -15,15 +15,15 @@ public class BinaryExpr implements Expr {
         this.right = right;
     }
 
-    private Expr getCondition() {
+    public Expr getCondition() {
         return condition;
     }
 
-    private UnaryExpr getLeft() {
+    public UnaryExpr getLeft() {
         return left;
     }
 
-    private UnaryExpr getRight() {
+    public UnaryExpr getRight() {
         return right;
     }
 

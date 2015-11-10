@@ -15,15 +15,15 @@ public class TernaryExpr implements Expr {
         this.falseExpr = falseExpr;
     }
 
-    private Expr getCondition() {
+    public Expr getCondition() {
         return condition;
     }
 
-    private Expr getTrueExpr() {
+    public Expr getTrueExpr() {
         return trueExpr;
     }
 
-    private Expr getFalseExpr() {
+    public Expr getFalseExpr() {
         return falseExpr;
     }
 

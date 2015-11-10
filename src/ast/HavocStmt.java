@@ -4,10 +4,10 @@ import com.google.common.collect.Lists;
 
 import java.util.List;
 
-public class OldExpr implements AtomExpr {
+public class HavocStmt implements Stmt {
     private final String var;
 
-    public OldExpr(String var) {
+    public HavocStmt(String var) {
         this.var = var;
     }
 
@@ -16,7 +16,7 @@ public class OldExpr implements AtomExpr {
     }
 
     @Override
-    public List<Expr> getChildren() {
+    public List<Node> getChildren() {
         return Lists.newArrayList();
     }
 }

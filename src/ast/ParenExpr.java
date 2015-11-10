@@ -5,18 +5,18 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 public class ParenExpr implements AtomExpr {
-    private final AtomExpr atom;
+    private final Expr expr;
 
-    public ParenExpr(AtomExpr atom) {
-        this.atom = atom;
+    public ParenExpr(Expr expr) {
+        this.expr = expr;
     }
 
-    private AtomExpr getAtom() {
-        return atom;
+    public Expr getExpr() {
+        return expr;
     }
 
     @Override
     public List<Node> getChildren() {
-        return Lists.newArrayList(atom);
+        return Lists.newArrayList(expr);
     }
 }

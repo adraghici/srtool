@@ -4,15 +4,15 @@ import com.google.common.collect.Lists;
 
 import java.util.List;
 
-public class VarRef implements AtomExpr {
-    private final String name;
+public class VarDeclStmt implements Stmt {
+    private final String var;
 
-    public VarRef(String name) {
-        this.name = name;
+    public VarDeclStmt(String var) {
+        this.var = var;
     }
 
-    private String getName() {
-        return name;
+    public String getVar() {
+        return var;
     }
 
     @Override

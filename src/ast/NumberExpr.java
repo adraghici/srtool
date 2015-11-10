@@ -11,7 +11,7 @@ public class NumberExpr implements AtomExpr {
         this.number = number;
     }
 
-    private int getNumber() {
+    public int getNumber() {
         return number;
     }
 

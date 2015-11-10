@@ -4,10 +4,10 @@ import com.google.common.collect.Lists;
 
 import java.util.List;
 
-public class AssertStmt implements Condition, Stmt {
+public class Precondition implements PrePostCondition {
     private final Expr condition;
 
-    public AssertStmt(Expr condition) {
+    public Precondition(Expr condition) {
         this.condition = condition;
     }
 

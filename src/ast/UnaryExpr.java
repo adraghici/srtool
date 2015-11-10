@@ -13,11 +13,11 @@ public class UnaryExpr implements Expr {
         this.operators = operators;
     }
 
-    private AtomExpr getAtom() {
+    public AtomExpr getAtom() {
         return atom;
     }
 
-    private List<String> getOperators() {
+    public List<String> getOperators() {
         return operators;
     }
 
