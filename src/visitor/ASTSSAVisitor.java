@@ -36,7 +36,7 @@ public class ASTSSAVisitor implements ASTVisitor {
     @Override
     public String visit(AssignStmt assignStmt) {
         String rhs = (String) visit(assignStmt.getExpr());
-        String var = visit(assignStmt.getVarRef());
+        String var = assignStmt.getVarRef().getVar();
         int id = scopes.updateVar(var);
         return SMTUtil.declare(var, id) + SMTUtil.assertion("=", var + id, rhs);
     }
@@ -50,7 +50,7 @@ public class ASTSSAVisitor implements ASTVisitor {
     @Override
     public String visit(BinaryExpr binaryExpr) {
         return SMTUtil.binaryOp(
-            SMTUtil.binaryOp(binaryExpr.getOperator()),
+            binaryExpr.getOperator(),
             (String) visit(binaryExpr.getLeft()),
             (String) visit(binaryExpr.getRight()));
     }
@@ -228,7 +228,8 @@ public class ASTSSAVisitor implements ASTVisitor {
 
     @Override
     public String visit(VarRef varRef) {
-        return varRef.getVar();
+        String var = varRef.getVar();
+        return var + scopes.getId(var);
     }
 
     @Override

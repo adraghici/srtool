@@ -1,11 +1,14 @@
 package tool;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Collections;
 import java.util.List;
 
 public class SMTUtil {
+    private static ImmutableSet<String> LOGICAL_OPERATORS = ImmutableSet.of("&&", "||", "=>", "and");
+    private static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of("=", "<", ">", "<=", ">=");
 
     /**
      * Generate SMT code for a unary expression wrapping the argument with the given operators.
@@ -124,7 +127,14 @@ public class SMTUtil {
     }
 
     public static String binaryOp(String operator, String lhs, String rhs) {
-        return toBV32("(" + operator + " " + lhs + " " + rhs + ")");
+        String op = binaryOp(operator);
+        if (LOGICAL_OPERATORS.contains(operator)) {
+            return toBV32("(" + op + " " + toBool(lhs) + " " + toBool(rhs) + ")");
+        } else if (COMPARISON_OPERATORS.contains(operator)) {
+            return toBV32("(" + op + " " + lhs + " " + rhs + ")");
+        } else {
+            return "(" + op + " " + lhs + " " + rhs + ")";
+        }
     }
 
     private static String binaryOp(String operator, String lhs, String rhs, Type argsType, Type opType) {
