@@ -4,7 +4,7 @@ import ast.*;
 
 public interface ASTVisitor {
 
-    default public Object visitChildren(ast.Node node) {
+    default Object visitChildren(ast.Node node) {
         for (Node n : node.getChildren()) {
             System.out.println(n.getClass());
             visit(n);
@@ -16,87 +16,103 @@ public interface ASTVisitor {
         return visitChildren(assertStmt);
     }
 
-    default public Object visit(AssignStmt assignStmt) {
+    default Object visit(AssignStmt assignStmt) {
         return visitChildren(assignStmt);
     }
 
-    default public Object visit(AssumeStmt assumeStmt) {
+    default Object visit(AssumeStmt assumeStmt) {
         return visitChildren(assumeStmt);
     }
 
-    default public Object visit(BinaryExpr binaryExpr) {
+    default Object visit(AtomExpr atomExpr) {
+        return visitChildren(atomExpr);
+    }
+
+    default Object visit(BinaryExpr binaryExpr) {
         return visitChildren(binaryExpr);
     }
 
-    default public Object visit(BlockStmt blockStmt) {
+    default Object visit(BlockStmt blockStmt) {
         return visitChildren(blockStmt);
     }
 
-    default public Object visit(CandidatePostcondition candidatePostcondition) {
+    default Object visit(CandidatePostcondition candidatePostcondition) {
         return visitChildren(candidatePostcondition);
     }
 
-    default public Object visit(CandidatePrecondition candidatePrecondition) {
+    default Object visit(CandidatePrecondition candidatePrecondition) {
         return visitChildren(candidatePrecondition);
     }
 
-    default public Object visit(HavocStmt havocStmt) {
+    default Object visit(Expr expr) {
+        return visitChildren(expr);
+    }
+
+    default Object visit(HavocStmt havocStmt) {
         return visitChildren(havocStmt);
     }
 
-    default public Object visit(IfStmt ifStmt) {
+    default Object visit(IfStmt ifStmt) {
         return visitChildren(ifStmt);
     }
 
-    default public Object visit(NumberExpr numberExpr) {
+    default Object visit(NumberExpr numberExpr) {
         return visitChildren(numberExpr);
     }
 
-    default public Object visit(Node node) {
+    default Object visit(Node node) {
         return null;
     }
 
-    default public Object visit(OldExpr oldExpr) {
+    default Object visit(OldExpr oldExpr) {
         return visitChildren(oldExpr);
     }
 
-    default public Object visit(ParenExpr parenExpr) {
+    default Object visit(ParenExpr parenExpr) {
         return visitChildren(parenExpr);
     }
 
-    default public Object visit(Postcondition postcondition) {
+    default Object visit(Postcondition postcondition) {
         return visitChildren(postcondition);
     }
 
-    default public Object visit(Precondition precondition) {
+    default Object visit(Precondition precondition) {
         return visitChildren(precondition);
     }
 
-    default public Object visit(ProcedureDecl procedureDecl) {
+    default Object visit(PrePostCondition prePostCondition) {
+        return visitChildren(prePostCondition);
+    }
+
+    default Object visit(ProcedureDecl procedureDecl) {
         return visitChildren(procedureDecl);
     }
 
-    default public Object visit(Program program) {
+    default Object visit(Program program) {
         return visitChildren(program);
     }
 
-    default public Object visit(ResultExpr resultExpr) {
+    default Object visit(ResultExpr resultExpr) {
         return visitChildren(resultExpr);
     }
 
-    default public Object visit(TernaryExpr ternaryExpr) {
+    default Object visit(Stmt stmt) {
+        return visitChildren(stmt);
+    }
+
+    default Object visit(TernaryExpr ternaryExpr) {
         return visitChildren(ternaryExpr);
     }
 
-    default public Object visit(UnaryExpr unaryExpr) {
+    default Object visit(UnaryExpr unaryExpr) {
         return visitChildren(unaryExpr);
     }
 
-    default public Object visit(VarDeclStmt varDeclStmt) {
+    default Object visit(VarDeclStmt varDeclStmt) {
         return visitChildren(varDeclStmt);
     }
 
-    default public Object visit(VarRefExpr varRefExpr) {
+    default Object visit(VarRefExpr varRefExpr) {
         return visitChildren(varRefExpr);
     }
 }

@@ -188,7 +188,11 @@ public class ASTBuilder {
 
     private static Expr build(SimpleCParser.UnaryExprContext unaryExpr) {
         List<String> operators = unaryExpr.ops.stream().map(Token::getText).collect(Collectors.toList());
-        return new UnaryExpr(build(unaryExpr.single), operators);
+        if (unaryExpr.single != null) {
+            return new UnaryExpr(build(unaryExpr.single), operators);
+        } else {
+            return new UnaryExpr(build(unaryExpr.arg), operators);
+        }
     }
 
     private static Expr build(SimpleCParser.AtomExprContext atomExpr) {
