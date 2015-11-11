@@ -22,7 +22,7 @@ public class ShadowingVisitor implements ASTVisitor {
 
     @Override
     public String visit(AssignStmt assignStmt) {
-        return String.format("%s = %s;", getShadowedVar(assignStmt.getVar()),visit(assignStmt.getExpr()));
+        return String.format("%s = %s;", visit(assignStmt.getVarRef()),visit(assignStmt.getExpr()));
     }
 
     @Override
@@ -85,7 +85,7 @@ public class ShadowingVisitor implements ASTVisitor {
 
     @Override
     public String visit(HavocStmt havocStmt) {
-        return String.format("havoc %s;", getShadowedVar(havocStmt.getVar()));
+        return String.format("havoc %s;", visit(havocStmt.getVarRef()));
     }
 
     @Override
@@ -100,7 +100,7 @@ public class ShadowingVisitor implements ASTVisitor {
 
     @Override
     public String visit(OldExpr oldExpr) {
-        return String.format("\\old(%s)", getShadowedVar(oldExpr.getVar()));
+        return String.format("\\old(%s)", visit(oldExpr.getVarRef()));
     }
 
     @Override
@@ -189,25 +189,30 @@ public class ShadowingVisitor implements ASTVisitor {
 
     @Override
     public String visit(VarDeclStmt varDeclStmt) {
-        String var = varDeclStmt.getVar();
-        scopes.declareVar(var);
-        return String.format("int %s;", getShadowedVar(var));
+        VarRef varRef = varDeclStmt.getVarRef();
+        scopes.declareVar(varRef.getVar());
+        return String.format("int %s;", visit(varRef));
+    }
+
+    @Override
+    public String visit(VarRef varRef) {
+        return getShadowedVar(varRef.getVar());
     }
 
     @Override
     public String visit(VarRefExpr varRefExpr) {
-        return getShadowedVar(varRefExpr.getVar());
+        return visit(varRefExpr.getVarRef());
     }
 
     /*
      * Format Utilities.
      */
 
-    private String formatProcedureSignature(String name, List<String> params) {
+    private String formatProcedureSignature(String name, List<VarRef> params) {
         StringBuilder result = new StringBuilder();
         result.append(String.format("int %s(", name));
-        for (String param : params) {
-            result.append(String.format("int %s, ", getShadowedVar(param)));
+        for (VarRef param : params) {
+            result.append(String.format("int %s, ", visit(param)));
         }
         // In case the procedure has parameters, remove the extra comma and space at the end.
         if (!params.isEmpty()) {

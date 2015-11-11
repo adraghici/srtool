@@ -5,14 +5,14 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 public class OldExpr implements AtomExpr {
-    private final String var;
+    private final VarRef varRef;
 
-    public OldExpr(String var) {
-        this.var = var;
+    public OldExpr(VarRef varRef) {
+        this.varRef = varRef;
     }
 
-    public String getVar() {
-        return var;
+    public VarRef getVarRef() {
+        return varRef;
     }
 
     @Override

@@ -30,13 +30,13 @@ public class ASTBuilder {
     }
 
     private static VarDeclStmt build(SimpleCParser.VarDeclContext varDecl) {
-        return new VarDeclStmt(varDecl.ident.name.getText());
+        return new VarDeclStmt(new VarRef(varDecl.ident.name.getText()));
     }
 
     private static ProcedureDecl build(SimpleCParser.ProcedureDeclContext procedureDecl) {
         String name = procedureDecl.name.getText();
-        List<String> params = procedureDecl.formals.stream()
-                .map(formal -> formal.ident.name.getText())
+        List<VarRef> params = procedureDecl.formals.stream()
+                .map(formal -> new VarRef(formal.ident.name.getText()))
                 .collect(Collectors.toList());
         List<PrePostCondition> conditions = procedureDecl.contract.stream()
             .map(ASTBuilder::build)
@@ -79,7 +79,7 @@ public class ASTBuilder {
     }
 
     private static AssignStmt build(SimpleCParser.AssignStmtContext assignStmt) {
-        return new AssignStmt(assignStmt.lhs.ident.name.getText(), build(assignStmt.rhs));
+        return new AssignStmt(build(assignStmt.lhs), build(assignStmt.rhs));
     }
 
     private static AssertStmt build(SimpleCParser.AssertStmtContext assertStmt) {
@@ -91,7 +91,7 @@ public class ASTBuilder {
     }
 
     private static HavocStmt build(SimpleCParser.HavocStmtContext havocStmt) {
-        return new HavocStmt(havocStmt.var.ident.name.getText());
+        return new HavocStmt(build(havocStmt.var));
     }
 
     private static IfStmt build(SimpleCParser.IfStmtContext ifStmt) {
@@ -199,14 +199,26 @@ public class ASTBuilder {
         if (atomExpr.numberExpr() != null) {
             return new NumberExpr(atomExpr.numberExpr().NUMBER().toString());
         } else if (atomExpr.varrefExpr() != null) {
-            return new VarRefExpr(atomExpr.varrefExpr().var.ident.name.getText());
+            return build(atomExpr.varrefExpr());
         } else if (atomExpr.parenExpr() != null) {
             return new ParenExpr(build(atomExpr.parenExpr().arg));
         } else if (atomExpr.resultExpr() != null) {
             return new ResultExpr(atomExpr.resultExpr().resultTok.getText());
         } else {
-            return new OldExpr(atomExpr.oldExpr().arg.ident.name.getText());
+            return build(atomExpr.oldExpr());
         }
+    }
+
+    private static Expr build(SimpleCParser.VarrefExprContext varRefExpr) {
+        return new VarRefExpr(build(varRefExpr.var));
+    }
+
+    private static VarRef build(SimpleCParser.VarrefContext varRef) {
+        return new VarRef(varRef.ident.name.getText());
+    }
+
+    public static OldExpr build(SimpleCParser.OldExprContext oldExprContext) {
+        return new OldExpr(build(oldExprContext.arg));
     }
 
     private static TernaryExpr unflattenTernaryExpr(List<SimpleCParser.LorExprContext> args) {

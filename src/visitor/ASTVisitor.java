@@ -6,7 +6,6 @@ public interface ASTVisitor {
 
     default Object visitChildren(ast.Node node) {
         for (Node n : node.getChildren()) {
-            System.out.println(n.getClass());
             visit(n);
         }
         return node;
@@ -112,7 +111,12 @@ public interface ASTVisitor {
         return visitChildren(varDeclStmt);
     }
 
+    default Object visit(VarRef varRef) {
+        return visitChildren(varRef);
+    }
+
     default Object visit(VarRefExpr varRefExpr) {
         return visitChildren(varRefExpr);
     }
+
 }

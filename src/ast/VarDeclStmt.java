@@ -5,14 +5,14 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 public class VarDeclStmt implements Stmt {
-    private final String var;
+    private final VarRef varRef;
 
-    public VarDeclStmt(String var) {
-        this.var = var;
+    public VarDeclStmt(VarRef varRef) {
+        this.varRef = varRef;
     }
 
-    public String getVar() {
-        return var;
+    public VarRef getVarRef() {
+        return varRef;
     }
 
     @Override

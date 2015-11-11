@@ -3,16 +3,16 @@ package ast;
 import java.util.List;
 
 public class AssignStmt implements Stmt {
-    private final String var;
+    private final VarRef varRef;
     private final Expr expr;
 
-    public AssignStmt(String var, Expr expr) {
-        this.var = var;
+    public AssignStmt(VarRef varRef, Expr expr) {
+        this.varRef = varRef;
         this.expr = expr;
     }
 
-    public String getVar() {
-        return var;
+    public VarRef getVarRef() {
+        return varRef;
     }
 
     public Expr getExpr() {

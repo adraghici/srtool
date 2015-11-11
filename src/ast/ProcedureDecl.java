@@ -7,12 +7,12 @@ import java.util.List;
 
 public class ProcedureDecl implements Node {
     private final String name;
-    private final List<String> params;
+    private final List<VarRef> params;
     private final List<PrePostCondition> conditions;
     private final List<Stmt> stmts;
     private final Expr returnExpr;
 
-    public ProcedureDecl(String name, List<String> params, List<PrePostCondition> conditions,
+    public ProcedureDecl(String name, List<VarRef> params, List<PrePostCondition> conditions,
         List<Stmt> stmts, Expr returnExpr) {
         this.name = name;
         this.params = params;
@@ -25,7 +25,7 @@ public class ProcedureDecl implements Node {
         return name;
     }
 
-    public List<String> getParams() {
+    public List<VarRef> getParams() {
         return params;
     }
 

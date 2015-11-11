@@ -5,18 +5,18 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 public class VarRefExpr implements AtomExpr {
-    private final String var;
+    private final VarRef varRef;
 
-    public VarRefExpr(String var) {
-        this.var = var;
+    public VarRefExpr(VarRef varRef) {
+        this.varRef = varRef;
     }
 
-    public String getVar() {
-        return var;
+    public VarRef getVarRef() {
+        return varRef;
     }
 
     @Override
     public List<Node> getChildren() {
-        return Lists.newArrayList();
+        return Lists.newArrayList(varRef);
     }
 }
