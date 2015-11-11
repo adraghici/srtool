@@ -24,7 +24,17 @@ public interface ASTVisitor {
     }
 
     default Object visit(AtomExpr atomExpr) {
-        return visitChildren(atomExpr);
+        if (atomExpr instanceof NumberExpr) {
+            return visit((NumberExpr) atomExpr);
+        } else if (atomExpr instanceof VarRefExpr) {
+            return visit((VarRefExpr) atomExpr);
+        } else if (atomExpr instanceof ParenExpr) {
+            return visit((ParenExpr) atomExpr);
+        } else if (atomExpr instanceof ResultExpr) {
+            return visit((ResultExpr) atomExpr);
+        } else {
+            return visit((OldExpr) atomExpr);
+        }
     }
 
     default Object visit(BinaryExpr binaryExpr) {
@@ -44,7 +54,15 @@ public interface ASTVisitor {
     }
 
     default Object visit(Expr expr) {
-        return visitChildren(expr);
+        if (expr instanceof TernaryExpr) {
+            return visit((TernaryExpr) expr);
+        } else if (expr instanceof BinaryExpr) {
+            return visit((BinaryExpr) expr);
+        } else if (expr instanceof UnaryExpr) {
+            return visit((UnaryExpr) expr);
+        } else {
+            return visit((AtomExpr) expr);
+        }
     }
 
     default Object visit(HavocStmt havocStmt) {
@@ -80,7 +98,15 @@ public interface ASTVisitor {
     }
 
     default Object visit(PrePostCondition prePostCondition) {
-        return visitChildren(prePostCondition);
+        if (prePostCondition instanceof Postcondition) {
+            return visit((Postcondition) prePostCondition);
+        } else if (prePostCondition instanceof Precondition) {
+            return visit((Precondition) prePostCondition);
+        } else if (prePostCondition instanceof CandidatePostcondition) {
+            return visit((CandidatePostcondition) prePostCondition);
+        } else {
+            return visit((CandidatePrecondition) prePostCondition);
+        }
     }
 
     default Object visit(ProcedureDecl procedureDecl) {
@@ -96,7 +122,21 @@ public interface ASTVisitor {
     }
 
     default Object visit(Stmt stmt) {
-        return visitChildren(stmt);
+        if (stmt instanceof VarDeclStmt) {
+            return visit((VarDeclStmt) stmt);
+        } else if (stmt instanceof AssignStmt) {
+            return visit((AssignStmt) stmt);
+        } else if (stmt instanceof AssertStmt) {
+            return visit((AssertStmt) stmt);
+        } else if (stmt instanceof AssumeStmt) {
+            return visit((AssumeStmt) stmt);
+        } else if (stmt instanceof HavocStmt) {
+            return visit((HavocStmt) stmt);
+        } else if (stmt instanceof IfStmt) {
+            return visit((IfStmt) stmt);
+        } else {
+            return visit((BlockStmt) stmt);
+        }
     }
 
     default Object visit(TernaryExpr ternaryExpr) {

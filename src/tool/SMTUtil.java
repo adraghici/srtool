@@ -11,8 +11,11 @@ public class SMTUtil {
      * Generate SMT code for a unary expression wrapping the argument with the given operators.
      */
     public static String unaryExpr(String arg, List<String> ops) {
-        Collections.reverse(ops);
+        if (ops.isEmpty()) {
+            return arg;
+        }
 
+        Collections.reverse(ops);
         String result = unaryOp(ops.get(0), arg);
         for (int i = 1; i < ops.size(); ++i) {
             result = unaryOp(ops.get(i), result);

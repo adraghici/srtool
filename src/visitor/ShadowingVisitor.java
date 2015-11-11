@@ -31,21 +31,6 @@ public class ShadowingVisitor implements ASTVisitor {
     }
 
     @Override
-    public String visit(AtomExpr atomExpr) {
-        if (atomExpr instanceof NumberExpr) {
-            return visit((NumberExpr) atomExpr);
-        } else if (atomExpr instanceof VarRefExpr) {
-            return visit((VarRefExpr) atomExpr);
-        } else if (atomExpr instanceof ParenExpr) {
-            return visit((ParenExpr) atomExpr);
-        } else if (atomExpr instanceof ResultExpr) {
-            return visit((ResultExpr) atomExpr);
-        } else {
-            return visit((OldExpr) atomExpr);
-        }
-    }
-
-    @Override
     public String visit(BinaryExpr binaryExpr) {
         return String.format("%s %s %s",
             visit(binaryExpr.getLeft()), binaryExpr.getOperator(), visit(binaryExpr.getRight()));
@@ -55,7 +40,9 @@ public class ShadowingVisitor implements ASTVisitor {
     public String visit(BlockStmt blockStmt) {
         scopes.enterScope();
         String result = String.join("\n",
-            blockStmt.getStmts().stream().map(this::visit).collect(Collectors.toList()));
+            blockStmt.getStmts().stream()
+                .map(stmt -> ((String) visit(stmt)))
+                .collect(Collectors.toList()));
         scopes.exitScope();
         return String.format("{\n%s\n}", result);
     }
@@ -68,19 +55,6 @@ public class ShadowingVisitor implements ASTVisitor {
     @Override
     public String visit(CandidatePrecondition candidatePrecondition) {
         return "";
-    }
-
-    @Override
-    public String visit(Expr expr) {
-        if (expr instanceof TernaryExpr) {
-            return visit((TernaryExpr) expr);
-        } else if (expr instanceof BinaryExpr) {
-            return visit((BinaryExpr) expr);
-        } else if (expr instanceof UnaryExpr) {
-            return visit((UnaryExpr) expr);
-        } else {
-            return visit((AtomExpr) expr);
-        }
     }
 
     @Override
@@ -119,19 +93,6 @@ public class ShadowingVisitor implements ASTVisitor {
     }
 
     @Override
-    public String visit(PrePostCondition prePostCondition) {
-        if (prePostCondition instanceof Postcondition) {
-            return visit((Postcondition) prePostCondition);
-        } else if (prePostCondition instanceof Precondition) {
-            return visit((Precondition) prePostCondition);
-        } else if (prePostCondition instanceof CandidatePostcondition) {
-            return visit((CandidatePostcondition) prePostCondition);
-        } else {
-            return visit((CandidatePrecondition) prePostCondition);
-        }
-    }
-
-    @Override
     public String visit(ProcedureDecl procedureDecl) {
         StringBuilder result = new StringBuilder();
         scopes.enterScope();
@@ -155,24 +116,6 @@ public class ShadowingVisitor implements ASTVisitor {
         return resultExpr.getToken();
     }
 
-    @Override
-    public String visit(Stmt stmt) {
-        if (stmt instanceof VarDeclStmt) {
-            return visit((VarDeclStmt) stmt);
-        } else if (stmt instanceof AssignStmt) {
-            return visit((AssignStmt) stmt);
-        } else if (stmt instanceof AssertStmt) {
-            return visit((AssertStmt) stmt);
-        } else if (stmt instanceof AssumeStmt) {
-            return visit((AssumeStmt) stmt);
-        } else if (stmt instanceof HavocStmt) {
-            return visit((HavocStmt) stmt);
-        } else if (stmt instanceof IfStmt) {
-            return visit((IfStmt) stmt);
-        } else {
-            return visit((BlockStmt) stmt);
-        }
-    }
 
     @Override
     public String visit(TernaryExpr ternaryExpr) {

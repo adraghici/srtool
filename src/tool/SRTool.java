@@ -31,7 +31,8 @@ public class SRTool {
         // Second pass to perform the SSA conversion.
         input = new ANTLRInputStream(content);
         ctx = getProgramContext(input, filename);
-        VCGenerator vcGenerator = new VCGenerator(ctx);
+        program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
+        VCGenerator vcGenerator = new VCGenerator(program);
         String vc = vcGenerator.generateVC().toString();
 
         String dir = System.getProperty("user.dir");
