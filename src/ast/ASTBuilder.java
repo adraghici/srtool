@@ -52,11 +52,11 @@ public class ASTBuilder {
         if (prePost.requires() != null) {
             return new Precondition(build(prePost.requires().condition));
         } else if (prePost.ensures() != null) {
-            return new Precondition(build(prePost.ensures().condition));
+            return new Postcondition(build(prePost.ensures().condition));
         } else if (prePost.candidateRequires() != null) {
-            return new Precondition(build(prePost.candidateRequires().condition));
+            return new CandidatePrecondition(build(prePost.candidateRequires().condition));
         } else {
-            return new Precondition(build(prePost.candidateEnsures().condition));
+            return new CandidatePostcondition(build(prePost.candidateEnsures().condition));
         }
     }
 
@@ -201,7 +201,7 @@ public class ASTBuilder {
         } else if (atomExpr.varrefExpr() != null) {
             return new VarRefExpr(atomExpr.varrefExpr().var.ident.name.getText());
         } else if (atomExpr.parenExpr() != null) {
-            return build(atomExpr.parenExpr().arg);
+            return new ParenExpr(build(atomExpr.parenExpr().arg));
         } else if (atomExpr.resultExpr() != null) {
             return new ResultExpr(atomExpr.resultExpr().resultTok.getText());
         } else {

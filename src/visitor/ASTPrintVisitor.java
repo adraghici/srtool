@@ -3,13 +3,14 @@ package visitor;
 import ast.*;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ASTPrintVisitor implements ASTVisitor {
 
     @Override
     public String visit(AssertStmt assertStmt) {
-        return String.format("assert %s", visit(assertStmt.getCondition()));
+        return String.format("assert %s;", visit(assertStmt.getCondition()));
     }
 
     @Override
@@ -19,7 +20,7 @@ public class ASTPrintVisitor implements ASTVisitor {
 
     @Override
     public String visit(AssumeStmt assumeStmt) {
-        return String.format("assume %s", visit(assumeStmt.getCondition()));
+        return String.format("assume %s;", visit(assumeStmt.getCondition()));
     }
 
     @Override
@@ -45,7 +46,8 @@ public class ASTPrintVisitor implements ASTVisitor {
 
     @Override
     public String visit(BlockStmt blockStmt) {
-        return "";
+        return String.format("{\n%s\n}", String.join("\n",
+            blockStmt.getStmts().stream().map(this::visit).collect(Collectors.toList())));
     }
 
     @Override
@@ -73,12 +75,12 @@ public class ASTPrintVisitor implements ASTVisitor {
 
     @Override
     public String visit(HavocStmt havocStmt) {
-        return String.format("havoc %s", havocStmt.getVar());
+        return String.format("havoc %s;", havocStmt.getVar());
     }
 
     @Override
     public String visit(IfStmt ifStmt) {
-        return "";
+        return formatIfStatement(ifStmt.getCondition(), ifStmt.getThenBlock(), ifStmt.getElseBlock());
     }
 
     @Override
@@ -87,13 +89,8 @@ public class ASTPrintVisitor implements ASTVisitor {
     }
 
     @Override
-    public String visit(Node node) {
-        return "";
-    }
-
-    @Override
     public String visit(OldExpr oldExpr) {
-        return "";
+        return String.format("\\old(%s)", oldExpr.getVar());
     }
 
     @Override
@@ -103,17 +100,25 @@ public class ASTPrintVisitor implements ASTVisitor {
 
     @Override
     public String visit(Postcondition postcondition) {
-        return "";
+        return String.format("  ensures %s", visit(postcondition.getCondition()));
     }
 
     @Override
     public String visit(Precondition precondition) {
-        return "";
+        return String.format("  requires %s", visit(precondition.getCondition()));
     }
 
     @Override
     public String visit(PrePostCondition prePostCondition) {
-        return "";
+        if (prePostCondition instanceof Postcondition) {
+            return visit((Postcondition) prePostCondition);
+        } else if (prePostCondition instanceof Precondition) {
+            return visit((Precondition) prePostCondition);
+        } else if (prePostCondition instanceof CandidatePostcondition) {
+            return visit((CandidatePostcondition) prePostCondition);
+        } else {
+            return visit((CandidatePrecondition) prePostCondition);
+        }
     }
 
     @Override
@@ -160,7 +165,10 @@ public class ASTPrintVisitor implements ASTVisitor {
 
     @Override
     public String visit(TernaryExpr ternaryExpr) {
-        return "";
+        return String.format("%s ? %s : %s",
+            visit(ternaryExpr.getCondition()),
+            visit(ternaryExpr.getTrueExpr()),
+            visit(ternaryExpr.getFalseExpr()));
     }
 
     @Override
@@ -199,7 +207,7 @@ public class ASTPrintVisitor implements ASTVisitor {
     private String formatProcedureConditions(List<PrePostCondition> conditions) {
         StringBuilder result = new StringBuilder();
         for (PrePostCondition prePostCondition : conditions) {
-            result.append(visit(prePostCondition));
+            result.append(String.format("%s,\n", visit(prePostCondition)));
         }
         if (!conditions.isEmpty()) {
             result.delete(result.length() - 2, result.length());
@@ -209,7 +217,7 @@ public class ASTPrintVisitor implements ASTVisitor {
 
     private String formatProcedureStatements(List<Stmt> stmts) {
         StringBuilder result = new StringBuilder();
-        result.append("{\n");
+        result.append("\n{\n");
         for (Stmt stmt : stmts) {
             result.append(visit(stmt) + "\n");
         }
@@ -228,4 +236,14 @@ public class ASTPrintVisitor implements ASTVisitor {
         result.append(visit(atom));
         return result.toString();
     }
+
+    private String formatIfStatement(Expr condition, BlockStmt thenBlock, Optional<BlockStmt> elseBlock) {
+        StringBuilder result = new StringBuilder();
+        result.append(String.format("if (%s)\n%s", visit(condition), visit(thenBlock)));
+        if (elseBlock.isPresent()) {
+            result.append(String.format("\nelse\n%s", visit(elseBlock.get())));
+        }
+        return result.toString();
+    }
+
 }

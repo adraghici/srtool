@@ -31,13 +31,18 @@ public class SRTool {
         // Second pass through the file after renaming shadow variables.
         input = new ANTLRInputStream(content);
         ctx = getProgramContext(input, filename);
-        VCGenerator vcGenerator = new VCGenerator(ctx);
-        String vc = vcGenerator.generateVC().toString();
 
-        // Test new representation for nodes.
+        // Test the new structure for nodes by getting the 'ctx' from ShadowingVisitor
+        // and retrieving (hopefully) the same content from our new representation.
         Program program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
         ASTPrintVisitor astPrintVisitor = new ASTPrintVisitor();
-        // System.out.println(astPrintVisitor.visit(program));
+        content = astPrintVisitor.visit(program);
+        input = new ANTLRInputStream(content);
+        ctx = getProgramContext(input, filename);
+        // System.out.println(content);
+
+        VCGenerator vcGenerator = new VCGenerator(ctx);
+        String vc = vcGenerator.generateVC().toString();
 
         String dir = System.getProperty("user.dir");
         String tool = "srtool";
