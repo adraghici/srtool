@@ -1,470 +1,265 @@
 package visitor;
 
-import parser.SimpleCBaseVisitor;
-import parser.SimpleCParser.*;
+import ast.*;
 import ssa.Scopes;
-import tool.SMTUtil;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class ShadowingVisitor extends SimpleCBaseVisitor<String> {
+public class ShadowingVisitor implements ASTVisitor {
+
     private final Scopes scopes;
 
     public ShadowingVisitor() {
-        scopes = Scopes.withDefault();
+        this.scopes = Scopes.withDefault();
     }
 
     @Override
-    public String visitProgram(ProgramContext ctx) {
-        List<String> globals = ctx.globals.stream().map(this::visit).collect(Collectors.toList());
-        List<String> procedures = ctx.procedures.stream().map(this::visit).collect(Collectors.toList());
+    public String visit(AssertStmt assertStmt) {
+        return String.format("assert %s;", visit(assertStmt.getCondition()));
+    }
+
+    @Override
+    public String visit(AssignStmt assignStmt) {
+        return String.format("%s = %s;", getShadowedVar(assignStmt.getVar()),visit(assignStmt.getExpr()));
+    }
+
+    @Override
+    public String visit(AssumeStmt assumeStmt) {
+        return String.format("assume %s;", visit(assumeStmt.getCondition()));
+    }
+
+    @Override
+    public String visit(AtomExpr atomExpr) {
+        if (atomExpr instanceof NumberExpr) {
+            return visit((NumberExpr) atomExpr);
+        } else if (atomExpr instanceof VarRefExpr) {
+            return visit((VarRefExpr) atomExpr);
+        } else if (atomExpr instanceof ParenExpr) {
+            return visit((ParenExpr) atomExpr);
+        } else if (atomExpr instanceof ResultExpr) {
+            return visit((ResultExpr) atomExpr);
+        } else {
+            return visit((OldExpr) atomExpr);
+        }
+    }
+
+    @Override
+    public String visit(BinaryExpr binaryExpr) {
+        return String.format("%s %s %s",
+            visit(binaryExpr.getLeft()), binaryExpr.getOperator(), visit(binaryExpr.getRight()));
+    }
+
+    @Override
+    public String visit(BlockStmt blockStmt) {
+        scopes.enterScope();
+        String result = String.join("\n",
+            blockStmt.getStmts().stream().map(this::visit).collect(Collectors.toList()));
+        scopes.exitScope();
+        return String.format("{\n%s\n}", result);
+    }
+
+    @Override
+    public String visit(CandidatePostcondition candidatePostcondition) {
+        return "";
+    }
+
+    @Override
+    public String visit(CandidatePrecondition candidatePrecondition) {
+        return "";
+    }
+
+    @Override
+    public String visit(Expr expr) {
+        if (expr instanceof TernaryExpr) {
+            return visit((TernaryExpr) expr);
+        } else if (expr instanceof BinaryExpr) {
+            return visit((BinaryExpr) expr);
+        } else if (expr instanceof UnaryExpr) {
+            return visit((UnaryExpr) expr);
+        } else {
+            return visit((AtomExpr) expr);
+        }
+    }
+
+    @Override
+    public String visit(HavocStmt havocStmt) {
+        return String.format("havoc %s;", getShadowedVar(havocStmt.getVar()));
+    }
+
+    @Override
+    public String visit(IfStmt ifStmt) {
+        return formatIfStatement(ifStmt.getCondition(), ifStmt.getThenBlock(), ifStmt.getElseBlock());
+    }
+
+    @Override
+    public String visit(NumberExpr numberExpr) {
+        return numberExpr.getNumber();
+    }
+
+    @Override
+    public String visit(OldExpr oldExpr) {
+        return String.format("\\old(%s)", getShadowedVar(oldExpr.getVar()));
+    }
+
+    @Override
+    public String visit(ParenExpr parenExpr) {
+        return String.format("(%s)", visit(parenExpr.getExpr()));
+    }
+
+    @Override
+    public String visit(Postcondition postcondition) {
+        return String.format("  ensures %s", visit(postcondition.getCondition()));
+    }
+
+    @Override
+    public String visit(Precondition precondition) {
+        return String.format("  requires %s", visit(precondition.getCondition()));
+    }
+
+    @Override
+    public String visit(PrePostCondition prePostCondition) {
+        if (prePostCondition instanceof Postcondition) {
+            return visit((Postcondition) prePostCondition);
+        } else if (prePostCondition instanceof Precondition) {
+            return visit((Precondition) prePostCondition);
+        } else if (prePostCondition instanceof CandidatePostcondition) {
+            return visit((CandidatePostcondition) prePostCondition);
+        } else {
+            return visit((CandidatePrecondition) prePostCondition);
+        }
+    }
+
+    @Override
+    public String visit(ProcedureDecl procedureDecl) {
+        StringBuilder result = new StringBuilder();
+        scopes.enterScope();
+        result.append(formatProcedureSignature(procedureDecl.getName(), procedureDecl.getParams()));
+        result.append(formatProcedureConditions(procedureDecl.getConditions()));
+        result.append(formatProcedureStatements(procedureDecl.getStmts()));
+        result.append(formatProcedureReturn(procedureDecl.getReturnExpr()));
+        scopes.exitScope();
+        return result.toString();
+    }
+
+    @Override
+    public String visit(Program program) {
+        List<String> globals = program.getGlobalDecls().stream().map(this::visit).collect(Collectors.toList());
+        List<String> procedures = program.getProcedureDecls().stream().map(this::visit).collect(Collectors.toList());
         return String.join("\n", globals) + "\n" + String.join("\n", procedures);
     }
 
     @Override
-    public String visitVarDecl(VarDeclContext ctx) {
-        String var = ctx.ident.name.getText();
-        scopes.declareVar(var);
-        return SMTUtil.indent(scopes.count(), "int " + var + scopes.getId(var) + ";");
+    public String visit(ResultExpr resultExpr) {
+        return resultExpr.getToken();
     }
 
     @Override
-    public String visitProcedureDecl(ProcedureDeclContext ctx) {
-        StringBuilder result = new StringBuilder();
-        result.append("int " + ctx.name.getText() + "(");
-
-        scopes.enterScope();
-        for (FormalParamContext formal : ctx.formals) {
-            result.append(visit(formal) + ", ");
+    public String visit(Stmt stmt) {
+        if (stmt instanceof VarDeclStmt) {
+            return visit((VarDeclStmt) stmt);
+        } else if (stmt instanceof AssignStmt) {
+            return visit((AssignStmt) stmt);
+        } else if (stmt instanceof AssertStmt) {
+            return visit((AssertStmt) stmt);
+        } else if (stmt instanceof AssumeStmt) {
+            return visit((AssumeStmt) stmt);
+        } else if (stmt instanceof HavocStmt) {
+            return visit((HavocStmt) stmt);
+        } else if (stmt instanceof IfStmt) {
+            return visit((IfStmt) stmt);
+        } else {
+            return visit((BlockStmt) stmt);
         }
+    }
 
-        if (ctx.formals.size() != 0) {
+    @Override
+    public String visit(TernaryExpr ternaryExpr) {
+        return String.format("%s ? %s : %s",
+            visit(ternaryExpr.getCondition()),
+            visit(ternaryExpr.getTrueExpr()),
+            visit(ternaryExpr.getFalseExpr()));
+    }
+
+    @Override
+    public String visit(UnaryExpr unaryExpr) {
+        return formatUnaryExpression(unaryExpr.getAtom(), unaryExpr.getOperators());
+    }
+
+    @Override
+    public String visit(VarDeclStmt varDeclStmt) {
+        String var = varDeclStmt.getVar();
+        scopes.declareVar(var);
+        return String.format("int %s;", getShadowedVar(var));
+    }
+
+    @Override
+    public String visit(VarRefExpr varRefExpr) {
+        return getShadowedVar(varRefExpr.getVar());
+    }
+
+    /*
+     * Format Utilities.
+     */
+
+    private String formatProcedureSignature(String name, List<String> params) {
+        StringBuilder result = new StringBuilder();
+        result.append(String.format("int %s(", name));
+        for (String param : params) {
+            result.append(String.format("int %s, ", getShadowedVar(param));
+        }
+        // In case the procedure has parameters, remove the extra comma and space at the end.
+        if (!params.isEmpty()) {
             result.delete(result.length() - 2, result.length());
         }
         result.append(")\n");
+        return result.toString();
+    }
 
-        for (PrepostContext prepost : ctx.contract) {
-            result.append("    " + visit(prepost) + ",\n");
+    private String formatProcedureConditions(List<PrePostCondition> conditions) {
+        StringBuilder result = new StringBuilder();
+        for (PrePostCondition prePostCondition : conditions) {
+            result.append(String.format("%s,\n", visit(prePostCondition)));
         }
-
-        if (ctx.contract.size() != 0) {
+        if (!conditions.isEmpty()) {
             result.delete(result.length() - 2, result.length());
-            result.append("\n");
         }
-        result.append("{\n");
+        return result.toString();
+    }
 
-        for (StmtContext stmt : ctx.stmts) {
+    private String formatProcedureStatements(List<Stmt> stmts) {
+        StringBuilder result = new StringBuilder();
+        result.append("\n{\n");
+        for (Stmt stmt : stmts) {
             result.append(visit(stmt) + "\n");
         }
-        result.append(SMTUtil.indent(scopes.count(), "return ") + visit(ctx.returnExpr) + ";\n}\n");
-        scopes.exitScope();
-
         return result.toString();
     }
 
-    @Override
-    public String visitFormalParam(FormalParamContext ctx) {
-        return "int " + visit(ctx.ident);
+    private String formatProcedureReturn(Expr returnExpr) {
+        return "return " + visit(returnExpr) + ";\n}\n";
     }
 
-    @Override
-    public String visitPrepost(PrepostContext ctx) {
+    private String formatUnaryExpression(Expr atom, List<String> operators) {
         StringBuilder result = new StringBuilder();
-        if (ctx.requires() != null) {
-            result.append(visit(ctx.requires()));
+        for (String operator : operators) {
+            result.append(operator + " ");
         }
-
-        if (ctx.ensures() != null) {
-            result.append(visit(ctx.ensures()));
-        }
-
+        result.append(visit(atom));
         return result.toString();
     }
 
-    @Override
-    public String visitRequires(RequiresContext ctx) {
-        return "requires " + visit(ctx.condition);
-    }
-
-    @Override
-    public String visitEnsures(EnsuresContext ctx) {
-        return "ensures " + visit(ctx.condition);
-    }
-
-    @Override
-    public String visitCandidateRequires(CandidateRequiresContext ctx) {
-        return "";
-    }
-
-    @Override
-    public String visitCandidateEnsures(CandidateEnsuresContext ctx) {
-        return "";
-    }
-
-    @Override
-    public String visitStmt(StmtContext ctx) {
-        if (ctx.varDecl() != null) {
-            return visit(ctx.varDecl());
-        }
-
-        if (ctx.assignStmt() != null) {
-            return visit(ctx.assignStmt());
-        }
-
-        if (ctx.assertStmt() != null) {
-            return visit(ctx.assertStmt());
-        }
-
-        if (ctx.assumeStmt() != null) {
-            return visit(ctx.assumeStmt());
-        }
-
-        if (ctx.havocStmt() != null) {
-            return visit(ctx.havocStmt());
-        }
-
-        if (ctx.callStmt() != null) {
-            return visit(ctx.callStmt());
-        }
-
-        if (ctx.ifStmt() != null) {
-            return visit(ctx.ifStmt());
-        }
-
-        if (ctx.whileStmt() != null) {
-            return visit(ctx.whileStmt());
-        }
-
-        return visit(ctx.blockStmt());
-    }
-
-    @Override
-    public String visitAssignStmt(AssignStmtContext ctx) {
-        return SMTUtil.indent(scopes.count(), visit(ctx.lhs) + " = " + visit(ctx.rhs) + ";");
-    }
-
-    @Override
-    public String visitAssertStmt(AssertStmtContext ctx) {
-        return SMTUtil.indent(scopes.count(), "assert " + visit(ctx.condition) + ";");
-    }
-
-    @Override
-    public String visitAssumeStmt(AssumeStmtContext ctx) {
-        return SMTUtil.indent(scopes.count(), "assume " + visit(ctx.condition) + ";");
-    }
-
-    @Override
-    public String visitHavocStmt(HavocStmtContext ctx) {
-        return SMTUtil.indent(scopes.count(), "havoc " + visit(ctx.var) + ";");
-    }
-
-    @Override
-    public String visitCallStmt(CallStmtContext ctx) {
-        return "";
-    }
-
-    @Override
-    public String visitIfStmt(IfStmtContext ctx) {
+    private String formatIfStatement(Expr condition, BlockStmt thenBlock, Optional<BlockStmt> elseBlock) {
         StringBuilder result = new StringBuilder();
-        result.append(SMTUtil.indent(
-            scopes.count(),
-            "if (" + visit(ctx.condition) + ") \n" + visit(ctx.thenBlock)));
-        if (ctx.elseBlock != null) {
-            result.append("\n" + SMTUtil.indent(scopes.count(), "else\n"));
-            result.append(visit(ctx.elseBlock));
-        }
-
-        return result.toString();
-    }
-
-    @Override
-    public String visitWhileStmt(WhileStmtContext ctx) {
-        StringBuilder result = new StringBuilder();
-
-        List<String> invariants = ctx.invariantAnnotations.stream().
-            filter(i -> i.invariant() != null).map(this::visit).collect(Collectors.toList());
-        List<String> candidate_invariants = ctx.invariantAnnotations.stream().
-            filter(i -> i.candidateInvariant() != null).map(this::visit).collect(Collectors.toList());
-
-        // Generate asserts.
-        result.append("\n");
-        for (String invariant: invariants) {
-            result.append(SMTUtil.indent(scopes.count(), "assert " + invariant) + ";\n");
-        }
-
-        // TODO: Havoc modset.
-        result.append("\n");
-
-        // Generate assumes.
-        for (String invariant: invariants) {
-            result.append(SMTUtil.indent(scopes.count(), "assume " + invariant) + ";\n");
-        }
-
-        // Convert 'while' to 'if'.
-        result.append("\n" + SMTUtil.indent(scopes.count(), "if (" + visit(ctx.condition) + ")\n"));
-        result.append(visit(ctx.body));
-
-        // Generate the asserts and the 'assume false' at the end of the 'if' body.
-        // First delete the closing curly brace and then generate the new conditions.
-        result.delete(result.length() - 4 * (scopes.count() - 1) - 1, result.length());
-        result.append("\n");
-        for (String invariant: invariants) {
-            result.append(SMTUtil.indent(scopes.count() + 1, "assert " + invariant) + ";\n");
-        }
-        result.append(SMTUtil.indent(scopes.count() + 1, "assume 0;\n"));
-        result.append(SMTUtil.indent(scopes.count(), "}"));
-
-        return result.toString();
-    }
-
-    @Override
-    public String visitBlockStmt(BlockStmtContext ctx) {
-        scopes.enterScope();
-        List<String> statements = ctx.stmts.stream().map(this::visit).collect(Collectors.toList());
-        scopes.exitScope();
-
-        return SMTUtil.indent(scopes.count(), "{") + "\n" +
-            String.join("\n", statements) + "\n" +
-            SMTUtil.indent(scopes.count(), "}");
-    }
-
-    @Override
-    public String visitLoopInvariant(LoopInvariantContext ctx) {
-        if (ctx.invariant() != null) {
-            return visit(ctx.invariant());
-        }
-        return visit(ctx.candidateInvariant());
-    }
-
-    @Override
-    public String visitInvariant(InvariantContext ctx) {
-        return visit(ctx.expr());
-    }
-
-    @Override
-    public String visitCandidateInvariant(CandidateInvariantContext ctx) {
-        return visit(ctx.expr());
-    }
-
-    @Override
-    public String visitExpr(ExprContext ctx) {
-        return visit(ctx.ternExpr());
-    }
-
-    @Override
-    public String visitTernExpr(TernExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        return ternaryExpr(args);
-    }
-
-    @Override
-    public String visitLorExpr(LorExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> ops = ctx.ops.stream().map(t -> t.getText()).collect(Collectors.toList());
-        return binaryExpr(args, ops);
-    }
-
-    @Override
-    public String visitLandExpr(LandExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> ops = ctx.ops.stream().map(t -> t.getText()).collect(Collectors.toList());
-        return binaryExpr(args, ops);
-    }
-
-    @Override
-    public String visitBorExpr(BorExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> ops = ctx.ops.stream().map(t -> t.getText()).collect(Collectors.toList());
-        return binaryExpr(args, ops);
-    }
-
-    @Override
-    public String visitBxorExpr(BxorExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> ops = ctx.ops.stream().map(t -> t.getText()).collect(Collectors.toList());
-        return binaryExpr(args, ops);
-    }
-
-    @Override
-    public String visitBandExpr(BandExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> ops = ctx.ops.stream().map(t -> t.getText()).collect(Collectors.toList());
-        return binaryExpr(args, ops);
-    }
-
-    @Override
-    public String visitEqualityExpr(EqualityExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> ops = ctx.ops.stream().map(t -> t.getText()).collect(Collectors.toList());
-        return binaryExpr(args, ops);
-    }
-
-    @Override
-    public String visitRelExpr(RelExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> ops = ctx.ops.stream().map(t -> t.getText()).collect(Collectors.toList());
-        return binaryExpr(args, ops);
-    }
-
-    @Override
-    public String visitShiftExpr(ShiftExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> ops = ctx.ops.stream().map(t -> t.getText()).collect(Collectors.toList());
-        return binaryExpr(args, ops);
-    }
-
-    @Override
-    public String visitAddExpr(AddExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> ops = ctx.ops.stream().map(t -> t.getText()).collect(Collectors.toList());
-        return binaryExpr(args, ops);
-    }
-
-    @Override
-    public String visitMulExpr(MulExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        List<String> args = ctx.args.stream().map(this::visit).collect(Collectors.toList());
-        List<String> ops = ctx.ops.stream().map(t -> t.getText()).collect(Collectors.toList());
-        return binaryExpr(args, ops);
-    }
-
-    @Override
-    public String visitUnaryExpr(UnaryExprContext ctx) {
-        if (ctx.single != null) {
-            return visit(ctx.single);
-        }
-
-        String arg = visit(ctx.arg);
-        List<String> ops = ctx.ops.stream().map(t -> t.getText()).collect(Collectors.toList());
-        return unaryOp(ops, arg);
-    }
-
-    @Override
-    public String visitAtomExpr(AtomExprContext ctx) {
-        if (ctx.numberExpr() != null) {
-            return visit(ctx.numberExpr());
-        }
-
-        if (ctx.varrefExpr() != null) {
-            return visit(ctx.varrefExpr());
-        }
-
-        if (ctx.parenExpr() != null) {
-            return visit(ctx.parenExpr());
-        }
-
-        if (ctx.resultExpr() != null) {
-            return visit(ctx.resultExpr());
-        }
-
-        return visit(ctx.oldExpr());
-    }
-
-    @Override
-    public String visitNumberExpr(NumberExprContext ctx) {
-        return ctx.number.getText();
-    }
-
-    @Override
-    public String visitVarrefExpr(VarrefExprContext ctx) {
-        return visit(ctx.var);
-    }
-
-    @Override
-    public String visitParenExpr(ParenExprContext ctx) {
-        return "(" + visit(ctx.arg) + ")";
-    }
-
-    @Override
-    public String visitResultExpr(ResultExprContext ctx) {
-        return ctx.resultTok.getText() + " ";
-    }
-
-    @Override
-    public String visitOldExpr(OldExprContext ctx) {
-        return ctx.oldTok.getText() + "(" + visit(ctx.arg) + ")";
-    }
-
-    @Override
-    public String visitVarref(VarrefContext ctx) {
-        return visit(ctx.ident);
-    }
-
-    @Override
-    public String visitVarIdentifier(VarIdentifierContext ctx) {
-        String var = ctx.name.getText();
-        return var + scopes.getId(var);
-    }
-
-    private String unaryOp(List<String> ops, String arg) {
-        StringBuilder result = new StringBuilder();
-        for (String op : ops) {
-            result.append(op + " ");
-        }
-        result.append(arg);
-        return result.toString();
-    }
-
-    private static String binaryExpr(List<String> args, List<String> ops) {
-        StringBuilder result = new StringBuilder();
-        result.append(args.get(0));
-        for (int i = 0; i < ops.size(); ++i) {
-            result.append(" " + ops.get(i) + " " + args.get(i+1));
+        result.append(String.format("if (%s)\n%s", visit(condition), visit(thenBlock)));
+        if (elseBlock.isPresent()) {
+            result.append(String.format("\nelse\n%s", visit(elseBlock.get())));
         }
         return result.toString();
     }
 
-    private static String ternaryExpr(List<String> args) {
-        StringBuilder result = new StringBuilder();
-        int i = 0;
-        for ( ; i < args.size() - 1; i+=2) {
-            result.append(args.get(i) + " ? " + args.get(i+1) + " : ");
-        }
-        result.append(args.get(i));
-        return result.toString();
+    private String getShadowedVar(String var) {
+        return var + this.scopes.getId(var);
     }
 }
