@@ -30,7 +30,7 @@ public class SRTool {
 
         // Second pass to perform the SSA conversion.
         input = new ANTLRInputStream(content);
-        ctx = getProgramContext(input, filename)
+        ctx = getProgramContext(input, filename);
         VCGenerator vcGenerator = new VCGenerator(ctx);
         String vc = vcGenerator.generateVC().toString();
 

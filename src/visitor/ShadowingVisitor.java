@@ -207,7 +207,7 @@ public class ShadowingVisitor implements ASTVisitor {
         StringBuilder result = new StringBuilder();
         result.append(String.format("int %s(", name));
         for (String param : params) {
-            result.append(String.format("int %s, ", getShadowedVar(param));
+            result.append(String.format("int %s, ", getShadowedVar(param)));
         }
         // In case the procedure has parameters, remove the extra comma and space at the end.
         if (!params.isEmpty()) {
