@@ -10,7 +10,6 @@ import parser.SimpleCParser.ProgramContext;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
 import visitor.ASTPrintVisitor;
-import visitor.ShadowingVisitor;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -24,19 +23,20 @@ public class SRTool {
         String filename = args[0];
         ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
         ProgramContext ctx = getProgramContext(input, filename);
-        ShadowingVisitor shadowingVisitor = new ShadowingVisitor();
-        String content = shadowingVisitor.visit(ctx);
+
+        // ShadowingVisitor shadowingVisitor = new ShadowingVisitor();
+        // String content = shadowingVisitor.visit(ctx);
         // System.out.println(content);
 
         // Second pass through the file after renaming shadow variables.
-        input = new ANTLRInputStream(content);
-        ctx = getProgramContext(input, filename);
+        // input = new ANTLRInputStream(content);
+        // ctx = getProgramContext(input, filename);
 
         // Test the new structure for nodes by getting the 'ctx' from ShadowingVisitor
         // and retrieving (hopefully) the same content from our new representation.
         Program program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
         ASTPrintVisitor astPrintVisitor = new ASTPrintVisitor();
-        content = astPrintVisitor.visit(program);
+        String content = astPrintVisitor.visit(program);
         input = new ANTLRInputStream(content);
         ctx = getProgramContext(input, filename);
         // System.out.println(content);

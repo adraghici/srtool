@@ -1,12 +1,19 @@
 package visitor;
 
 import ast.*;
+import ssa.Scopes;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ASTPrintVisitor implements ASTVisitor {
+
+    private final Scopes scopes;
+
+    public ASTPrintVisitor() {
+        this.scopes = Scopes.withDefault();
+    }
 
     @Override
     public String visit(AssertStmt assertStmt) {
@@ -15,7 +22,8 @@ public class ASTPrintVisitor implements ASTVisitor {
 
     @Override
     public String visit(AssignStmt assignStmt) {
-        return String.format("%s = %s;", assignStmt.getVar(), visit(assignStmt.getExpr()));
+        String var = assignStmt.getVar();
+        return String.format("%s%s = %s;", var, scopes.getId(var), visit(assignStmt.getExpr()));
     }
 
     @Override
@@ -46,8 +54,11 @@ public class ASTPrintVisitor implements ASTVisitor {
 
     @Override
     public String visit(BlockStmt blockStmt) {
-        return String.format("{\n%s\n}", String.join("\n",
-            blockStmt.getStmts().stream().map(this::visit).collect(Collectors.toList())));
+        scopes.enterScope();
+        String result = String.join("\n",
+            blockStmt.getStmts().stream().map(this::visit).collect(Collectors.toList()));
+        scopes.exitScope();
+        return String.format("{\n%s\n}", result);
     }
 
     @Override
@@ -75,7 +86,8 @@ public class ASTPrintVisitor implements ASTVisitor {
 
     @Override
     public String visit(HavocStmt havocStmt) {
-        return String.format("havoc %s;", havocStmt.getVar());
+        String var = havocStmt.getVar();
+        return String.format("havoc %s%s;", var, scopes.getId(var));
     }
 
     @Override
@@ -90,7 +102,8 @@ public class ASTPrintVisitor implements ASTVisitor {
 
     @Override
     public String visit(OldExpr oldExpr) {
-        return String.format("\\old(%s)", oldExpr.getVar());
+        String var = oldExpr.getVar();
+        return String.format("\\old(%s%s)", var, scopes.getId(var));
     }
 
     @Override
@@ -124,11 +137,12 @@ public class ASTPrintVisitor implements ASTVisitor {
     @Override
     public String visit(ProcedureDecl procedureDecl) {
         StringBuilder result = new StringBuilder();
+        scopes.enterScope();
         result.append(formatProcedureSignature(procedureDecl.getName(), procedureDecl.getParams()));
         result.append(formatProcedureConditions(procedureDecl.getConditions()));
         result.append(formatProcedureStatements(procedureDecl.getStmts()));
         result.append(formatProcedureReturn(procedureDecl.getReturnExpr()));
-
+        scopes.exitScope();
         return result.toString();
     }
 
@@ -178,12 +192,15 @@ public class ASTPrintVisitor implements ASTVisitor {
 
     @Override
     public String visit(VarDeclStmt varDeclStmt) {
-        return String.format("int %s;", varDeclStmt.getVar());
+        String var = varDeclStmt.getVar();
+        scopes.declareVar(var);
+        return String.format("int %s%s;", var, scopes.getId(var));
     }
 
     @Override
     public String visit(VarRefExpr varRefExpr) {
-        return varRefExpr.getVar();
+        String var = varRefExpr.getVar();
+        return String.format("%s%s", var, scopes.getId(var));
     }
 
     /*
@@ -194,7 +211,7 @@ public class ASTPrintVisitor implements ASTVisitor {
         StringBuilder result = new StringBuilder();
         result.append(String.format("int %s(", name));
         for (String param : params) {
-            result.append(String.format("int %s, ", param));
+            result.append(String.format("int %s%s, ", param, scopes.getId(param)));
         }
         // In case the procedure has parameters, remove the extra comma and space at the end.
         if (!params.isEmpty()) {
