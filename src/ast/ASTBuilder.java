@@ -73,6 +73,8 @@ public class ASTBuilder {
             return build(stmt.havocStmt());
         } else if (stmt.ifStmt() != null) {
             return build(stmt.ifStmt());
+        } else if (stmt.whileStmt() != null) {
+            return build(stmt.whileStmt());
         } else {
             return build(stmt.blockStmt());
         }
@@ -101,8 +103,23 @@ public class ASTBuilder {
         return new IfStmt(build(ifStmt.condition), build(ifStmt.thenBlock), elseBlock);
     }
 
+    private static WhileStmt build(SimpleCParser.WhileStmtContext whileStmt) {
+        List<LoopInvariant> invariants = whileStmt.invariantAnnotations.stream()
+            .map(ASTBuilder::build)
+            .collect(Collectors.toList());
+        return new WhileStmt(build(whileStmt.condition), build(whileStmt.body), invariants);
+    }
+
     private static BlockStmt build(SimpleCParser.BlockStmtContext blockStmt) {
         return new BlockStmt(blockStmt.stmts.stream().map(ASTBuilder::build).collect(Collectors.toList()));
+    }
+
+    private static LoopInvariant build(SimpleCParser.LoopInvariantContext loopInvariant) {
+        if (loopInvariant.invariant() != null) {
+            return new Invariant(build(loopInvariant.invariant().condition));
+        } else {
+            return new CandidateInvariant(build(loopInvariant.candidateInvariant().condition));
+        }
     }
 
     private static Expr build(SimpleCParser.ExprContext expr) {

@@ -75,18 +75,40 @@ public class ShadowingVisitor implements Visitor {
 
     @Override
     public String visit(IfStmt ifStmt) {
-        return formatIfStatement(ifStmt.getCondition(), ifStmt.getThenBlock(), ifStmt.getElseBlock());
+        return formatIfStatement(
+            ifStmt.getCondition(),
+            ifStmt.getThenBlock(),
+            ifStmt.getElseBlock());
+    }
+
+    @Override
+    public String visit(WhileStmt whileStmt) {
+        return formatWhileStatement(
+            whileStmt.getCondition(),
+            whileStmt.getWhileBlock(),
+            whileStmt.getInvariants());
     }
 
     @Override
     public String visit(BlockStmt blockStmt) {
         scopes.enterScope();
-        String result = String.join("\n",
+        String result = String.join(
+            "\n",
             blockStmt.getStmts().stream()
                 .map(stmt -> ((String) visit(stmt)))
                 .collect(Collectors.toList()));
         scopes.exitScope();
         return String.format("{\n%s\n}", result);
+    }
+
+    @Override
+    public String visit(Invariant invariant) {
+        return (String) visit(invariant.getCondition());
+    }
+
+    @Override
+    public String visit(CandidateInvariant candidateInvariant) {
+        return (String) visit(candidateInvariant.getCondition());
     }
 
     @Override
@@ -152,7 +174,7 @@ public class ShadowingVisitor implements Visitor {
         if (!params.isEmpty()) {
             result.delete(result.length() - 2, result.length());
         }
-        result.append(")\n");
+        result.append(")");
         return result.toString();
     }
 
@@ -195,6 +217,19 @@ public class ShadowingVisitor implements Visitor {
         if (elseBlock.isPresent()) {
             result.append(String.format("\nelse\n%s", visit(elseBlock.get())));
         }
+        return result.toString();
+    }
+
+    private String formatWhileStatement(
+        Expr condition, BlockStmt whileBlock, List<LoopInvariant> loopInvariants) {
+        StringBuilder result = new StringBuilder();
+        String invariants = String.join(
+            ",\n",
+            loopInvariants.stream()
+                .map(inv -> (inv instanceof Invariant ? "invariant " : "candidate_invariant ") + visit(inv))
+                .collect(Collectors.toList()));
+        result.append(
+            String.format("while (%s)\n%s\n%s", visit(condition), invariants, visit(whileBlock)));
         return result.toString();
     }
 

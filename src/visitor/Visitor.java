@@ -64,8 +64,28 @@ public interface Visitor {
         return visitChildren(ifStmt);
     }
 
+    default Object visit(WhileStmt whileStmt) {
+        return visitChildren(whileStmt);
+    }
+
     default Object visit(BlockStmt blockStmt) {
         return visitChildren(blockStmt);
+    }
+
+    default Object visit(LoopInvariant loopInvariant) {
+        if (loopInvariant instanceof Invariant) {
+            return visit((Invariant) loopInvariant);
+        } else {
+            return visit((CandidateInvariant) loopInvariant);
+        }
+    }
+
+    default Object visit(Invariant invariant) {
+        return visitChildren(invariant);
+    }
+
+    default Object visit(CandidateInvariant candidateInvariant) {
+        return visitChildren(candidateInvariant);
     }
 
     default Object visit(VarRef varRef) {
@@ -97,6 +117,8 @@ public interface Visitor {
             return visit((HavocStmt) stmt);
         } else if (stmt instanceof IfStmt) {
             return visit((IfStmt) stmt);
+        } else if (stmt instanceof WhileStmt) {
+            return visit((WhileStmt) stmt);
         } else {
             return visit((BlockStmt) stmt);
         }
