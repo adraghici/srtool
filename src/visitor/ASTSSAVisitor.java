@@ -217,7 +217,7 @@ public class ASTSSAVisitor implements ASTVisitor {
                 asserts.add(expr);
             } else {
                 asserts.add(SMTUtil.implies(
-                    SMTUtil.toBool(SMTUtil.andExpressions(assumptions)), SMTUtil.toBool(expr)));
+                    SMTUtil.toBool(SMTUtil.and(assumptions)), SMTUtil.toBool(expr)));
             }
         } else if (assumptions.isEmpty()) {
             asserts.add(SMTUtil.implies(scope.getPred(), SMTUtil.toBool(expr)));
@@ -225,7 +225,7 @@ public class ASTSSAVisitor implements ASTVisitor {
             asserts.add(SMTUtil.implies(
                 SMTUtil.toBool(SMTUtil.and(
                     scope.getPred(),
-                    SMTUtil.toBool(SMTUtil.andExpressions(assumptions)))),
+                    SMTUtil.toBool(SMTUtil.and(assumptions)))),
                 SMTUtil.toBool(expr)));
         }
         return "";

@@ -153,18 +153,7 @@ public class SMTUtil {
             case 1:
                 return assertion("not", asserts.get(0));
             default:
-                return assertion("not", andExpressions(asserts));
-        }
-    }
-
-    public static String andExpressions(List<String> expressions) {
-        switch (expressions.size()) {
-            case 0:
-                return "";
-            case 1:
-                return expressions.get(0);
-            default:
-                return and(expressions);
+                return assertion("not", and(asserts));
         }
     }
 }
