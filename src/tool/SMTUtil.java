@@ -1,18 +1,24 @@
 package tool;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Collections;
 import java.util.List;
 
 public class SMTUtil {
+    private static ImmutableSet<String> LOGICAL_OPERATORS = ImmutableSet.of("&&", "||");
+    private static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of("==", "!=", "<", ">", "<=", ">=", "=>", "and");
 
     /**
      * Generate SMT code for a unary expression wrapping the argument with the given operators.
      */
     public static String unaryExpr(String arg, List<String> ops) {
-        Collections.reverse(ops);
+        if (ops.isEmpty()) {
+            return arg;
+        }
 
+        Collections.reverse(ops);
         String result = unaryOp(ops.get(0), arg);
         for (int i = 1; i < ops.size(); ++i) {
             result = unaryOp(ops.get(i), result);
@@ -99,6 +105,10 @@ public class SMTUtil {
                 return "bvdiv";
             case "%":
                 return "bvsrem";
+            case "=>":
+                return "=>";
+            case "and":
+                return "and";
             default:
                 throw new IllegalArgumentException();
         }
@@ -121,7 +131,14 @@ public class SMTUtil {
     }
 
     public static String binaryOp(String operator, String lhs, String rhs) {
-        return toBV32("(" + operator + " " + lhs + " " + rhs + ")");
+        String op = binaryOp(operator);
+        if (LOGICAL_OPERATORS.contains(operator)) {
+            return toBV32("(" + op + " " + toBool(lhs) + " " + toBool(rhs) + ")");
+        } else if (COMPARISON_OPERATORS.contains(operator)) {
+            return toBV32("(" + op + " " + lhs + " " + rhs + ")");
+        } else {
+            return "(" + op + " " + lhs + " " + rhs + ")";
+        }
     }
 
     private static String binaryOp(String operator, String lhs, String rhs, Type argsType, Type opType) {

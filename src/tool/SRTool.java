@@ -1,4 +1,7 @@
 package tool;
+
+import ast.ASTBuilder;
+import ast.Program;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import parser.SimpleCLexer;
@@ -6,6 +9,7 @@ import parser.SimpleCParser;
 import parser.SimpleCParser.ProgramContext;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
+import visitor.ShadowingVisitor;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,21 +19,20 @@ public class SRTool {
     private static final int TIMEOUT = 30000;
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        // First pass through initial SimpleC file.
+        // First pass to create the shadow variables.
         String filename = args[0];
         ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
         ProgramContext ctx = getProgramContext(input, filename);
-
-        // Second pass through the file after renaming shadow variables.
+        Program program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
         ShadowingVisitor shadowingVisitor = new ShadowingVisitor();
-        String content = shadowingVisitor.visit(ctx);
+        String content = shadowingVisitor.visit(program);
         // System.out.println(content);
+
+        // Second pass to perform the SSA conversion.
         input = new ANTLRInputStream(content);
         ctx = getProgramContext(input, filename);
-
-        assert ctx.procedures.size() == 1; // For Part 1 of the coursework, this can be assumed
-
-        VCGenerator vcGenerator = new VCGenerator(ctx);
+        program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
+        VCGenerator vcGenerator = new VCGenerator(program);
         String vc = vcGenerator.generateVC().toString();
 
         String dir = System.getProperty("user.dir");

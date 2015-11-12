@@ -1,14 +1,15 @@
 package tool;
 
-import parser.SimpleCParser.ProgramContext;
+import ast.Program;
+import visitor.ASTSSAVisitor;
 
 public class VCGenerator {
-    private final ProgramContext program;
-    private final SSAVisitor visitor;
+    private final Program program;
+    private final ASTSSAVisitor visitor;
 
-    public VCGenerator(ProgramContext program) {
+    public VCGenerator(Program program) {
         this.program = program;
-        this.visitor = new SSAVisitor();
+        this.visitor = new ASTSSAVisitor();
     }
 
     public StringBuilder generateVC() {
