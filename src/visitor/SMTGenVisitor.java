@@ -23,13 +23,13 @@ import ast.UnaryExpr;
 import ast.VarDeclStmt;
 import ast.VarRef;
 import ast.VarRefExpr;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import ssa.Scope;
 import ssa.Scopes;
 import tool.SMTUtil;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -127,45 +127,26 @@ public class SMTGenVisitor implements Visitor {
         Scope scope = Scope.fromScope(scopes.topScope());
         String pred = SMTUtil.toBool((String) visit(ifStmt.getCondition()));
 
-        Scope thenScope;
-        if (scope.getPred().isEmpty()) {
-            thenScope = Scope.fromScope(scope, pred);
-        } else {
-            thenScope = Scope.fromScope(
-                scope,
-                SMTUtil.toBool(SMTUtil.and(scope.getPred(), pred)));
-        }
-        scopes.enterScope(thenScope);
-        String thenBlock = visit(ifStmt.getThenBlock());
-        scopes.exitScope();
+        Scope thenScope = createBranchScope(scope, pred, true);
+        String thenBlock = translateBranch(thenScope, ifStmt.getThenBlock());
 
         Scope elseScope = Scope.fromScope(scope);
         String elseBlock = "";
         if (ifStmt.getElseBlock().isPresent()) {
-            if (scope.getPred().isEmpty()) {
-                elseScope = Scope.fromScope(scope, SMTUtil.unaryOp("not", pred));
-            } else {
-                elseScope = Scope.fromScope(
-                    scope,
-                    SMTUtil.toBool(SMTUtil.and(scope.getPred(), SMTUtil.unaryOp("not", pred))));
-            }
-            scopes.enterScope(elseScope);
-            elseBlock = visit(ifStmt.getElseBlock().get());
-            scopes.exitScope();
+            elseScope = createBranchScope(scope, pred, false);
+            elseBlock = translateBranch(elseScope, ifStmt.getElseBlock().get());
         }
 
         StringBuilder endIf = new StringBuilder();
         Set<String> thenModset = ifStmt.getThenBlock().getModset();
-        Set<String> elseModset =
-            ifStmt.getElseBlock().isPresent() ? ifStmt.getElseBlock().get().getModset() : ImmutableSet.of();
+        Set<String> elseModset = ifStmt.getElseBlock().map(BlockStmt::getModset).orElse(Collections.emptySet());
         for (String var : Sets.intersection(scope.vars(), ifStmt.getModset())) {
-            int thenId = thenModset.contains(var) ? thenScope.getId(var) : scope.getId(var);
-            int elseId  = elseModset.contains(var) ? elseScope.getId(var) : scope.getId(var);
             endIf.append(SMTUtil.declare(var, scopes.updateVar(var)));
-            endIf.append(SMTUtil.assertion(
-                "=",
-                var + scopes.getId(var),
-                SMTUtil.ternaryOp(pred, var + thenId, var + elseId)));
+            String rhs = SMTUtil.ternaryOp(
+                pred,
+                var + getBranchId(scope, thenScope, thenModset, var),
+                var + getBranchId(scope, elseScope, elseModset, var));
+            endIf.append(SMTUtil.assertion("=", var + scopes.getId(var), rhs));
         }
 
         return thenBlock + elseBlock + endIf;
@@ -266,6 +247,25 @@ public class SMTGenVisitor implements Visitor {
             assumptions.add(SMTUtil.implies(scope.getPred(), SMTUtil.toBool(expr)));
         }
         return "";
+    }
+
+    private String translateBranch(Scope branchScope, BlockStmt blockStmt) {
+        scopes.enterScope(branchScope);
+        String block = visit(blockStmt);
+        scopes.exitScope();
+        return block;
+    }
+
+    private static Scope createBranchScope(Scope scope, String pred, boolean trueBranch) {
+        String processedPred = trueBranch ? pred : SMTUtil.unaryOp("not", pred);
+        if (scope.getPred().isEmpty()) {
+            return Scope.fromScope(scope, processedPred);
+        }
+        return Scope.fromScope(scope, SMTUtil.toBool(SMTUtil.and(scope.getPred(), processedPred)));
+    }
+
+    private static int getBranchId(Scope currentScope, Scope branchScope, Set<String> modset, String var) {
+        return modset.contains(var) ? branchScope.getId(var) : currentScope.getId(var);
     }
 
     private String translateParams(List<VarRef> params) {
