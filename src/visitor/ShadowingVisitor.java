@@ -16,80 +16,17 @@ public class ShadowingVisitor implements ASTVisitor {
     }
 
     @Override
-    public String visit(AssertStmt assertStmt) {
-        return String.format("assert %s;", visit(assertStmt.getCondition()));
+    public String visit(Program program) {
+        List<String> globals = program.getGlobalDecls().stream().map(this::visit).collect(Collectors.toList());
+        List<String> procedures = program.getProcedureDecls().stream().map(this::visit).collect(Collectors.toList());
+        return String.join("\n", globals) + "\n" + String.join("\n", procedures);
     }
 
     @Override
-    public String visit(AssignStmt assignStmt) {
-        return String.format("%s = %s;", visit(assignStmt.getVarRef()),visit(assignStmt.getExpr()));
-    }
-
-    @Override
-    public String visit(AssumeStmt assumeStmt) {
-        return String.format("assume %s;", visit(assumeStmt.getCondition()));
-    }
-
-    @Override
-    public String visit(BinaryExpr binaryExpr) {
-        return String.format("%s %s %s",
-            visit(binaryExpr.getLeft()), binaryExpr.getOperator(), visit(binaryExpr.getRight()));
-    }
-
-    @Override
-    public String visit(BlockStmt blockStmt) {
-        scopes.enterScope();
-        String result = String.join("\n",
-            blockStmt.getStmts().stream()
-                .map(stmt -> ((String) visit(stmt)))
-                .collect(Collectors.toList()));
-        scopes.exitScope();
-        return String.format("{\n%s\n}", result);
-    }
-
-    @Override
-    public String visit(CandidatePostcondition candidatePostcondition) {
-        return "";
-    }
-
-    @Override
-    public String visit(CandidatePrecondition candidatePrecondition) {
-        return "";
-    }
-
-    @Override
-    public String visit(HavocStmt havocStmt) {
-        return String.format("havoc %s;", visit(havocStmt.getVarRef()));
-    }
-
-    @Override
-    public String visit(IfStmt ifStmt) {
-        return formatIfStatement(ifStmt.getCondition(), ifStmt.getThenBlock(), ifStmt.getElseBlock());
-    }
-
-    @Override
-    public String visit(NumberExpr numberExpr) {
-        return numberExpr.getNumber();
-    }
-
-    @Override
-    public String visit(OldExpr oldExpr) {
-        return String.format("\\old(%s)", visit(oldExpr.getVarRef()));
-    }
-
-    @Override
-    public String visit(ParenExpr parenExpr) {
-        return String.format("(%s)", visit(parenExpr.getExpr()));
-    }
-
-    @Override
-    public String visit(Postcondition postcondition) {
-        return String.format("  ensures %s", visit(postcondition.getCondition()));
-    }
-
-    @Override
-    public String visit(Precondition precondition) {
-        return String.format("  requires %s", visit(precondition.getCondition()));
+    public String visit(VarDeclStmt varDeclStmt) {
+        VarRef varRef = varDeclStmt.getVarRef();
+        scopes.declareVar(varRef.getVar());
+        return String.format("int %s;", visit(varRef));
     }
 
     @Override
@@ -105,17 +42,55 @@ public class ShadowingVisitor implements ASTVisitor {
     }
 
     @Override
-    public String visit(Program program) {
-        List<String> globals = program.getGlobalDecls().stream().map(this::visit).collect(Collectors.toList());
-        List<String> procedures = program.getProcedureDecls().stream().map(this::visit).collect(Collectors.toList());
-        return String.join("\n", globals) + "\n" + String.join("\n", procedures);
+    public String visit(Precondition precondition) {
+        return String.format("  requires %s", visit(precondition.getCondition()));
     }
 
     @Override
-    public String visit(ResultExpr resultExpr) {
-        return resultExpr.getToken();
+    public String visit(Postcondition postcondition) {
+        return String.format("  ensures %s", visit(postcondition.getCondition()));
     }
 
+    @Override
+    public String visit(AssignStmt assignStmt) {
+        return String.format("%s = %s;", visit(assignStmt.getVarRef()), visit(assignStmt.getExpr()));
+    }
+
+    @Override
+    public String visit(AssertStmt assertStmt) {
+        return String.format("assert %s;", visit(assertStmt.getCondition()));
+    }
+
+    @Override
+    public String visit(AssumeStmt assumeStmt) {
+        return String.format("assume %s;", visit(assumeStmt.getCondition()));
+    }
+
+    @Override
+    public String visit(HavocStmt havocStmt) {
+        return String.format("havoc %s;", visit(havocStmt.getVarRef()));
+    }
+
+    @Override
+    public String visit(IfStmt ifStmt) {
+        return formatIfStatement(ifStmt.getCondition(), ifStmt.getThenBlock(), ifStmt.getElseBlock());
+    }
+
+    @Override
+    public String visit(BlockStmt blockStmt) {
+        scopes.enterScope();
+        String result = String.join("\n",
+            blockStmt.getStmts().stream()
+                .map(stmt -> ((String) visit(stmt)))
+                .collect(Collectors.toList()));
+        scopes.exitScope();
+        return String.format("{\n%s\n}", result);
+    }
+
+    @Override
+    public String visit(VarRef varRef) {
+        return getShadowedVar(varRef.getVar());
+    }
 
     @Override
     public String visit(TernaryExpr ternaryExpr) {
@@ -126,25 +101,39 @@ public class ShadowingVisitor implements ASTVisitor {
     }
 
     @Override
+    public String visit(BinaryExpr binaryExpr) {
+        return String.format("%s %s %s",
+            visit(binaryExpr.getLeft()), binaryExpr.getOperator(), visit(binaryExpr.getRight()));
+    }
+
+    @Override
     public String visit(UnaryExpr unaryExpr) {
         return formatUnaryExpression(unaryExpr.getAtom(), unaryExpr.getOperators());
     }
 
     @Override
-    public String visit(VarDeclStmt varDeclStmt) {
-        VarRef varRef = varDeclStmt.getVarRef();
-        scopes.declareVar(varRef.getVar());
-        return String.format("int %s;", visit(varRef));
-    }
-
-    @Override
-    public String visit(VarRef varRef) {
-        return getShadowedVar(varRef.getVar());
+    public String visit(NumberExpr numberExpr) {
+        return numberExpr.getNumber();
     }
 
     @Override
     public String visit(VarRefExpr varRefExpr) {
         return visit(varRefExpr.getVarRef());
+    }
+
+    @Override
+    public String visit(ParenExpr parenExpr) {
+        return String.format("(%s)", visit(parenExpr.getExpr()));
+    }
+
+    @Override
+    public String visit(ResultExpr resultExpr) {
+        return resultExpr.getToken();
+    }
+
+    @Override
+    public String visit(OldExpr oldExpr) {
+        return String.format("\\old(%s)", visit(oldExpr.getVarRef()));
     }
 
     /*
