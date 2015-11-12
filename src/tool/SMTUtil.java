@@ -1,14 +1,14 @@
 package tool;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SMTUtil {
     private static ImmutableSet<String> LOGICAL_OPERATORS = ImmutableSet.of("&&", "||");
-    private static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of("==", "!=", "<", ">", "<=", ">=", "=>", "and");
+    private static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of("==", "!=", "<", ">", "<=", ">=");
 
     /**
      * Generate SMT code for a unary expression wrapping the argument with the given operators.
@@ -25,31 +25,6 @@ public class SMTUtil {
         }
 
         return result;
-    }
-
-    /**
-     * Generate SMT code for a binary expression with the given arguments and operators.
-     * Size of args must always be 1 larger than the size of ops.
-     */
-    public static String binaryExpr(List<String> args, List<String> ops, Type argsType, Type opType) {
-        if (ops.size() == 1) {
-            return binaryOp(ops.get(0), args.get(0), args.get(1), argsType, opType);
-        }
-
-        return binaryOp(ops.get(ops.size() - 1),
-            binaryExpr(args.subList(0, args.size() - 1), ops.subList(0, ops.size() - 1), argsType, opType),
-            args.get(args.size() - 1), argsType, opType);
-    }
-
-    /**
-     * Generate SMT code for a ternary expression with the given arguments.
-     */
-    public static String ternaryExpr(List<String> args) {
-        if (args.size() == 3) {
-            return ternaryOp(toBool(args.get(0)), args.get(1), args.get(2));
-        }
-
-        return ternaryOp(toBool(args.get(0)), args.get(1), ternaryExpr(args.subList(2, args.size())));
     }
 
     public static String unaryOp(String operator) {
@@ -105,10 +80,6 @@ public class SMTUtil {
                 return "bvdiv";
             case "%":
                 return "bvsrem";
-            case "=>":
-                return "=>";
-            case "and":
-                return "and";
             default:
                 throw new IllegalArgumentException();
         }
@@ -141,18 +112,26 @@ public class SMTUtil {
         }
     }
 
-    private static String binaryOp(String operator, String lhs, String rhs, Type argsType, Type opType) {
-        if (argsType == Type.BOOL && opType == Type.BOOL) {
-            return toBV32("(" + operator + " " + toBool(lhs) + " " + toBool(rhs) + ")");
-        } else if (argsType == Type.INT && opType == Type.BOOL) {
-            return toBV32("(" + operator + " " + lhs + " " + rhs + ")");
-        } else {
-            return "(" + operator + " " + lhs + " " + rhs + ")";
-        }
-    }
-
     public static String ternaryOp(String cond, String lhs, String rhs) {
         return "(ite " + cond + " " + lhs + " " + rhs + ")";
+    }
+
+    public static String implies(String lhs, String rhs) {
+        return toBV32("(=> " + lhs + " " + rhs + ")");
+    }
+
+    public static String and(String lhs, String rhs) {
+        return toBV32("(and " + lhs + " " + rhs + ")");
+    }
+
+    public static String and(List<String> expressions) {
+        StringBuilder result = new StringBuilder();
+        result.append("(and ");
+        result.append(String.join("",
+            expressions.stream().map(expr -> toBool(expr) + " ").collect(Collectors.toList())));
+        // Replace space at the end with a matching closing parantheses for 'and'.
+        result.replace(result.length()-1, result.length(), ")");
+        return toBV32(result.toString());
     }
 
     public static String number(String number) {
@@ -185,17 +164,7 @@ public class SMTUtil {
             case 1:
                 return expressions.get(0);
             default:
-                return SMTUtil.binaryExpr(
-                    expressions,
-                    Collections.nCopies(expressions.size() - 1, "and"),
-                    Type.BOOL,
-                    Type.BOOL);
+                return and(expressions);
         }
     }
-
-    public static String indent(int numberOfScopes, String s) {
-        return Strings.repeat("    ", numberOfScopes - 1) + s;
-    }
-
-    public enum Type { BOOL, INT }
 }

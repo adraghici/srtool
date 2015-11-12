@@ -107,7 +107,7 @@ public class ASTSSAVisitor implements ASTVisitor {
         } else {
             thenScope = Scope.fromScope(
                 scope,
-                SMTUtil.toBool(SMTUtil.binaryOp("and", scope.getPred(), pred)));
+                SMTUtil.toBool(SMTUtil.and(scope.getPred(), pred)));
         }
         scopes.enterScope(thenScope);
         String thenBlock = visit(ifStmt.getThenBlock());
@@ -121,10 +121,7 @@ public class ASTSSAVisitor implements ASTVisitor {
             } else {
                 elseScope = Scope.fromScope(
                     scope,
-                    SMTUtil.toBool(SMTUtil.binaryOp(
-                        "and",
-                        scope.getPred(),
-                        SMTUtil.unaryOp("not", pred))));
+                    SMTUtil.toBool(SMTUtil.and(scope.getPred(), SMTUtil.unaryOp("not", pred))));
             }
             scopes.enterScope(elseScope);
             elseBlock = visit(ifStmt.getElseBlock().get());
@@ -219,16 +216,14 @@ public class ASTSSAVisitor implements ASTVisitor {
             if (assumptions.isEmpty()) {
                 asserts.add(expr);
             } else {
-                asserts.add(SMTUtil.binaryOp(
-                    "=>", SMTUtil.toBool(SMTUtil.andExpressions(assumptions)), SMTUtil.toBool(expr)));
+                asserts.add(SMTUtil.implies(
+                    SMTUtil.toBool(SMTUtil.andExpressions(assumptions)), SMTUtil.toBool(expr)));
             }
         } else if (assumptions.isEmpty()) {
-            asserts.add(SMTUtil.binaryOp("=>", scope.getPred(), SMTUtil.toBool(expr)));
+            asserts.add(SMTUtil.implies(scope.getPred(), SMTUtil.toBool(expr)));
         } else {
-            asserts.add(SMTUtil.binaryOp(
-                "=>",
-                SMTUtil.toBool(SMTUtil.binaryOp(
-                    "and",
+            asserts.add(SMTUtil.implies(
+                SMTUtil.toBool(SMTUtil.and(
                     scope.getPred(),
                     SMTUtil.toBool(SMTUtil.andExpressions(assumptions)))),
                 SMTUtil.toBool(expr)));
@@ -238,13 +233,11 @@ public class ASTSSAVisitor implements ASTVisitor {
 
     private String assume(String expr) {
         Scope scope = scopes.topScope();
-
         if (scope.getPred().isEmpty()) {
             assumptions.add(expr);
         } else {
-            assumptions.add(SMTUtil.binaryOp("=>", scope.getPred(), SMTUtil.toBool(expr)));
+            assumptions.add(SMTUtil.implies(scope.getPred(), SMTUtil.toBool(expr)));
         }
-
         return "";
     }
 
