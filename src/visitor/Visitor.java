@@ -2,7 +2,7 @@ package visitor;
 
 import ast.*;
 
-public interface ASTVisitor {
+public interface Visitor {
 
     default Object visit(Program program) {
         return visitChildren(program);

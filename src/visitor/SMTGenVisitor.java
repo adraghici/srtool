@@ -11,7 +11,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ASTSSAVisitor implements ASTVisitor {
+/**
+ * Visitor used to generated SMT code from an AST representation.
+ */
+public class SMTGenVisitor implements Visitor {
     public static final String RESULT_PLACEHOLDER = "RESULT?!";
     private final List<String> postconditions;
     private final List<String> assumptions;
@@ -19,7 +22,7 @@ public class ASTSSAVisitor implements ASTVisitor {
     private final Scopes scopes;
     private final Scopes globals;
 
-    public ASTSSAVisitor() {
+    public SMTGenVisitor() {
         postconditions = Lists.newArrayList();
         assumptions = Lists.newArrayList();
         asserts = Lists.newArrayList();

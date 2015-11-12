@@ -1,15 +1,15 @@
 package tool;
 
 import ast.Program;
-import visitor.ASTSSAVisitor;
+import visitor.SMTGenVisitor;
 
 public class VCGenerator {
     private final Program program;
-    private final ASTSSAVisitor visitor;
+    private final SMTGenVisitor visitor;
 
     public VCGenerator(Program program) {
         this.program = program;
-        this.visitor = new ASTSSAVisitor();
+        this.visitor = new SMTGenVisitor();
     }
 
     public StringBuilder generateVC() {

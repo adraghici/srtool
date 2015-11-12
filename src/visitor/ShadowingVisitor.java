@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class ShadowingVisitor implements ASTVisitor {
-
+/**
+ * Visitor used to disambiguate variables within nested scopes.
+ */
+public class ShadowingVisitor implements Visitor {
     private final Scopes scopes;
 
     public ShadowingVisitor() {
