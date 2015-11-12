@@ -1,6 +1,36 @@
 package visitor;
 
-import ast.*;
+import ast.AssertStmt;
+import ast.AssignStmt;
+import ast.AssumeStmt;
+import ast.AtomExpr;
+import ast.BinaryExpr;
+import ast.BlockStmt;
+import ast.CandidateInvariant;
+import ast.CandidatePostcondition;
+import ast.CandidatePrecondition;
+import ast.Expr;
+import ast.HavocStmt;
+import ast.IfStmt;
+import ast.Invariant;
+import ast.LoopInvariant;
+import ast.Node;
+import ast.NumberExpr;
+import ast.OldExpr;
+import ast.ParenExpr;
+import ast.Postcondition;
+import ast.PrePostCondition;
+import ast.Precondition;
+import ast.ProcedureDecl;
+import ast.Program;
+import ast.ResultExpr;
+import ast.Stmt;
+import ast.TernaryExpr;
+import ast.UnaryExpr;
+import ast.VarDeclStmt;
+import ast.VarRef;
+import ast.VarRefExpr;
+import ast.WhileStmt;
 
 public interface Visitor {
 
@@ -174,11 +204,8 @@ public interface Visitor {
         return null;
     }
 
-    default Object visitChildren(ast.Node node) {
-        for (Node n : node.getChildren()) {
-            visit(n);
-        }
+    default Object visitChildren(Node node) {
+        node.getChildren().forEach(this::visit);
         return node;
     }
-
 }
