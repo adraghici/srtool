@@ -7,8 +7,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class SMTUtil {
-    private static ImmutableSet<String> LOGICAL_OPERATORS = ImmutableSet.of("&&", "||", "=>", "and");
-    private static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of("=", "<", ">", "<=", ">=");
+    private static ImmutableSet<String> LOGICAL_OPERATORS = ImmutableSet.of("&&", "||");
+    private static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of("==", "!=", "<", ">", "<=", ">=", "=>", "and");
 
     /**
      * Generate SMT code for a unary expression wrapping the argument with the given operators.
@@ -105,6 +105,10 @@ public class SMTUtil {
                 return "bvdiv";
             case "%":
                 return "bvsrem";
+            case "=>":
+                return "=>";
+            case "and":
+                return "and";
             default:
                 throw new IllegalArgumentException();
         }

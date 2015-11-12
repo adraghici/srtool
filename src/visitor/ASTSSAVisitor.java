@@ -44,7 +44,7 @@ public class ASTSSAVisitor implements ASTVisitor {
     @Override
     public String visit(AssumeStmt assumeStmt) {
         String condition = (String) visit(assumeStmt.getCondition());
-        return assertion(condition);
+        return assume(condition);
     }
 
     @Override
@@ -78,7 +78,7 @@ public class ASTSSAVisitor implements ASTVisitor {
 
     @Override
     public String visit(HavocStmt havocStmt) {
-        String var = visit(havocStmt.getVarRef());
+        String var = havocStmt.getVarRef().getVar();
         return SMTUtil.declare(var, scopes.updateVar(var));
     }
 
@@ -173,8 +173,8 @@ public class ASTSSAVisitor implements ASTVisitor {
 
         result.append(String.join("\n",
             procedureDecl.getConditions().stream()
-                .filter(cond -> cond.getCondition() instanceof Precondition)
-                .map(cond -> (String) visit(cond))
+                .filter(cond -> cond instanceof Precondition)
+                .map(cond -> (String) visit((Precondition) cond))
                 .collect(Collectors.toList())));
 
         result.append(String.join("\n",
@@ -210,14 +210,16 @@ public class ASTSSAVisitor implements ASTVisitor {
     @Override
     public String visit(TernaryExpr ternaryExpr) {
         return SMTUtil.ternaryOp(
-            (String) visit(ternaryExpr.getCondition()),
+            SMTUtil.toBool((String) visit(ternaryExpr.getCondition())),
             (String) visit(ternaryExpr.getTrueExpr()),
             (String) visit(ternaryExpr.getFalseExpr()));
     }
 
     @Override
     public String visit(UnaryExpr unaryExpr) {
-        return SMTUtil.unaryExpr((String) visit(unaryExpr.getAtom()), unaryExpr.getOperators());
+        return SMTUtil.unaryExpr(
+            (String) visit(unaryExpr.getAtom()),
+            unaryExpr.getOperators().stream().map(SMTUtil::unaryOp).collect(Collectors.toList()));
     }
 
     @Override
