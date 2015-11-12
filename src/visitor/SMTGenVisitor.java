@@ -1,6 +1,29 @@
 package visitor;
 
-import ast.*;
+import ast.AssertStmt;
+import ast.AssignStmt;
+import ast.AssumeStmt;
+import ast.BinaryExpr;
+import ast.BlockStmt;
+import ast.Expr;
+import ast.HavocStmt;
+import ast.IfStmt;
+import ast.NumberExpr;
+import ast.OldExpr;
+import ast.ParenExpr;
+import ast.Postcondition;
+import ast.PrePostCondition;
+import ast.Precondition;
+import ast.ProcedureDecl;
+import ast.Program;
+import ast.ResultExpr;
+import ast.Stmt;
+import ast.TernaryExpr;
+import ast.UnaryExpr;
+import ast.VarDeclStmt;
+import ast.VarRef;
+import ast.VarRefExpr;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import ssa.Scope;
@@ -132,9 +155,10 @@ public class SMTGenVisitor implements Visitor {
         }
 
         StringBuilder endIf = new StringBuilder();
-        Set<String> thenModset = scope.modset(thenScope);
-        Set<String> elseModset = scope.modset(elseScope);
-        for (String var : Sets.union(thenModset, elseModset).immutableCopy()) {
+        Set<String> thenModset = ifStmt.getThenBlock().getModset();
+        Set<String> elseModset =
+            ifStmt.getElseBlock().isPresent() ? ifStmt.getElseBlock().get().getModset() : ImmutableSet.of();
+        for (String var : Sets.intersection(scope.vars(), ifStmt.getModset())) {
             int thenId = thenModset.contains(var) ? thenScope.getId(var) : scope.getId(var);
             int elseId  = elseModset.contains(var) ? elseScope.getId(var) : scope.getId(var);
             endIf.append(SMTUtil.declare(var, scopes.updateVar(var)));

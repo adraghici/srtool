@@ -3,6 +3,7 @@ package ast;
 import com.google.common.collect.Lists;
 
 import java.util.List;
+import java.util.Set;
 
 public class WhileStmt implements Condition, Stmt {
     private final Expr condition;
@@ -26,6 +27,11 @@ public class WhileStmt implements Condition, Stmt {
     @Override
     public Expr getCondition() {
         return condition;
+    }
+
+    @Override
+    public Set<String> getModset() {
+        return whileBlock.getModset();
     }
 
     @Override

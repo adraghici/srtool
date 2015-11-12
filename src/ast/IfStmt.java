@@ -1,9 +1,12 @@
 package ast;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class IfStmt implements Condition, Stmt {
     private final Expr condition;
@@ -27,6 +30,13 @@ public class IfStmt implements Condition, Stmt {
     @Override
     public Expr getCondition() {
         return condition;
+    }
+
+    @Override
+    public Set<String> getModset() {
+        return Sets.union(
+            thenBlock.getModset(),
+            elseBlock.isPresent() ? elseBlock.get().getModset() : ImmutableSet.of()).immutableCopy();
     }
 
     @Override

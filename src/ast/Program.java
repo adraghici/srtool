@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Program implements Node {
     private final List<VarDeclStmt> globalDecls;
@@ -20,6 +22,14 @@ public class Program implements Node {
 
     public List<ProcedureDecl> getProcedureDecls() {
         return procedureDecls;
+    }
+
+    @Override
+    public Set<String> getModset() {
+        return procedureDecls.stream()
+            .map(ProcedureDecl::getModset)
+            .flatMap(Set::stream)
+            .collect(Collectors.toSet());
     }
 
     @Override

@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ProcedureDecl implements Node {
     private final String name;
@@ -39,6 +41,11 @@ public class ProcedureDecl implements Node {
 
     public Expr getReturnExpr() {
         return returnExpr;
+    }
+
+    @Override
+    public Set<String> getModset() {
+        return stmts.stream().map(Stmt::getModset).flatMap(Set::stream).collect(Collectors.toSet());
     }
 
     @Override

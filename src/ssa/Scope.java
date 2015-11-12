@@ -3,7 +3,6 @@ package ssa;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class Scope {
     private final IdMap idMap;
@@ -66,9 +65,7 @@ public class Scope {
         ids.put(var, id);
     }
 
-    public Set<String> modset(Scope scope) {
-        return scope.ids.keySet().stream()
-            .filter(var -> scope.ids.containsKey(var) && ids.get(var) != scope.ids.get(var))
-            .collect(Collectors.toSet());
+    public Set<String> vars() {
+        return ids.keySet();
     }
 }
