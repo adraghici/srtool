@@ -140,7 +140,7 @@ public class ASTSSAVisitor implements ASTVisitor {
 
     @Override
     public String visit(OldExpr oldExpr) {
-        String var = visit(oldExpr.getVarRef());
+        String var = oldExpr.getVarRef().getVar();
         return var + globals.getId(var);
     }
 
@@ -174,7 +174,7 @@ public class ASTSSAVisitor implements ASTVisitor {
         result.append(String.join("\n",
             procedureDecl.getConditions().stream()
                 .filter(cond -> cond instanceof Precondition)
-                .map(cond -> (String) visit((Precondition) cond))
+                .map(cond -> visit((Precondition) cond))
                 .collect(Collectors.toList())));
 
         result.append(String.join("\n",
@@ -182,10 +182,16 @@ public class ASTSSAVisitor implements ASTVisitor {
                 .map(stmt -> (String) visit(stmt))
                 .collect(Collectors.toList())));
 
+        result.append(String.join("\n",
+            procedureDecl.getConditions().stream()
+                .filter(cond -> cond instanceof Postcondition)
+                .map(cond -> visit((Postcondition) cond))
+                .collect(Collectors.toList())));
+
         String returnExpr = (String) visit(procedureDecl.getReturnExpr());
         result.append(String.join("\n",
             postconditions.stream()
-                .map(p -> p.replace(RESULT_PLACEHOLDER, returnExpr))
+                .map(post -> assertion(post.replace(RESULT_PLACEHOLDER, returnExpr)))
                 .collect(Collectors.toList())));
 
         scopes.exitScope();
