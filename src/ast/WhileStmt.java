@@ -30,8 +30,8 @@ public class WhileStmt implements Condition, Stmt {
     }
 
     @Override
-    public Set<String> getModset() {
-        return whileBlock.getModset();
+    public Set<String> getModified() {
+        return whileBlock.getModified();
     }
 
     @Override

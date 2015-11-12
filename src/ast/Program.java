@@ -25,9 +25,9 @@ public class Program implements Node {
     }
 
     @Override
-    public Set<String> getModset() {
+    public Set<String> getModified() {
         return procedureDecls.stream()
-            .map(ProcedureDecl::getModset)
+            .map(ProcedureDecl::getModified)
             .flatMap(Set::stream)
             .collect(Collectors.toSet());
     }

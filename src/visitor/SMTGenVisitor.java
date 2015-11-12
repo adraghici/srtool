@@ -138,9 +138,9 @@ public class SMTGenVisitor implements Visitor {
         }
 
         StringBuilder endIf = new StringBuilder();
-        Set<String> thenModset = ifStmt.getThenBlock().getModset();
-        Set<String> elseModset = ifStmt.getElseBlock().map(BlockStmt::getModset).orElse(Collections.emptySet());
-        for (String var : Sets.intersection(scope.vars(), ifStmt.getModset())) {
+        Set<String> thenModset = ifStmt.getThenBlock().getModified();
+        Set<String> elseModset = ifStmt.getElseBlock().map(BlockStmt::getModified).orElse(Collections.emptySet());
+        for (String var : Sets.intersection(scope.vars(), ifStmt.getModified())) {
             endIf.append(SMTUtil.declare(var, scopes.updateVar(var)));
             String rhs = SMTUtil.ternaryOp(
                 pred,

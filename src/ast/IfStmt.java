@@ -33,10 +33,10 @@ public class IfStmt implements Condition, Stmt {
     }
 
     @Override
-    public Set<String> getModset() {
+    public Set<String> getModified() {
         return Sets.union(
-            thenBlock.getModset(),
-            elseBlock.isPresent() ? elseBlock.get().getModset() : ImmutableSet.of()).immutableCopy();
+            thenBlock.getModified(),
+            elseBlock.isPresent() ? elseBlock.get().getModified() : ImmutableSet.of()).immutableCopy();
     }
 
     @Override

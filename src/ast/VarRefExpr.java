@@ -1,10 +1,8 @@
 package ast;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 import java.util.List;
-import java.util.Set;
 
 public class VarRefExpr implements AtomExpr {
     private final VarRef varRef;
@@ -15,11 +13,6 @@ public class VarRefExpr implements AtomExpr {
 
     public VarRef getVarRef() {
         return varRef;
-    }
-
-    @Override
-    public Set<String> getModset() {
-        return Sets.newHashSet();
     }
 
     @Override

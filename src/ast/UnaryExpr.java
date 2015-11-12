@@ -1,10 +1,8 @@
 package ast;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 import java.util.List;
-import java.util.Set;
 
 public class UnaryExpr implements Expr {
     private final Expr atom;
@@ -21,11 +19,6 @@ public class UnaryExpr implements Expr {
 
     public List<String> getOperators() {
         return operators;
-    }
-
-    @Override
-    public Set<String> getModset() {
-        return Sets.newHashSet();
     }
 
     @Override

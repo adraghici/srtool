@@ -1,5 +1,6 @@
 package ast;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -11,10 +12,14 @@ public interface Node {
     /**
      * Returns all the variables modified in the current node.
      */
-    Set<String> getModset();
+    default Set<String> getModified() {
+        return Collections.emptySet();
+    }
 
     /**
      * Returns the nodes that should be visited from the current node.
      */
-    List<Node> getChildren();
+    default List<Node> getChildren() {
+        return Collections.emptyList();
+    }
 }

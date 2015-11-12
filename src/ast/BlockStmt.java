@@ -18,8 +18,8 @@ public class BlockStmt implements Stmt {
     }
 
     @Override
-    public Set<String> getModset() {
-        return stmts.stream().map(Stmt::getModset).flatMap(Set::stream).collect(Collectors.toSet());
+    public Set<String> getModified() {
+        return stmts.stream().map(Stmt::getModified).flatMap(Set::stream).collect(Collectors.toSet());
     }
 
     @Override

@@ -2,7 +2,6 @@ package ast;
 
 import com.google.common.collect.Sets;
 
-import java.util.List;
 import java.util.Set;
 
 public class AssignStmt implements Stmt {
@@ -23,12 +22,7 @@ public class AssignStmt implements Stmt {
     }
 
     @Override
-    public Set<String> getModset() {
+    public Set<String> getModified() {
         return Sets.newHashSet(varRef.getVar());
-    }
-
-    @Override
-    public List<Node> getChildren() {
-        return null;
     }
 }

@@ -1,10 +1,8 @@
 package ast;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 import java.util.List;
-import java.util.Set;
 
 public class TernaryExpr implements Expr {
     private final Expr condition;
@@ -27,11 +25,6 @@ public class TernaryExpr implements Expr {
 
     public Expr getFalseExpr() {
         return falseExpr;
-    }
-
-    @Override
-    public Set<String> getModset() {
-        return Sets.newHashSet();
     }
 
     @Override
