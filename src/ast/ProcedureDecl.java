@@ -9,20 +9,13 @@ import java.util.stream.Collectors;
 
 public class ProcedureDecl implements Node {
     private final String name;
-    private final List<VarRef> params;
-    private final List<PrePostCondition> conditions;
-    private final List<Stmt> stmts;
-    private final Expr returnExpr;
     private List<Node> children;
 
     public ProcedureDecl(String name, List<VarRef> params, List<PrePostCondition> conditions,
         List<Stmt> stmts, Expr returnExpr) {
         this.name = name;
-        this.params = params;
-        this.conditions = conditions;
-        this.stmts = stmts;
-        this.returnExpr = returnExpr;
-        this.children = Lists.newArrayList(conditions);
+        this.children = Lists.newArrayList(params);
+        this.children.addAll(conditions);
         this.children.addAll(stmts);
         this.children.add(returnExpr);
     }
@@ -32,7 +25,10 @@ public class ProcedureDecl implements Node {
     }
 
     public List<VarRef> getParams() {
-        return params;
+        return children.stream()
+            .filter(x -> x instanceof VarRef)
+            .map(x -> (VarRef) x)
+            .collect(Collectors.toList());
     }
 
     public List<PrePostCondition> getConditions() {
@@ -58,7 +54,10 @@ public class ProcedureDecl implements Node {
 
     @Override
     public Set<String> getModified() {
-        return stmts.stream().map(Stmt::getModified).flatMap(Set::stream).collect(Collectors.toSet());
+        return getStmts().stream()
+            .map(Stmt::getModified)
+            .flatMap(Set::stream)
+            .collect(Collectors.toSet());
     }
 
     @Override
