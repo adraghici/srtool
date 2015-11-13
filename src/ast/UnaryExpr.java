@@ -6,18 +6,16 @@ import visitor.Visitor;
 import java.util.List;
 
 public class UnaryExpr implements Expr {
-    private final Expr atom;
     private final List<String> operators;
     private List<Node> children;
 
     public UnaryExpr(Expr atom, List<String> operators) {
-        this.atom = atom;
         this.operators = operators;
         this.children = Lists.newArrayList(atom);
     }
 
     public Expr getAtom() {
-        return atom;
+        return (Expr) children.get(0);
     }
 
     public List<String> getOperators() {
@@ -27,11 +25,6 @@ public class UnaryExpr implements Expr {
     @Override
     public List<Node> getChildren() {
         return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        this.children = Lists.newArrayList(children);
     }
 
     @Override

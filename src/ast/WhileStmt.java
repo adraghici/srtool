@@ -5,48 +5,40 @@ import visitor.Visitor;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class WhileStmt implements Condition, Stmt {
-    private final Expr condition;
-    private final BlockStmt whileBlock;
-    private final List<LoopInvariant> invariants;
     private List<Node> children;
 
     public WhileStmt(Expr condition, BlockStmt whileBlock, List<LoopInvariant> invariants) {
-        this.condition = condition;
-        this.whileBlock = whileBlock;
-        this.invariants = invariants;
         this.children = Lists.newArrayList(condition, whileBlock);
-        this.children.addAll(invariants);
         this.children.addAll(invariants);
     }
 
     public List<LoopInvariant> getInvariants() {
-        return invariants;
+        return children.stream()
+            .filter(x -> x instanceof LoopInvariant)
+            .map(x -> (LoopInvariant) x)
+            .collect(Collectors.toList());
     }
 
     public BlockStmt getWhileBlock() {
-        return whileBlock;
+        return (BlockStmt) children.get(1);
     }
 
     @Override
     public Expr getCondition() {
-        return condition;
+        return (Expr) children.get(0);
     }
 
     @Override
     public Set<String> getModified() {
-        return whileBlock.getModified();
+        return getWhileBlock().getModified();
     }
 
     @Override
     public List<Node> getChildren() {
         return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        this.children = Lists.newArrayList(children);
     }
 
     @Override

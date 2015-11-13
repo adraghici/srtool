@@ -6,19 +6,19 @@ import visitor.Visitor;
 import java.util.List;
 
 public class VarRefExpr implements AtomExpr {
-    private final VarRef varRef;
+    private List<Node> children;
 
     public VarRefExpr(VarRef varRef) {
-        this.varRef = varRef;
+        this.children = Lists.newArrayList(varRef);
     }
 
     public VarRef getVarRef() {
-        return varRef;
+        return (VarRef) children.get(0);
     }
 
     @Override
     public List<Node> getChildren() {
-        return Lists.newArrayList(varRef);
+        return children;
     }
 
     @Override

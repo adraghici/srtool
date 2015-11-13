@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 /**
  * Visitor used to generated SMT code from an AST representation.
  */
-public class SMTGenVisitor implements StringVisitor {
+public class SMTGenVisitor implements Visitor {
     public static final String RESULT_PLACEHOLDER = "RESULT?!";
     private final List<String> postconditions;
     private final List<String> assumptions;

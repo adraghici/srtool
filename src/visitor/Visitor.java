@@ -4,7 +4,6 @@ import ast.*;
 import com.google.common.collect.Lists;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public interface Visitor {
 
@@ -57,16 +56,7 @@ public interface Visitor {
     }
 
     default Object visit(WhileStmt whileStmt) {
-//        return visitChildren(whileStmt);
-        Expr condition = (Expr) whileStmt.getCondition().accept(this);
-        BlockStmt whileBlock = (BlockStmt) whileStmt.getWhileBlock().accept(this);
-        List<LoopInvariant> invariants =
-            whileStmt.getInvariants().stream().map(inv -> (LoopInvariant) inv.accept(this)).collect(Collectors.toList());
-
-        List<Stmt> stmts = whileBlock.getStmts();
-
-
-        return new WhileStmt(condition, whileBlock, invariants);
+        return visitChildren(whileStmt);
     }
 
     default Object visit(BlockStmt blockStmt) {
@@ -120,7 +110,6 @@ public interface Visitor {
     default Object visitChildren(Node node) {
         List<Node> newChildren = Lists.newArrayList();
         for (Node child : node.getChildren()) {
-            //System.out.println("====>>>>> " + child.accept(this));
             Node newChild = (Node) child.accept(this);
             if (newChild != child) {
                 newChildren.add(newChild);

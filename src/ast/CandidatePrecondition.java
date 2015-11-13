@@ -6,20 +6,20 @@ import visitor.Visitor;
 import java.util.List;
 
 public class CandidatePrecondition implements PrePostCondition {
-    private final Expr condition;
+    private List<Node> children;
 
     public CandidatePrecondition(Expr condition) {
-        this.condition = condition;
+        children = Lists.newArrayList(condition);
     }
 
     @Override
     public Expr getCondition() {
-        return condition;
+        return (Expr) children.get(0);
     }
 
     @Override
     public List<Node> getChildren() {
-        return Lists.newArrayList(condition);
+        return Lists.newArrayList(getCondition());
     }
 
     @Override

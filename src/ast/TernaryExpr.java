@@ -6,38 +6,27 @@ import visitor.Visitor;
 import java.util.List;
 
 public class TernaryExpr implements Expr {
-    private final Expr condition;
-    private final Expr trueExpr;
-    private final Expr falseExpr;
-    private final List<Node> children;
+    private List<Node> children;
 
     public TernaryExpr(Expr condition, Expr trueExpr, Expr falseExpr) {
-        this.condition = condition;
-        this.trueExpr = trueExpr;
-        this.falseExpr = falseExpr;
         this.children = Lists.newArrayList(condition, trueExpr, falseExpr);
     }
 
     public Expr getCondition() {
-        return condition;
+        return (Expr) children.get(0);
     }
 
     public Expr getTrueExpr() {
-        return trueExpr;
+        return (Expr) children.get(1);
     }
 
     public Expr getFalseExpr() {
-        return falseExpr;
+        return (Expr) children.get(2);
     }
 
     @Override
     public List<Node> getChildren() {
         return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        children = Lists.newArrayList(children);
     }
 
     @Override

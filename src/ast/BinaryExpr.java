@@ -7,14 +7,10 @@ import java.util.List;
 
 public class BinaryExpr implements Expr {
     private final String operator;
-    private final Expr left;
-    private final Expr right;
     private List<Node> children;
 
     public BinaryExpr(String operator, Expr left, Expr right) {
         this.operator = operator;
-        this.left = left;
-        this.right = right;
         this.children = Lists.newArrayList(left, right);
     }
 
@@ -23,21 +19,16 @@ public class BinaryExpr implements Expr {
     }
 
     public Expr getLeft() {
-        return left;
+        return (Expr) children.get(0);
     }
 
     public Expr getRight() {
-        return right;
+        return (Expr) children.get(1);
     }
 
     @Override
     public List<Node> getChildren() {
         return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        this.children = Lists.newArrayList(children);
     }
 
     @Override

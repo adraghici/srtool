@@ -8,27 +8,23 @@ import java.util.List;
 import java.util.Set;
 
 public class AssignStmt implements Stmt {
-    private final VarRef varRef;
-    private final Expr expr;
     private List<Node> children;
 
     public AssignStmt(VarRef varRef, Expr expr) {
-        this.varRef = varRef;
-        this.expr = expr;
-        this.children = Lists.newArrayList(expr);
+        this.children = Lists.newArrayList(varRef, expr);
     }
 
     public VarRef getVarRef() {
-        return varRef;
+        return (VarRef) children.get(0);
     }
 
     public Expr getExpr() {
-        return expr;
+        return (Expr) children.get(1);
     }
 
     @Override
     public Set<String> getModified() {
-        return Sets.newHashSet(varRef.getVar());
+        return Sets.newHashSet(getVarRef().getVar());
     }
 
     @Override

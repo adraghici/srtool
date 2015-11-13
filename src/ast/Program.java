@@ -8,28 +8,30 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Program implements Node {
-    private final List<VarDeclStmt> globalDecls;
-    private final List<ProcedureDecl> procedureDecls;
     private List<Node> children;
 
     public Program(List<VarDeclStmt> globalDecls, List<ProcedureDecl> procedureDecls) {
-        this.globalDecls = globalDecls;
-        this.procedureDecls = procedureDecls;
         this.children = Lists.newArrayList(globalDecls);
         this.children.addAll(procedureDecls);
     }
 
     public List<VarDeclStmt> getGlobalDecls() {
-        return globalDecls;
+        return children.stream()
+            .filter(x -> x instanceof VarDeclStmt)
+            .map(x -> (VarDeclStmt) x)
+            .collect(Collectors.toList());
     }
 
     public List<ProcedureDecl> getProcedureDecls() {
-        return procedureDecls;
+        return children.stream()
+            .filter(x -> x instanceof ProcedureDecl)
+            .map(x -> (ProcedureDecl) x)
+            .collect(Collectors.toList());
     }
 
     @Override
     public Set<String> getModified() {
-        return procedureDecls.stream()
+        return getProcedureDecls().stream()
             .map(ProcedureDecl::getModified)
             .flatMap(Set::stream)
             .collect(Collectors.toSet());
@@ -38,11 +40,6 @@ public class Program implements Node {
     @Override
     public List<Node> getChildren() {
         return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        this.children = Lists.newArrayList(children);
     }
 
     @Override

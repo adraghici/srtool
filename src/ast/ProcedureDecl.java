@@ -36,15 +36,24 @@ public class ProcedureDecl implements Node {
     }
 
     public List<PrePostCondition> getConditions() {
-        return conditions;
+        return children.stream()
+            .filter(x -> x instanceof PrePostCondition)
+            .map(x -> (PrePostCondition) x)
+            .collect(Collectors.toList());
     }
 
     public List<Stmt> getStmts() {
-        return stmts;
+        return children.stream()
+            .filter(x -> x instanceof Stmt)
+            .map(x -> (Stmt) x)
+            .collect(Collectors.toList());
     }
 
     public Expr getReturnExpr() {
-        return returnExpr;
+        return children.stream()
+            .filter(x -> x instanceof Expr)
+            .map(x -> (Expr) x)
+            .collect(Collectors.toList()).get(0);
     }
 
     @Override

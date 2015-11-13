@@ -6,26 +6,19 @@ import visitor.Visitor;
 import java.util.List;
 
 public class ParenExpr implements AtomExpr {
-    private final Expr expr;
-    private final List<Node> children;
+    private List<Node> children;
 
     public ParenExpr(Expr expr) {
-        this.expr = expr;
         this.children = Lists.newArrayList(expr);
     }
 
     public Expr getExpr() {
-        return expr;
+        return (Expr) children.get(0);
     }
 
     @Override
     public List<Node> getChildren() {
         return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        children = Lists.newArrayList(children);
     }
 
     @Override
