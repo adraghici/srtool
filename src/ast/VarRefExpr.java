@@ -1,6 +1,7 @@
 package ast;
 
 import com.google.common.collect.Lists;
+import visitor.Visitor;
 
 import java.util.List;
 
@@ -18,5 +19,10 @@ public class VarRefExpr implements AtomExpr {
     @Override
     public List<Node> getChildren() {
         return Lists.newArrayList(varRef);
+    }
+
+    @Override
+    public Object accept(Visitor visitor) {
+        return visitor.visit(this);
     }
 }

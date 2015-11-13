@@ -1,8 +1,8 @@
 package ast;
 
 import com.google.common.collect.Lists;
+import visitor.Visitor;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -13,6 +13,7 @@ public class ProcedureDecl implements Node {
     private final List<PrePostCondition> conditions;
     private final List<Stmt> stmts;
     private final Expr returnExpr;
+    private List<Node> children;
 
     public ProcedureDecl(String name, List<VarRef> params, List<PrePostCondition> conditions,
         List<Stmt> stmts, Expr returnExpr) {
@@ -21,6 +22,9 @@ public class ProcedureDecl implements Node {
         this.conditions = conditions;
         this.stmts = stmts;
         this.returnExpr = returnExpr;
+        this.children = Lists.newArrayList(conditions);
+        this.children.addAll(stmts);
+        this.children.add(returnExpr);
     }
 
     public String getName() {
@@ -50,8 +54,16 @@ public class ProcedureDecl implements Node {
 
     @Override
     public List<Node> getChildren() {
-        ArrayList<Node> children = Lists.newArrayList(conditions);
-        children.addAll(stmts);
         return children;
+    }
+
+    @Override
+    public void setChildren(List<Node> children) {
+        this.children = Lists.newArrayList(children);
+    }
+
+    @Override
+    public Object accept(Visitor visitor) {
+        return visitor.visit(this);
     }
 }

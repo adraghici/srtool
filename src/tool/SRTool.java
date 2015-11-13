@@ -10,6 +10,7 @@ import parser.SimpleCParser.ProgramContext;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
 import visitor.ShadowingVisitor;
+import visitor.WhileVisitor;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -32,6 +33,11 @@ public class SRTool {
         input = new ANTLRInputStream(content);
         ctx = getProgramContext(input, filename);
         program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
+
+        // Run the WhileVisitor.
+        WhileVisitor whileVisitor = new WhileVisitor();
+        program = (Program) whileVisitor.visit(program);
+
         VCGenerator vcGenerator = new VCGenerator(program);
         String vc = vcGenerator.generateVC().toString();
 

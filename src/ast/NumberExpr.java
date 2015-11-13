@@ -1,5 +1,7 @@
 package ast;
 
+import visitor.Visitor;
+
 public class NumberExpr implements AtomExpr {
     private final String number;
 
@@ -9,5 +11,10 @@ public class NumberExpr implements AtomExpr {
 
     public String getNumber() {
         return number;
+    }
+
+    @Override
+    public Object accept(Visitor visitor) {
+        return visitor.visit(this);
     }
 }

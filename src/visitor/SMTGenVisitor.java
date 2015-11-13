@@ -1,28 +1,6 @@
 package visitor;
 
-import ast.AssertStmt;
-import ast.AssignStmt;
-import ast.AssumeStmt;
-import ast.BinaryExpr;
-import ast.BlockStmt;
-import ast.Expr;
-import ast.HavocStmt;
-import ast.IfStmt;
-import ast.NumberExpr;
-import ast.OldExpr;
-import ast.ParenExpr;
-import ast.Postcondition;
-import ast.PrePostCondition;
-import ast.Precondition;
-import ast.ProcedureDecl;
-import ast.Program;
-import ast.ResultExpr;
-import ast.Stmt;
-import ast.TernaryExpr;
-import ast.UnaryExpr;
-import ast.VarDeclStmt;
-import ast.VarRef;
-import ast.VarRefExpr;
+import ast.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import ssa.Scope;
@@ -37,7 +15,7 @@ import java.util.stream.Collectors;
 /**
  * Visitor used to generated SMT code from an AST representation.
  */
-public class SMTGenVisitor implements Visitor {
+public class SMTGenVisitor implements StringVisitor {
     public static final String RESULT_PLACEHOLDER = "RESULT?!";
     private final List<String> postconditions;
     private final List<String> assumptions;
@@ -55,8 +33,12 @@ public class SMTGenVisitor implements Visitor {
 
     @Override
     public String visit(Program program) {
-        List<String> globals = program.getGlobalDecls().stream().map(this::visit).collect(Collectors.toList());
-        List<String> procedures = program.getProcedureDecls().stream().map(this::visit).collect(Collectors.toList());
+        List<String> globals = program.getGlobalDecls().stream()
+            .map(g -> (String) g.accept(this))
+            .collect(Collectors.toList());
+        List<String> procedures = program.getProcedureDecls().stream()
+            .map(p -> (String) p.accept(this))
+            .collect(Collectors.toList());
         String condition = SMTUtil.generateCondition(asserts);
         return String.join("", globals) + String.join("", procedures) + condition;
     }
@@ -87,18 +69,18 @@ public class SMTGenVisitor implements Visitor {
 
     @Override
     public String visit(Precondition precondition) {
-        return assume((String) visit(precondition.getCondition()));
+        return assume((String) precondition.getCondition().accept(this));
     }
 
     @Override
     public String visit(Postcondition postcondition) {
-        postconditions.add((String) visit(postcondition.getCondition()));
+        postconditions.add((String) postcondition.getCondition().accept(this));
         return "";
     }
 
     @Override
     public String visit(AssignStmt assignStmt) {
-        String rhs = (String) visit(assignStmt.getExpr());
+        String rhs = (String) assignStmt.getExpr().accept(this);
         String var = assignStmt.getVarRef().getVar();
         int id = scopes.updateVar(var);
         return SMTUtil.declare(var, id) + SMTUtil.assertion("=", var + id, rhs);
@@ -106,13 +88,13 @@ public class SMTGenVisitor implements Visitor {
 
     @Override
     public String visit(AssertStmt assertStmt) {
-        String condition = (String) visit(assertStmt.getCondition());
+        String condition = (String) assertStmt.getCondition().accept(this);
         return assertion(condition);
     }
 
     @Override
     public String visit(AssumeStmt assumeStmt) {
-        String condition = (String) visit(assumeStmt.getCondition());
+        String condition = (String) assumeStmt.getCondition().accept(this);
         return assume(condition);
     }
 
@@ -125,7 +107,7 @@ public class SMTGenVisitor implements Visitor {
     @Override
     public String visit(IfStmt ifStmt) {
         Scope scope = Scope.fromScope(scopes.topScope());
-        String pred = SMTUtil.toBool((String) visit(ifStmt.getCondition()));
+        String pred = SMTUtil.toBool((String) ifStmt.getCondition().accept(this));
 
         Scope thenScope = createBranchScope(scope, pred, true);
         String thenBlock = translateBranch(thenScope, ifStmt.getThenBlock());
@@ -157,7 +139,7 @@ public class SMTGenVisitor implements Visitor {
         scopes.enterScope();
         List<String> statements =
             blockStmt.getStmts().stream()
-                .map(stmt -> (String) visit(stmt))
+                .map(stmt -> (String) stmt.accept(this))
                 .collect(Collectors.toList());
         scopes.exitScope();
         return String.join("", statements);
@@ -172,23 +154,23 @@ public class SMTGenVisitor implements Visitor {
     @Override
     public String visit(TernaryExpr ternaryExpr) {
         return SMTUtil.ternaryOp(
-            SMTUtil.toBool((String) visit(ternaryExpr.getCondition())),
-            (String) visit(ternaryExpr.getTrueExpr()),
-            (String) visit(ternaryExpr.getFalseExpr()));
+            SMTUtil.toBool((String) ternaryExpr.getCondition().accept(this)),
+            (String) ternaryExpr.getTrueExpr().accept(this),
+            (String) ternaryExpr.getFalseExpr().accept(this));
     }
 
     @Override
     public String visit(BinaryExpr binaryExpr) {
         return SMTUtil.binaryOp(
             binaryExpr.getOperator(),
-            (String) visit(binaryExpr.getLeft()),
-            (String) visit(binaryExpr.getRight()));
+            (String) binaryExpr.getLeft().accept(this),
+            (String) binaryExpr.getRight().accept(this));
     }
 
     @Override
     public String visit(UnaryExpr unaryExpr) {
         return SMTUtil.unaryExpr(
-            (String) visit(unaryExpr.getAtom()),
+            (String) unaryExpr.getAtom().accept(this),
             unaryExpr.getOperators().stream().map(SMTUtil::unaryOp).collect(Collectors.toList()));
     }
 
@@ -199,12 +181,12 @@ public class SMTGenVisitor implements Visitor {
 
     @Override
     public String visit(VarRefExpr varRefExpr) {
-        return visit(varRefExpr.getVarRef());
+        return (String) varRefExpr.getVarRef().accept(this);
     }
 
     @Override
     public String visit(ParenExpr parenExpr) {
-        return (String) visit(parenExpr.getExpr());
+        return (String) parenExpr.getExpr().accept(this);
     }
 
     @Override
@@ -251,7 +233,7 @@ public class SMTGenVisitor implements Visitor {
 
     private String translateBranch(Scope branchScope, BlockStmt blockStmt) {
         scopes.enterScope(branchScope);
-        String block = visit(blockStmt);
+        String block = (String) blockStmt.accept(this);
         scopes.exitScope();
         return block;
     }
@@ -279,14 +261,14 @@ public class SMTGenVisitor implements Visitor {
         return String.join("",
             conditions.stream()
                 .filter(cond -> cond instanceof Precondition)
-                .map(cond -> visit((Precondition) cond))
+                .map(cond -> (String) cond.accept(this))
                 .collect(Collectors.toList()));
     }
 
     private String translateStatements(List<Stmt> stmts) {
         return String.join("",
             stmts.stream()
-                .map(stmt -> (String) visit(stmt))
+                .map(stmt -> (String) stmt.accept(this))
                 .collect(Collectors.toList()));
     }
 
@@ -294,12 +276,12 @@ public class SMTGenVisitor implements Visitor {
         return String.join("",
             conditions.stream()
                 .filter(cond -> cond instanceof Postcondition)
-                .map(cond -> visit((Postcondition) cond))
+                .map(cond -> (String) cond.accept(this))
                 .collect(Collectors.toList()));
     }
 
     private String translateReturnExpression(Expr returnExpr) {
-        String returnExpression = (String) visit(returnExpr);
+        String returnExpression = (String) returnExpr.accept(this);
         return String.join("",
             postconditions.stream()
                 .map(post -> assertion(post.replace(RESULT_PLACEHOLDER, returnExpression)))

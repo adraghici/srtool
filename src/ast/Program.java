@@ -1,8 +1,8 @@
 package ast;
 
 import com.google.common.collect.Lists;
+import visitor.Visitor;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -10,10 +10,13 @@ import java.util.stream.Collectors;
 public class Program implements Node {
     private final List<VarDeclStmt> globalDecls;
     private final List<ProcedureDecl> procedureDecls;
+    private List<Node> children;
 
     public Program(List<VarDeclStmt> globalDecls, List<ProcedureDecl> procedureDecls) {
         this.globalDecls = globalDecls;
         this.procedureDecls = procedureDecls;
+        this.children = Lists.newArrayList(globalDecls);
+        this.children.addAll(procedureDecls);
     }
 
     public List<VarDeclStmt> getGlobalDecls() {
@@ -34,8 +37,16 @@ public class Program implements Node {
 
     @Override
     public List<Node> getChildren() {
-        ArrayList<Node> children = Lists.newArrayList(globalDecls);
-        children.addAll(procedureDecls);
         return children;
+    }
+
+    @Override
+    public void setChildren(List<Node> children) {
+        this.children = Lists.newArrayList(children);
+    }
+
+    @Override
+    public Object accept(Visitor visitor) {
+        return visitor.visit(this);
     }
 }

@@ -1,5 +1,7 @@
 package ast;
 
+import visitor.Visitor;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -22,4 +24,8 @@ public interface Node {
     default List<Node> getChildren() {
         return Collections.emptyList();
     }
+
+    default void setChildren(List<Node> children) {}
+
+    Object accept(Visitor visitor);
 }

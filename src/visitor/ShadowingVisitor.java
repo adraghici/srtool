@@ -19,8 +19,8 @@ public class ShadowingVisitor implements Visitor {
 
     @Override
     public String visit(Program program) {
-        List<String> globals = program.getGlobalDecls().stream().map(this::visit).collect(Collectors.toList());
-        List<String> procedures = program.getProcedureDecls().stream().map(this::visit).collect(Collectors.toList());
+        List<String> globals = program.getGlobalDecls().stream().map(g -> (String) g.accept(this)).collect(Collectors.toList());
+        List<String> procedures = program.getProcedureDecls().stream().map(g -> (String) g.accept(this)).collect(Collectors.toList());
         return String.join("\n", globals) + "\n" + String.join("\n", procedures);
     }
 
@@ -28,7 +28,7 @@ public class ShadowingVisitor implements Visitor {
     public String visit(VarDeclStmt varDeclStmt) {
         VarRef varRef = varDeclStmt.getVarRef();
         scopes.declareVar(varRef.getVar());
-        return String.format("int %s;", visit(varRef));
+        return String.format("int %s;", (String) varRef.accept(this));
     }
 
     @Override
@@ -45,32 +45,33 @@ public class ShadowingVisitor implements Visitor {
 
     @Override
     public String visit(Precondition precondition) {
-        return String.format("  requires %s", visit(precondition.getCondition()));
+        return String.format("  requires %s", precondition.getCondition().accept(this));
     }
 
     @Override
     public String visit(Postcondition postcondition) {
-        return String.format("  ensures %s", visit(postcondition.getCondition()));
+        return String.format("  ensures %s", postcondition.getCondition().accept(this));
     }
 
     @Override
     public String visit(AssignStmt assignStmt) {
-        return String.format("%s = %s;", visit(assignStmt.getVarRef()), visit(assignStmt.getExpr()));
+        return String.format(
+            "%s = %s;", assignStmt.getVarRef().accept(this), assignStmt.getExpr().accept(this));
     }
 
     @Override
     public String visit(AssertStmt assertStmt) {
-        return String.format("assert %s;", visit(assertStmt.getCondition()));
+        return String.format("assert %s;", assertStmt.getCondition().accept(this));
     }
 
     @Override
     public String visit(AssumeStmt assumeStmt) {
-        return String.format("assume %s;", visit(assumeStmt.getCondition()));
+        return String.format("assume %s;", assumeStmt.getCondition().accept(this));
     }
 
     @Override
     public String visit(HavocStmt havocStmt) {
-        return String.format("havoc %s;", visit(havocStmt.getVarRef()));
+        return String.format("havoc %s;", havocStmt.getVarRef().accept(this));
     }
 
     @Override
@@ -95,7 +96,7 @@ public class ShadowingVisitor implements Visitor {
         String result = String.join(
             "\n",
             blockStmt.getStmts().stream()
-                .map(stmt -> ((String) visit(stmt)))
+                .map(stmt -> ((String) stmt.accept(this)))
                 .collect(Collectors.toList()));
         scopes.exitScope();
         return String.format("{\n%s\n}", result);
@@ -103,12 +104,12 @@ public class ShadowingVisitor implements Visitor {
 
     @Override
     public String visit(Invariant invariant) {
-        return (String) visit(invariant.getCondition());
+        return (String) invariant.getCondition().accept(this);
     }
 
     @Override
     public String visit(CandidateInvariant candidateInvariant) {
-        return (String) visit(candidateInvariant.getCondition());
+        return (String) candidateInvariant.getCondition().accept(this);
     }
 
     @Override
@@ -118,16 +119,20 @@ public class ShadowingVisitor implements Visitor {
 
     @Override
     public String visit(TernaryExpr ternaryExpr) {
-        return String.format("%s ? %s : %s",
-            visit(ternaryExpr.getCondition()),
-            visit(ternaryExpr.getTrueExpr()),
-            visit(ternaryExpr.getFalseExpr()));
+        return String.format(
+            "%s ? %s : %s",
+            ternaryExpr.getCondition().accept(this),
+            ternaryExpr.getTrueExpr().accept(this),
+            ternaryExpr.getFalseExpr().accept(this));
     }
 
     @Override
     public String visit(BinaryExpr binaryExpr) {
-        return String.format("%s %s %s",
-            visit(binaryExpr.getLeft()), binaryExpr.getOperator(), visit(binaryExpr.getRight()));
+        return String.format(
+            "%s %s %s",
+            binaryExpr.getLeft().accept(this),
+            binaryExpr.getOperator(),
+            binaryExpr.getRight().accept(this));
     }
 
     @Override
@@ -147,7 +152,7 @@ public class ShadowingVisitor implements Visitor {
 
     @Override
     public String visit(ParenExpr parenExpr) {
-        return String.format("(%s)", visit(parenExpr.getExpr()));
+        return String.format("(%s)", parenExpr.getExpr().accept(this));
     }
 
     @Override
@@ -157,7 +162,7 @@ public class ShadowingVisitor implements Visitor {
 
     @Override
     public String visit(OldExpr oldExpr) {
-        return String.format("\\old(%s)", visit(oldExpr.getVarRef()));
+        return String.format("\\old(%s)", oldExpr.getVarRef().accept(this));
     }
 
     /*
@@ -168,7 +173,7 @@ public class ShadowingVisitor implements Visitor {
         StringBuilder result = new StringBuilder();
         result.append(String.format("int %s(", name));
         for (VarRef param : params) {
-            result.append(String.format("int %s, ", visit(param)));
+            result.append(String.format("int %s, ", param.accept(this)));
         }
         // In case the procedure has parameters, remove the extra comma and space at the end.
         if (!params.isEmpty()) {
@@ -181,7 +186,7 @@ public class ShadowingVisitor implements Visitor {
     private String formatProcedureConditions(List<PrePostCondition> conditions) {
         StringBuilder result = new StringBuilder();
         for (PrePostCondition prePostCondition : conditions) {
-            result.append(String.format("%s,\n", visit(prePostCondition)));
+            result.append(String.format("%s,\n", prePostCondition.accept(this)));
         }
         if (!conditions.isEmpty()) {
             result.delete(result.length() - 2, result.length());
@@ -193,13 +198,13 @@ public class ShadowingVisitor implements Visitor {
         StringBuilder result = new StringBuilder();
         result.append("\n{\n");
         for (Stmt stmt : stmts) {
-            result.append(visit(stmt) + "\n");
+            result.append(stmt.accept(this) + "\n");
         }
         return result.toString();
     }
 
     private String formatProcedureReturn(Expr returnExpr) {
-        return "return " + visit(returnExpr) + ";\n}\n";
+        return "return " + returnExpr.accept(this) + ";\n}\n";
     }
 
     private String formatUnaryExpression(Expr atom, List<String> operators) {
@@ -207,15 +212,15 @@ public class ShadowingVisitor implements Visitor {
         for (String operator : operators) {
             result.append(operator + " ");
         }
-        result.append(visit(atom));
+        result.append((String) atom.accept(this));
         return result.toString();
     }
 
     private String formatIfStatement(Expr condition, BlockStmt thenBlock, Optional<BlockStmt> elseBlock) {
         StringBuilder result = new StringBuilder();
-        result.append(String.format("if (%s)\n%s", visit(condition), visit(thenBlock)));
+        result.append(String.format("if (%s)\n%s", condition.accept(this), thenBlock.accept(this)));
         if (elseBlock.isPresent()) {
-            result.append(String.format("\nelse\n%s", visit(elseBlock.get())));
+            result.append(String.format("\nelse\n%s", elseBlock.get().accept(this)));
         }
         return result.toString();
     }
@@ -226,10 +231,10 @@ public class ShadowingVisitor implements Visitor {
         String invariants = String.join(
             ",\n",
             loopInvariants.stream()
-                .map(inv -> (inv instanceof Invariant ? "invariant " : "candidate_invariant ") + visit(inv))
+                .map(inv -> (inv instanceof Invariant ? "invariant " : "candidate_invariant ") + inv.accept(this))
                 .collect(Collectors.toList()));
         result.append(
-            String.format("while (%s)\n%s\n%s", visit(condition), invariants, visit(whileBlock)));
+            String.format("while (%s)\n%s\n%s", condition.accept(this), invariants, whileBlock.accept(this)));
         return result.toString();
     }
 

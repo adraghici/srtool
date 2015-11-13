@@ -1,6 +1,7 @@
 package ast;
 
 import com.google.common.collect.Sets;
+import visitor.Visitor;
 
 import java.util.Set;
 
@@ -18,5 +19,10 @@ public class VarDeclStmt implements Stmt {
     @Override
     public Set<String> getModified() {
         return Sets.newHashSet(varRef.getVar());
+    }
+
+    @Override
+    public Object accept(Visitor visitor) {
+        return visitor.visit(this);
     }
 }
