@@ -30,6 +30,11 @@ public class TernaryExpr implements Expr {
     }
 
     @Override
+    public void setChildren(List<Node> children) {
+        this.children = Lists.newArrayList(children);
+    }
+
+    @Override
     public Object accept(Visitor visitor) {
         return visitor.visit(this);
     }

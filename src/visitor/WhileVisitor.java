@@ -13,17 +13,17 @@ public class WhileVisitor implements Visitor {
         List<Stmt> stmts = Lists.newArrayList();
 
         whileStmt.getInvariants().forEach(x -> stmts.add(new AssertStmt(x.getCondition())));
+
         whileStmt.getModified().forEach(x -> stmts.add(new HavocStmt(new VarRef(x))));
         whileStmt.getInvariants().forEach(x -> stmts.add(new AssumeStmt(x.getCondition())));
 
-        List<Stmt> ifStmts = Lists.newArrayList();
-        whileStmt.getWhileBlock().getStmts().forEach(ifStmts::add);
-        whileStmt.getInvariants().forEach(x -> ifStmts.add(new AssertStmt(x.getCondition())));
-        ifStmts.add(new AssumeStmt(new NumberExpr("0")));
+        List<Stmt> blockStmts = Lists.newArrayList();
+        whileStmt.getWhileBlock().getStmts().forEach(stmt -> blockStmts.add((Stmt) stmt.accept(this)));
+        whileStmt.getInvariants().forEach(x -> blockStmts.add(new AssertStmt(x.getCondition())));
+        blockStmts.add(new AssumeStmt(new NumberExpr("0")));
 
-        stmts.add(new IfStmt(whileStmt.getCondition(), new BlockStmt(ifStmts), Optional.empty()));
+        stmts.add(new IfStmt(whileStmt.getCondition(), new BlockStmt(blockStmts), Optional.empty()));
 
         return new BlockStmt(stmts);
     }
-
 }

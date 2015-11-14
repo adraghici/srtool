@@ -21,22 +21,21 @@ public class SRTool {
     private static final int TIMEOUT = 30000;
 
     public static void main(String[] args) throws IOException, InterruptedException {
+        // Build the initial representation.
         Program program = buildProgram(args[0]);
         // printSimpleCFile(program);
 
+        // Run the ShadowingVisitor.
         ShadowingVisitor shadowingVisitor = new ShadowingVisitor();
-        String content = shadowingVisitor.visit(program);
-        // System.out.println(content);
-
-        // Second pass to perform the SSA conversion.
-        ANTLRInputStream input = new ANTLRInputStream(content);
-        ProgramContext ctx = getProgramContext(input);
-        program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
+        program = (Program) shadowingVisitor.visit(program);
+        // printSimpleCFile(program);
 
         // Run the WhileVisitor.
         WhileVisitor whileVisitor = new WhileVisitor();
         program = (Program) whileVisitor.visit(program);
+        // printSimpleCFile(program);
 
+        // Generate the final SMT-LIB2 code.
         VCGenerator vcGenerator = new VCGenerator(program);
         String vc = vcGenerator.generateVC().toString();
 
@@ -47,7 +46,6 @@ public class SRTool {
         String queryResult = "";
         try {
             queryResult = process.execute(vc, TIMEOUT);
-            // System.out.println(queryResult);
         } catch (ProcessTimeoutException e) {
             System.out.println("UNKNOWN");
             System.exit(1);
@@ -67,6 +65,13 @@ public class SRTool {
         System.out.println("CORRECT");
         System.exit(0);
 
+    }
+
+    private static Program buildProgram(String filename) throws IOException {
+        ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
+        ProgramContext ctx = getProgramContext(input);
+        Program program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
+        return program;
     }
 
     private static ProgramContext getProgramContext(ANTLRInputStream input) {
@@ -96,12 +101,5 @@ public class SRTool {
 
     private static void printSimpleCFile(Program program) {
         System.out.println(new PrinterVisitor().visit(program));
-    }
-
-    private static Program buildProgram(String filename) throws IOException {
-        ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
-        ProgramContext ctx = getProgramContext(input);
-        Program program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
-        return program;
     }
 }

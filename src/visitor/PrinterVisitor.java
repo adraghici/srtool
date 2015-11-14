@@ -20,14 +20,12 @@ public class PrinterVisitor implements Visitor {
 
     @Override
     public String visit(Program program) {
-        List<String> globals =
-            program.getGlobalDecls().stream()
-                .map(g -> (String) g.accept(this))
-                .collect(Collectors.toList());
-        List<String> procedures =
-            program.getProcedureDecls().stream()
-                .map(g -> (String) g.accept(this))
-                .collect(Collectors.toList());
+        List<String> globals = program.getGlobalDecls().stream()
+            .map(g -> (String) g.accept(this))
+            .collect(Collectors.toList());
+        List<String> procedures = program.getProcedureDecls().stream()
+            .map(g -> (String) g.accept(this))
+            .collect(Collectors.toList());
         return String.join("\n", globals) + "\n" + String.join("\n", procedures);
     }
 
@@ -194,7 +192,11 @@ public class PrinterVisitor implements Visitor {
     }
 
     private String formatProcedureConditions(List<PrePostCondition> conditions) {
-        StringBuilder result = new StringBuilder();
+        if (conditions.size() == 0) {
+            return "";
+        }
+
+        StringBuilder result = new StringBuilder("\n");
         for (PrePostCondition prePostCondition : conditions) {
             result.append(String.format("%s,\n", prePostCondition.accept(this)));
         }
@@ -241,10 +243,10 @@ public class PrinterVisitor implements Visitor {
         String invariants = String.join(
             ",\n",
             loopInvariants.stream()
-                .map(inv -> (inv instanceof Invariant ? "invariant " : "candidate_invariant ") + inv.accept(this))
+                .map(inv -> indent((inv instanceof Invariant ? "invariant " : "candidate_invariant ") + inv.accept(this)))
                 .collect(Collectors.toList()));
-        result.append(
-            String.format("while (%s)\n%s\n%s", condition.accept(this), invariants, whileBlock.accept(this)));
+        result.append(indent(
+            String.format("while (%s)\n%s\n%s", condition.accept(this), invariants, whileBlock.accept(this))));
         return result.toString();
     }
 }

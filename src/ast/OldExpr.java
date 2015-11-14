@@ -16,6 +16,15 @@ public class OldExpr implements AtomExpr {
         return (VarRef) children.get(0);
     }
 
+    public List<Node> getChildren() {
+        return children;
+    }
+
+    @Override
+    public void setChildren(List<Node> children) {
+        this.children = Lists.newArrayList(children);
+    }
+
     @Override
     public Object accept(Visitor visitor) {
         return visitor.visit(this);

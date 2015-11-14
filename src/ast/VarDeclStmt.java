@@ -24,6 +24,16 @@ public class VarDeclStmt implements Stmt {
     }
 
     @Override
+    public List<Node> getChildren() {
+        return children;
+    }
+
+    @Override
+    public void setChildren(List<Node> children) {
+        this.children = Lists.newArrayList(children);
+    }
+
+    @Override
     public Object accept(Visitor visitor) {
         return visitor.visit(this);
     }
