@@ -1,5 +1,7 @@
 package ssa;
 
+import com.google.common.collect.Sets;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -65,7 +67,7 @@ public class Scope {
         ids.put(var, id);
     }
 
-    public Set<String> vars() {
-        return ids.keySet();
+    public Set<String> modset(Set<String> modified) {
+        return Sets.intersection(ids.keySet(), modified);
     }
 }

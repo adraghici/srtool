@@ -1,8 +1,29 @@
 package visitor;
 
-import ast.*;
+import ast.AssertStmt;
+import ast.AssignStmt;
+import ast.AssumeStmt;
+import ast.BinaryExpr;
+import ast.BlockStmt;
+import ast.Expr;
+import ast.HavocStmt;
+import ast.IfStmt;
+import ast.NumberExpr;
+import ast.OldExpr;
+import ast.ParenExpr;
+import ast.Postcondition;
+import ast.PrePostCondition;
+import ast.Precondition;
+import ast.ProcedureDecl;
+import ast.Program;
+import ast.ResultExpr;
+import ast.Stmt;
+import ast.TernaryExpr;
+import ast.UnaryExpr;
+import ast.VarDeclStmt;
+import ast.VarRef;
+import ast.VarRefExpr;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import ssa.Scope;
 import ssa.Scopes;
 import tool.SMTUtil;
@@ -122,7 +143,7 @@ public class SMTGenVisitor implements Visitor {
         StringBuilder endIf = new StringBuilder();
         Set<String> thenModified = ifStmt.getThenBlock().getModified();
         Set<String> elseModified = ifStmt.getElseBlock().map(BlockStmt::getModified).orElse(Collections.emptySet());
-        for (String var : Sets.intersection(scope.vars(), ifStmt.getModified())) {
+        for (String var : scope.modset(ifStmt.getModified())) {
             endIf.append(SMTUtil.declare(var, scopes.increaseVar(var)));
             String rhs = SMTUtil.ternaryOp(
                 pred,
