@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import visitor.Visitor;
 
 import java.util.List;
+import java.util.Map;
 
 public class OldExpr implements AtomExpr {
     private List<Node> children;
@@ -28,5 +29,10 @@ public class OldExpr implements AtomExpr {
     @Override
     public Object accept(Visitor visitor) {
         return visitor.visit(this);
+    }
+
+    @Override
+    public Expr replace(Map<String, Expr> vars) {
+        return this;
     }
 }

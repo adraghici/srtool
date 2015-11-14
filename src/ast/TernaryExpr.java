@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import visitor.Visitor;
 
 import java.util.List;
+import java.util.Map;
 
 public class TernaryExpr implements Expr {
     private List<Node> children;
@@ -37,5 +38,13 @@ public class TernaryExpr implements Expr {
     @Override
     public Object accept(Visitor visitor) {
         return visitor.visit(this);
+    }
+
+    @Override
+    public Expr replace(Map<String, Expr> vars) {
+        return new TernaryExpr(
+            getCondition().replace(vars),
+            getTrueExpr().replace(vars),
+            getFalseExpr().replace(vars));
     }
 }

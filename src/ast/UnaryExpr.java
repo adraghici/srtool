@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import visitor.Visitor;
 
 import java.util.List;
+import java.util.Map;
 
 public class UnaryExpr implements Expr {
     private final List<String> operators;
@@ -35,5 +36,10 @@ public class UnaryExpr implements Expr {
     @Override
     public Object accept(Visitor visitor) {
         return visitor.visit(this);
+    }
+
+    @Override
+    public Expr replace(Map<String, Expr> vars) {
+        return new UnaryExpr(getAtom().replace(vars), Lists.newArrayList(operators));
     }
 }

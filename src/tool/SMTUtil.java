@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SMTUtil {
+    public static final String RESULT_PLACEHOLDER = "\\result";
     private static ImmutableSet<String> LOGICAL_OPERATORS = ImmutableSet.of("&&", "||");
     private static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of("==", "!=", "<", ">", "<=", ">=");
 

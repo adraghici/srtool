@@ -111,8 +111,8 @@ public interface Visitor {
         return visitChildren(oldExpr);
     }
 
-    default Object visit(MethodRef methodRef) {
-        return visitChildren(methodRef);
+    default Object visit(ProcedureRef procedureRef) {
+        return visitChildren(procedureRef);
     }
 
     default Object visitChildren(Node node) {

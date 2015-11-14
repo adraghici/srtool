@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import visitor.Visitor;
 
 import java.util.List;
+import java.util.Map;
 
 public class BinaryExpr implements Expr {
     private final String operator;
@@ -39,5 +40,10 @@ public class BinaryExpr implements Expr {
     @Override
     public Object accept(Visitor visitor) {
         return visitor.visit(this);
+    }
+
+    @Override
+    public Expr replace(Map<String, Expr> vars) {
+        return new BinaryExpr(getOperator(), getLeft().replace(vars), getRight().replace(vars));
     }
 }

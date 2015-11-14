@@ -11,7 +11,10 @@ public class ProcedureDecl implements Node {
     private final String name;
     private List<Node> children;
 
-    public ProcedureDecl(String name, List<VarRef> params, List<PrePostCondition> conditions,
+    public ProcedureDecl(
+        String name,
+        List<VarRef> params,
+        List<PrePostCondition> conditions,
         List<Stmt> stmts, Expr returnExpr) {
         this.name = name;
         this.children = Lists.newArrayList(params);
@@ -35,6 +38,20 @@ public class ProcedureDecl implements Node {
         return children.stream()
             .filter(x -> x instanceof PrePostCondition)
             .map(x -> (PrePostCondition) x)
+            .collect(Collectors.toList());
+    }
+
+    public List<Precondition> getPreconditions() {
+        return children.stream()
+            .filter(x -> x instanceof Precondition)
+            .map(x -> (Precondition) x)
+            .collect(Collectors.toList());
+    }
+
+    public List<Postcondition> getPostconditions() {
+        return children.stream()
+            .filter(x -> x instanceof Postcondition)
+            .map(x -> (Postcondition) x)
             .collect(Collectors.toList());
     }
 

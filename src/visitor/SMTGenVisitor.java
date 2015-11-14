@@ -12,7 +12,6 @@ import ast.NumberExpr;
 import ast.OldExpr;
 import ast.ParenExpr;
 import ast.Postcondition;
-import ast.PrePostCondition;
 import ast.Precondition;
 import ast.ProcedureDecl;
 import ast.Program;
@@ -37,7 +36,6 @@ import java.util.stream.Collectors;
  * Visitor used to generated SMT code from an AST representation.
  */
 public class SMTGenVisitor implements Visitor {
-    public static final String RESULT_PLACEHOLDER = "RESULT?!";
     private final List<String> postconditions;
     private final List<String> assumptions;
     private final List<String> asserts;
@@ -77,13 +75,16 @@ public class SMTGenVisitor implements Visitor {
         globals.enterScope(Scope.fromScope(scopes.topScope()));
 
         result.append(translateParams(procedureDecl.getParams()));
-        result.append(translatePreConditions(procedureDecl.getConditions()));
+        result.append(translatePreconditions(procedureDecl.getPreconditions()));
         result.append(translateStatements(procedureDecl.getStmts()));
-        result.append(translatePostConditions(procedureDecl.getConditions()));
+        result.append(translatePostConditions(procedureDecl.getPostconditions()));
         result.append(translateReturnExpression(procedureDecl.getReturnExpr()));
 
         scopes.exitScope();
         globals.exitScope();
+
+        assumptions.clear();
+        postconditions.clear();
 
         return result.toString();
     }
@@ -212,7 +213,7 @@ public class SMTGenVisitor implements Visitor {
 
     @Override
     public String visit(ResultExpr resultExpr) {
-        return RESULT_PLACEHOLDER;
+        return resultExpr.getToken();
     }
 
     @Override
@@ -272,40 +273,39 @@ public class SMTGenVisitor implements Visitor {
     }
 
     private String translateParams(List<VarRef> params) {
-        return String.join("",
+        return String.join(
+            "",
             params.stream()
                 .map(param -> SMTUtil.declare(param.getVar(), scopes.increaseVar(param.getVar())))
                 .collect(Collectors.toList()));
     }
 
-    private String translatePreConditions(List<PrePostCondition> conditions) {
-        return String.join("",
-            conditions.stream()
-                .filter(cond -> cond instanceof Precondition)
-                .map(cond -> (String) cond.accept(this))
-                .collect(Collectors.toList()));
+    private String translatePreconditions(List<Precondition> conditions) {
+        return String.join(
+            "",
+            conditions.stream().map(cond -> (String) cond.accept(this)).collect(Collectors.toList()));
     }
 
     private String translateStatements(List<Stmt> stmts) {
-        return String.join("",
+        return String.join(
+            "",
             stmts.stream()
                 .map(stmt -> (String) stmt.accept(this))
                 .collect(Collectors.toList()));
     }
 
-    private String translatePostConditions(List<PrePostCondition> conditions) {
-        return String.join("",
-            conditions.stream()
-                .filter(cond -> cond instanceof Postcondition)
-                .map(cond -> (String) cond.accept(this))
-                .collect(Collectors.toList()));
+    private String translatePostConditions(List<Postcondition> conditions) {
+        return String.join(
+            "",
+            conditions.stream().map(cond -> (String) cond.accept(this)).collect(Collectors.toList()));
     }
 
     private String translateReturnExpression(Expr returnExpr) {
         String returnExpression = (String) returnExpr.accept(this);
-        return String.join("",
+        return String.join(
+            "",
             postconditions.stream()
-                .map(post -> assertion(post.replace(RESULT_PLACEHOLDER, returnExpression)))
+                .map(post -> assertion(post.replace(SMTUtil.RESULT_PLACEHOLDER, returnExpression)))
                 .collect(Collectors.toList()));
     }
 }

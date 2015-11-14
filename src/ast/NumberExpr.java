@@ -2,6 +2,8 @@ package ast;
 
 import visitor.Visitor;
 
+import java.util.Map;
+
 public class NumberExpr implements AtomExpr {
     private final String number;
 
@@ -16,5 +18,10 @@ public class NumberExpr implements AtomExpr {
     @Override
     public Object accept(Visitor visitor) {
         return visitor.visit(this);
+    }
+
+    @Override
+    public Expr replace(Map<String, Expr> vars) {
+        return this;
     }
 }

@@ -79,6 +79,15 @@ public class PrinterVisitor implements Visitor {
     }
 
     @Override
+    public Object visit(CallStmt callStmt) {
+        return indent(
+            String.format(
+                "%s = %s;",
+                callStmt.getVarRef().accept(this),
+                formatProcedureCall(callStmt.getProcedureRef().getName(), callStmt.getArgs())));
+    }
+
+    @Override
     public String visit(IfStmt ifStmt) {
         return formatIfStatement(
             ifStmt.getCondition(),
@@ -189,6 +198,11 @@ public class PrinterVisitor implements Visitor {
         }
         result.append(")");
         return result.toString();
+    }
+
+    private String formatProcedureCall(String name, List<Expr> exprs) {
+        String args = String.join(", ", exprs.stream().map(e -> (String) e.accept(this)).collect(Collectors.toList()));
+        return name + "(" + args + ")";
     }
 
     private String formatProcedureConditions(List<PrePostCondition> conditions) {

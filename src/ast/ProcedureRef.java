@@ -2,14 +2,14 @@ package ast;
 
 import visitor.Visitor;
 
-public class MethodRef implements Node {
+public class ProcedureRef implements Node {
     private final String var;
 
-    public MethodRef(String var) {
+    public ProcedureRef(String var) {
         this.var = var;
     }
 
-    public String getVar() {
+    public String getName() {
         return var;
     }
 

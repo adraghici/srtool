@@ -11,8 +11,8 @@ import java.util.stream.Collectors;
 public class CallStmt implements Stmt {
     private List<Node> children;
 
-    public CallStmt(VarRef varRef, MethodRef methodRef, List<Expr> args) {
-        children = Lists.newArrayList(varRef, methodRef);
+    public CallStmt(VarRef varRef, ProcedureRef procedureRef, List<Expr> args) {
+        children = Lists.newArrayList(varRef, procedureRef);
         children.addAll(args);
     }
 
@@ -20,8 +20,8 @@ public class CallStmt implements Stmt {
         return (VarRef) children.get(0);
     }
 
-    public MethodRef getMethodRef() {
-        return (MethodRef) children.get(1);
+    public ProcedureRef getProcedureRef() {
+        return (ProcedureRef) children.get(1);
     }
 
     public List<Expr> getArgs() {

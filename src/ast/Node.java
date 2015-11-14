@@ -25,7 +25,13 @@ public interface Node {
         return Collections.emptyList();
     }
 
+    /**
+     * Sets the children of the current node from the given list.
+     */
     default void setChildren(List<Node> children) {}
 
+    /**
+     * Used for visitor pattern.
+     */
     Object accept(Visitor visitor);
 }

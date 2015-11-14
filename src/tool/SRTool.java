@@ -9,6 +9,7 @@ import parser.SimpleCParser;
 import parser.SimpleCParser.ProgramContext;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
+import visitor.CallVisitor;
 import visitor.PrinterVisitor;
 import visitor.ShadowingVisitor;
 import visitor.WhileVisitor;
@@ -28,6 +29,11 @@ public class SRTool {
         // Run the ShadowingVisitor.
         ShadowingVisitor shadowingVisitor = new ShadowingVisitor();
         program = (Program) shadowingVisitor.visit(program);
+        // printSimpleCFile(program);
+
+        // Run the CallVisitor.
+        CallVisitor callVisitor = new CallVisitor();
+        program = (Program) callVisitor.visit(program);
         // printSimpleCFile(program);
 
         // Run the WhileVisitor.
