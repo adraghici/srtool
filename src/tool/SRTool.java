@@ -9,6 +9,7 @@ import parser.SimpleCParser;
 import parser.SimpleCParser.ProgramContext;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
+import visitor.PrinterVisitor;
 import visitor.ShadowingVisitor;
 import visitor.WhileVisitor;
 
@@ -20,18 +21,16 @@ public class SRTool {
     private static final int TIMEOUT = 30000;
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        // First pass to create the shadow variables.
-        String filename = args[0];
-        ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
-        ProgramContext ctx = getProgramContext(input, filename);
-        Program program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
+        Program program = buildProgram(args[0]);
+        // printSimpleCFile(program);
+
         ShadowingVisitor shadowingVisitor = new ShadowingVisitor();
         String content = shadowingVisitor.visit(program);
         // System.out.println(content);
 
         // Second pass to perform the SSA conversion.
-        input = new ANTLRInputStream(content);
-        ctx = getProgramContext(input, filename);
+        ANTLRInputStream input = new ANTLRInputStream(content);
+        ProgramContext ctx = getProgramContext(input);
         program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
 
         // Run the WhileVisitor.
@@ -70,7 +69,7 @@ public class SRTool {
 
     }
 
-    private static ProgramContext getProgramContext(ANTLRInputStream input, String filename) {
+    private static ProgramContext getProgramContext(ANTLRInputStream input) {
         SimpleCLexer lexer = new SimpleCLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SimpleCParser parser = new SimpleCParser(tokens);
@@ -85,7 +84,7 @@ public class SRTool {
         tc.resolve();
 
         if(tc.hasErrors()) {
-            System.err.println("Errors were detected when typechecking " + filename + ":");
+            System.err.println("Errors were detected when typechecking the file:");
             for(String err : tc.getErrors()) {
                 System.err.println("  " + err);
             }
@@ -93,5 +92,16 @@ public class SRTool {
         }
 
         return ctx;
+    }
+
+    private static void printSimpleCFile(Program program) {
+        System.out.println(new PrinterVisitor().visit(program));
+    }
+
+    private static Program buildProgram(String filename) throws IOException {
+        ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
+        ProgramContext ctx = getProgramContext(input);
+        Program program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
+        return program;
     }
 }
