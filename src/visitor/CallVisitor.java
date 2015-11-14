@@ -95,7 +95,7 @@ public class CallVisitor implements Visitor {
 
     private Map<String, Expr> createArgReplacements(CallStmt callStmt, ProcedureDecl proc) {
         Map<String, Expr> args = Maps.newHashMap();
-        args.put(SMTUtil.RESULT_PLACEHOLDER, new VarRefExpr(new VarRef("bar_ret")));
+        args.put(SMTUtil.RESULT_PLACEHOLDER, new VarRefExpr(new VarRef(proc.getName() + "_ret")));
         for (int i = 0; i < callStmt.getArgs().size(); i++) {
             args.put(proc.getParams().get(i).getVar(), (Expr) callStmt.getArgs().get(i).accept(this));
         }
