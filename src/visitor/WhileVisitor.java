@@ -17,6 +17,9 @@ import ssa.Scopes;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Visitor used to replace while loops with invariant assertions, randomising variables and if statements.
+ */
 public class WhileVisitor implements Visitor {
     private final Scopes scopes;
 
