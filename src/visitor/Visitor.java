@@ -51,6 +51,10 @@ public interface Visitor {
         return visitChildren(havocStmt);
     }
 
+    default Object visit(CallStmt callStmt) {
+        return visitChildren(callStmt);
+    }
+
     default Object visit(IfStmt ifStmt) {
         return visitChildren(ifStmt);
     }
@@ -105,6 +109,10 @@ public interface Visitor {
 
     default Object visit(OldExpr oldExpr) {
         return visitChildren(oldExpr);
+    }
+
+    default Object visit(MethodRef methodRef) {
+        return visitChildren(methodRef);
     }
 
     default Object visitChildren(Node node) {

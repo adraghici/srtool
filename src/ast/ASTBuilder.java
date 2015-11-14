@@ -71,6 +71,8 @@ public class ASTBuilder {
             return build(stmt.assumeStmt());
         } else if (stmt.havocStmt() != null) {
             return build(stmt.havocStmt());
+        } else if (stmt.callStmt() != null) {
+            return build(stmt.callStmt());
         } else if (stmt.ifStmt() != null) {
             return build(stmt.ifStmt());
         } else if (stmt.whileStmt() != null) {
@@ -94,6 +96,11 @@ public class ASTBuilder {
 
     private static HavocStmt build(SimpleCParser.HavocStmtContext havocStmt) {
         return new HavocStmt(build(havocStmt.var));
+    }
+
+    private static CallStmt build(SimpleCParser.CallStmtContext callStmt) {
+        List<Expr> exprs = callStmt.actuals.stream().map(ASTBuilder::build).collect(Collectors.toList());
+        return new CallStmt(build(callStmt.lhs), new MethodRef(callStmt.callee.getText()), exprs);
     }
 
     private static IfStmt build(SimpleCParser.IfStmtContext ifStmt) {
