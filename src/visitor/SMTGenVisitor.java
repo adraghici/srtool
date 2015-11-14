@@ -82,7 +82,7 @@ public class SMTGenVisitor implements Visitor {
     public String visit(AssignStmt assignStmt) {
         String rhs = (String) assignStmt.getExpr().accept(this);
         String var = assignStmt.getVarRef().getVar();
-        int id = scopes.updateVar(var);
+        int id = scopes.increaseVar(var);
         return SMTUtil.declare(var, id) + SMTUtil.assertion("=", var + id, rhs);
     }
 
@@ -101,7 +101,7 @@ public class SMTGenVisitor implements Visitor {
     @Override
     public String visit(HavocStmt havocStmt) {
         String var = havocStmt.getVarRef().getVar();
-        return SMTUtil.declare(var, scopes.updateVar(var));
+        return SMTUtil.declare(var, scopes.increaseVar(var));
     }
 
     @Override
@@ -123,7 +123,7 @@ public class SMTGenVisitor implements Visitor {
         Set<String> thenModset = ifStmt.getThenBlock().getModified();
         Set<String> elseModset = ifStmt.getElseBlock().map(BlockStmt::getModified).orElse(Collections.emptySet());
         for (String var : Sets.intersection(scope.vars(), ifStmt.getModified())) {
-            endIf.append(SMTUtil.declare(var, scopes.updateVar(var)));
+            endIf.append(SMTUtil.declare(var, scopes.increaseVar(var)));
             String rhs = SMTUtil.ternaryOp(
                 pred,
                 var + getBranchId(scope, thenScope, thenModset, var),
@@ -253,7 +253,7 @@ public class SMTGenVisitor implements Visitor {
     private String translateParams(List<VarRef> params) {
         return String.join("",
             params.stream()
-                .map(param -> SMTUtil.declare(param.getVar(), scopes.updateVar(param.getVar())))
+                .map(param -> SMTUtil.declare(param.getVar(), scopes.increaseVar(param.getVar())))
                 .collect(Collectors.toList()));
     }
 

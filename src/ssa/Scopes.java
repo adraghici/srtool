@@ -53,7 +53,7 @@ public class Scopes {
     /**
      * Increases the id of the given variable from the fresh id provider and returns new id.
      */
-    public int updateVar(String var) {
+    public int increaseVar(String var) {
         int id = Iterables.getLast(scopes).increaseVar(var);
         Lists.reverse(scopes.subList(0, scopes.size() - 1)).stream()
             .filter(scope -> scope.hasVar(var))
