@@ -41,10 +41,10 @@ public class TernaryExpr implements Expr {
     }
 
     @Override
-    public Expr replace(Map<String, Expr> vars) {
+    public Expr replace(Map<String, Expr> substitutes) {
         return new TernaryExpr(
-            getCondition().replace(vars),
-            getTrueExpr().replace(vars),
-            getFalseExpr().replace(vars));
+            getCondition().replace(substitutes),
+            getTrueExpr().replace(substitutes),
+            getFalseExpr().replace(substitutes));
     }
 }

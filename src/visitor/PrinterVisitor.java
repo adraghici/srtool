@@ -58,6 +58,18 @@ public class PrinterVisitor implements Visitor {
     }
 
     @Override
+    public String visit(CandidatePrecondition candidatePrecondition) {
+        return String.format(
+            "  candidate_requires %s", candidatePrecondition.getCondition().accept(this));
+    }
+
+    @Override
+    public String visit(CandidatePostcondition candidatePostcondition) {
+        return String.format(
+            "  candidate_ensures %s", candidatePostcondition.getCondition().accept(this));
+    }
+
+    @Override
     public String visit(AssignStmt assignStmt) {
         return indent(String.format(
             "%s = %s;", assignStmt.getVarRef().accept(this), assignStmt.getExpr().accept(this)));
@@ -189,35 +201,28 @@ public class PrinterVisitor implements Visitor {
     private String formatProcedureSignature(String name, List<VarRef> params) {
         StringBuilder result = new StringBuilder();
         result.append(String.format("int %s(", name));
-        for (VarRef param : params) {
-            result.append(String.format("int %s, ", param.accept(this)));
-        }
-        // In case the procedure has parameters, remove the extra comma and space at the end.
-        if (!params.isEmpty()) {
-            result.delete(result.length() - 2, result.length());
-        }
+        result.append(String.join(
+            ", ",
+            params.stream()
+                .map(p -> String.format("int %s", p.accept(this)))
+                .collect(Collectors.toList())));
         result.append(")");
         return result.toString();
     }
 
     private String formatProcedureCall(String name, List<Expr> exprs) {
-        String args = String.join(", ", exprs.stream().map(e -> (String) e.accept(this)).collect(Collectors.toList()));
+        String args = String.join(
+            ", ",
+            exprs.stream().map(expr -> (String) expr.accept(this)).collect(Collectors.toList()));
         return name + "(" + args + ")";
     }
 
     private String formatProcedureConditions(List<PrePostCondition> conditions) {
-        if (conditions.size() == 0) {
-            return "";
-        }
-
-        StringBuilder result = new StringBuilder("\n");
-        for (PrePostCondition prePostCondition : conditions) {
-            result.append(String.format("%s,\n", prePostCondition.accept(this)));
-        }
-        if (!conditions.isEmpty()) {
-            result.delete(result.length() - 2, result.length());
-        }
-        return result.toString();
+        return String.join(
+            ", ",
+            conditions.stream()
+                .map(cond -> String.format("\n%s", cond.accept(this)))
+                .collect(Collectors.toList()));
     }
 
     private String formatProcedureStatements(List<Stmt> stmts) {
@@ -257,10 +262,11 @@ public class PrinterVisitor implements Visitor {
         String invariants = String.join(
             ",\n",
             loopInvariants.stream()
-                .map(inv -> indent((inv instanceof Invariant ? "invariant " : "candidate_invariant ") + inv.accept(this)))
+                .map(inv -> indent((inv instanceof Invariant
+                    ? "  invariant " : "  candidate_invariant ") + inv.accept(this)))
                 .collect(Collectors.toList()));
-        result.append(indent(
-            String.format("while (%s)\n%s\n%s", condition.accept(this), invariants, whileBlock.accept(this))));
+        result.append(indent(String.format(
+            "while (%s)\n%s\n%s", condition.accept(this), invariants, whileBlock.accept(this))));
         return result.toString();
     }
 }

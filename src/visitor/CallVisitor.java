@@ -1,19 +1,6 @@
 package visitor;
 
-import ast.AssertStmt;
-import ast.AssignStmt;
-import ast.AssumeStmt;
-import ast.BlockStmt;
-import ast.CallStmt;
-import ast.Expr;
-import ast.HavocStmt;
-import ast.Node;
-import ast.ProcedureDecl;
-import ast.Program;
-import ast.Stmt;
-import ast.VarDeclStmt;
-import ast.VarRef;
-import ast.VarRefExpr;
+import ast.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import ssa.Scopes;
@@ -52,26 +39,27 @@ public class CallVisitor implements Visitor {
     public Stmt visit(CallStmt callStmt) {
         List<Stmt> stmts = Lists.newArrayList();
         ProcedureDecl proc = procedures.get(callStmt.getProcedureRef().getName());
-
-        Map<String, Expr> args = createArgReplacements(callStmt, proc);
+        Map<String, Expr> substituteArgs = createSubstituteArgs(callStmt, proc);
 
         // Assert preconditions.
         proc.getPreconditions()
-            .forEach(pre -> stmts.add(new AssertStmt((Expr) pre.getCondition().replace(args).accept(this))));
+            .forEach(pre -> stmts.add(
+                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this))));
 
         // Havoc callee modset.
-        scopes.topScope().modset(proc.getModified()).forEach(x -> stmts.add(new HavocStmt(new VarRef(x))));
+        scopes.topScope().modset(proc.getModified())
+            .forEach(modified -> stmts.add(new HavocStmt(new VarRef(modified))));
 
         // Declare and havoc return variable.
-        // TODO: Deal with multiple calls to the same function.
-        VarRef returnVarRef = new VarRef(proc.getName() + "_ret");
+        VarRef returnVarRef = new VarRef(returnVarName(proc.getName()));
         stmts.add(new VarDeclStmt(returnVarRef));
         stmts.add(new HavocStmt(returnVarRef));
 
         // Assume postconditions.
         VarRefExpr returnVarRefExpr = new VarRefExpr(returnVarRef);
         proc.getPostconditions()
-            .forEach(post -> stmts.add(new AssumeStmt((Expr) post.getCondition().replace(args).accept(this))));
+            .forEach(post -> stmts.add(
+                new AssumeStmt((Expr) post.getCondition().replace(substituteArgs).accept(this))));
 
         // Assign result to variable.
         stmts.add(new AssignStmt(callStmt.getVarRef(), returnVarRefExpr));
@@ -93,12 +81,23 @@ public class CallVisitor implements Visitor {
         return varRef;
     }
 
-    private Map<String, Expr> createArgReplacements(CallStmt callStmt, ProcedureDecl proc) {
-        Map<String, Expr> args = Maps.newHashMap();
-        args.put(SMTUtil.RESULT_PLACEHOLDER, new VarRefExpr(new VarRef(proc.getName() + "_ret")));
-        for (int i = 0; i < callStmt.getArgs().size(); i++) {
-            args.put(proc.getParams().get(i).getVar(), (Expr) callStmt.getArgs().get(i).accept(this));
+    /*
+     * Builds a map from argument names of a procedure 'proc' to the actual expressions of a given
+     * call statement 'callStmt' to allow substitution of arguments in pre/post conditions with the
+     * actual expressions passed in the procedure call.
+     */
+    private Map<String, Expr> createSubstituteArgs(CallStmt callStmt, ProcedureDecl proc) {
+        Map<String, Expr> substitutes = Maps.newHashMap();
+        substitutes.put(
+            SMTUtil.RESULT_PLACEHOLDER, new VarRefExpr(new VarRef(returnVarName(proc.getName()))));
+        for (int i = 0; i < callStmt.getArgs().size(); ++i) {
+            substitutes.put(
+                proc.getParams().get(i).getVar(), (Expr) callStmt.getArgs().get(i).accept(this));
         }
-        return args;
+        return substitutes;
+    }
+
+    private static String returnVarName(String var) {
+        return var + "_ret";
     }
 }

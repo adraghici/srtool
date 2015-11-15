@@ -33,9 +33,9 @@ public class VarRefExpr implements AtomExpr {
     }
 
     @Override
-    public Expr replace(Map<String, Expr> vars) {
-        if (vars.containsKey(getVarRef().getVar())) {
-            return vars.get(getVarRef().getVar());
+    public Expr replace(Map<String, Expr> substitutes) {
+        if (substitutes.containsKey(getVarRef().getVar())) {
+            return substitutes.get(getVarRef().getVar());
         }
         return this;
     }

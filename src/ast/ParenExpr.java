@@ -33,7 +33,7 @@ public class ParenExpr implements AtomExpr {
     }
 
     @Override
-    public Expr replace(Map<String, Expr> vars) {
-        return new ParenExpr(getExpr().replace(vars));
+    public Expr replace(Map<String, Expr> substitutes) {
+        return new ParenExpr(getExpr().replace(substitutes));
     }
 }

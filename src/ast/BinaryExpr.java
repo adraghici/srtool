@@ -43,7 +43,8 @@ public class BinaryExpr implements Expr {
     }
 
     @Override
-    public Expr replace(Map<String, Expr> vars) {
-        return new BinaryExpr(getOperator(), getLeft().replace(vars), getRight().replace(vars));
+    public Expr replace(Map<String, Expr> substitutes) {
+        return new BinaryExpr(getOperator(), getLeft().replace(substitutes), getRight().replace(
+            substitutes));
     }
 }

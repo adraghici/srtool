@@ -21,7 +21,7 @@ public class ResultExpr implements AtomExpr {
     }
 
     @Override
-    public Expr replace(Map<String, Expr> vars) {
-        return vars.get(token);
+    public Expr replace(Map<String, Expr> substitutes) {
+        return substitutes.get(token);
     }
 }

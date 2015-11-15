@@ -2,6 +2,7 @@ package tool;
 
 import ast.ASTBuilder;
 import ast.Program;
+import com.google.common.base.Strings;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import parser.SimpleCLexer;
@@ -24,22 +25,22 @@ public class SRTool {
     public static void main(String[] args) throws IOException, InterruptedException {
         // Build the initial representation.
         Program program = buildProgram(args[0]);
-        // printSimpleCFile(program);
+        // printSimpleCFile(program, "INITIAL");
 
         // Run the ShadowingVisitor.
         ShadowingVisitor shadowingVisitor = new ShadowingVisitor();
         program = (Program) shadowingVisitor.visit(program);
-        // printSimpleCFile(program);
+        // printSimpleCFile(program, "SHADOWING VISITOR");
 
         // Run the CallVisitor.
         CallVisitor callVisitor = new CallVisitor();
         program = (Program) callVisitor.visit(program);
-        // printSimpleCFile(program);
+        // printSimpleCFile(program, "CALL VISITOR");
 
         // Run the WhileVisitor.
         WhileVisitor whileVisitor = new WhileVisitor();
         program = (Program) whileVisitor.visit(program);
-        // printSimpleCFile(program);
+        // printSimpleCFile(program, "WHILE VISITOR");
 
         // Generate the final SMT-LIB2 code.
         VCGenerator vcGenerator = new VCGenerator(program);
@@ -70,7 +71,6 @@ public class SRTool {
 
         System.out.println("CORRECT");
         System.exit(0);
-
     }
 
     private static Program buildProgram(String filename) throws IOException {
@@ -105,7 +105,9 @@ public class SRTool {
         return ctx;
     }
 
-    private static void printSimpleCFile(Program program) {
+    private static void printSimpleCFile(Program program, String desc) {
+        System.out.println(desc + ":\n");
         System.out.println(new PrinterVisitor().visit(program));
+        System.out.println(String.format("%s\n", Strings.repeat("-", 100)));
     }
 }

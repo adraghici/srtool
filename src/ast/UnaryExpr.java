@@ -39,7 +39,7 @@ public class UnaryExpr implements Expr {
     }
 
     @Override
-    public Expr replace(Map<String, Expr> vars) {
-        return new UnaryExpr(getAtom().replace(vars), Lists.newArrayList(operators));
+    public Expr replace(Map<String, Expr> substitutes) {
+        return new UnaryExpr(getAtom().replace(substitutes), Lists.newArrayList(operators));
     }
 }

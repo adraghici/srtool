@@ -21,7 +21,7 @@ public class NumberExpr implements AtomExpr {
     }
 
     @Override
-    public Expr replace(Map<String, Expr> vars) {
+    public Expr replace(Map<String, Expr> substitutes) {
         return this;
     }
 }
