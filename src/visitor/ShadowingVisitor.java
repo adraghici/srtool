@@ -1,10 +1,7 @@
 package visitor;
 
-import ast.BlockStmt;
-import ast.Node;
-import ast.ProcedureDecl;
-import ast.VarDeclStmt;
-import ast.VarRef;
+import ast.*;
+import ssa.Scope;
 import ssa.Scopes;
 
 /**
@@ -12,9 +9,11 @@ import ssa.Scopes;
  */
 public class ShadowingVisitor implements Visitor {
     private final Scopes scopes;
+    private final Scopes globals;
 
     public ShadowingVisitor() {
         this.scopes = Scopes.withDefault();
+        globals = Scopes.empty();
     }
 
     @Override
@@ -27,7 +26,9 @@ public class ShadowingVisitor implements Visitor {
     @Override
     public Node visit(ProcedureDecl procedureDecl) {
         scopes.enterScope();
+        globals.enterScope(Scope.fromScope(scopes.topScope()));
         ProcedureDecl result = (ProcedureDecl) visitChildren(procedureDecl);
+        globals.exitScope();
         scopes.exitScope();
         return result;
     }
@@ -45,5 +46,11 @@ public class ShadowingVisitor implements Visitor {
         String var = varRef.getVar();
         String newVar = var + scopes.getId(var);
         return new VarRef(newVar);
+    }
+
+    @Override
+    public Node visit(OldExpr oldExpr) {
+        String var = oldExpr.getVarRef().getVar();
+        return new OldExpr(new VarRef(var + globals.getId(var)));
     }
 }
