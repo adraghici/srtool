@@ -259,14 +259,17 @@ public class PrinterVisitor implements Visitor {
     private String formatWhileStatement(
         Expr condition, BlockStmt whileBlock, List<LoopInvariant> loopInvariants) {
         StringBuilder result = new StringBuilder();
-        String invariants = String.join(
+        String invariants = "\n" + String.join(
             ",\n",
             loopInvariants.stream()
                 .map(inv -> indent((inv instanceof Invariant
                     ? "  invariant " : "  candidate_invariant ") + inv.accept(this)))
                 .collect(Collectors.toList()));
+        if (loopInvariants.isEmpty()) {
+            invariants = "";
+        }
         result.append(indent(String.format(
-            "while (%s)\n%s\n%s", condition.accept(this), invariants, whileBlock.accept(this))));
+            "while (%s)%s\n%s", condition.accept(this), invariants, whileBlock.accept(this))));
         return result.toString();
     }
 }

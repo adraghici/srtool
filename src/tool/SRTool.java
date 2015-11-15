@@ -10,10 +10,7 @@ import parser.SimpleCParser;
 import parser.SimpleCParser.ProgramContext;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
-import visitor.CallVisitor;
-import visitor.PrinterVisitor;
-import visitor.ShadowingVisitor;
-import visitor.WhileVisitor;
+import visitor.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -35,6 +32,12 @@ public class SRTool {
         // Run the CallVisitor.
         CallVisitor callVisitor = new CallVisitor();
         program = (Program) callVisitor.visit(program);
+        // printSimpleCFile(program, "CALL VISITOR");
+
+        // Run the LoopUnwinderVisitor.
+        // TODO: Run the unwinding in parallel with the loop summarisation procedure.
+        // LoopUnwinderVisitor loopUnwinderVisitor = new LoopUnwinderVisitor();
+        // program = (Program) loopUnwinderVisitor.visit(program);
         // printSimpleCFile(program, "CALL VISITOR");
 
         // Run the WhileVisitor.
