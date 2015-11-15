@@ -7,7 +7,7 @@ int foo() {
 
   int x;
   x = 0;
-  while(x < 8)
+  while(x < 8) {
     x = x + 1;
   }
   assert x == 8;
