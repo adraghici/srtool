@@ -34,11 +34,11 @@ public class SRTool {
         program = (Program) callVisitor.visit(program);
         // printSimpleCFile(program, "CALL VISITOR");
 
-        // Run the LoopUnwinderVisitor.
+        // Run the LoopUnwindingVisitor.
         // TODO: Run the unwinding in parallel with the loop summarisation procedure.
-        // LoopUnwinderVisitor loopUnwinderVisitor = new LoopUnwinderVisitor();
-        // program = (Program) loopUnwinderVisitor.visit(program);
-        // printSimpleCFile(program, "CALL VISITOR");
+        // LoopUnwindingVisitor loopUnwindingVisitor = new LoopUnwindingVisitor();
+        // program = (Program) loopUnwindingVisitor.visit(program);
+        // printSimpleCFile(program, "UNWINDING VISITOR");
 
         // Run the WhileVisitor.
         WhileVisitor whileVisitor = new WhileVisitor();
@@ -110,7 +110,7 @@ public class SRTool {
 
     private static void printSimpleCFile(Program program, String desc) {
         System.out.println(desc + ":\n");
-        System.out.println(new PrinterVisitor().visit(program));
+        System.out.println(new PrintingVisitor().visit(program));
         System.out.println(String.format("%s\n", Strings.repeat("-", 100)));
     }
 }

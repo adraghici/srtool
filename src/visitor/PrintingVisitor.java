@@ -11,10 +11,10 @@ import java.util.stream.Collectors;
 /**
  * Visitor used to print the SimpleC file held in the internal node representation.
  */
-public class PrinterVisitor implements Visitor {
+public class PrintingVisitor implements Visitor {
     private final Scopes scopes;
 
-    public PrinterVisitor() {
+    public PrintingVisitor() {
         this.scopes = Scopes.withDefault();
     }
 
