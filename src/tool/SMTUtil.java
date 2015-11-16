@@ -1,6 +1,7 @@
 package tool;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
 
 import java.util.Collections;
 import java.util.List;
@@ -90,6 +91,10 @@ public class SMTUtil {
         return "(declare-fun " + var + id + " () (_ BitVec 32))\n";
     }
 
+    public static String declareBool(String var, int id) {
+        return "(declare-fun " + var + id + " () (Bool))\n";
+    }
+
     public static String assertion(String operator, String expr) {
         return "(assert (" + operator + " " + toBool(expr) + "))\n";
     }
@@ -125,14 +130,10 @@ public class SMTUtil {
         return toBV32("(and " + lhs + " " + rhs + ")");
     }
 
-    public static String and(List<String> expressions) {
-        StringBuilder result = new StringBuilder();
-        result.append("(and ");
-        result.append(String.join("",
-            expressions.stream().map(expr -> toBool(expr) + " ").collect(Collectors.toList())));
-        // Replace space at the end with a matching closing parantheses for 'and'.
-        result.replace(result.length()-1, result.length(), ")");
-        return toBV32(result.toString());
+    public static String and(List<String> asserts) {
+        String result =
+            "(and " + String.join(" ", asserts.stream().map(SMTUtil::toBool).collect(Collectors.toList())) + ")";
+        return toBV32(result);
     }
 
     public static String number(String number) {
@@ -148,13 +149,29 @@ public class SMTUtil {
     }
 
     public static String generateCondition(List<String> asserts) {
-        switch (asserts.size()) {
-            case 0:
-                return "(assert false)";
-            case 1:
-                return assertion("not", asserts.get(0));
-            default:
-                return assertion("not", and(asserts));
+        if (asserts.size() == 0) {
+            return "(assert false)";
         }
+        return createProps(asserts) + assertion("not", and(asserts));
+    }
+
+    public static String getValues(int size) {
+        List<String> props = Lists.newArrayList();
+        for (int i = 0; i < size; ++i) {
+            props.add("prop" + i);
+        }
+        return "(get-value (" + String.join(" ", props) + "))\n";
+    }
+
+    private static String createProps(List<String> asserts) {
+        List<String> propDecls = Lists.newArrayList();
+        for (int i = 0; i < asserts.size(); ++i) {
+            propDecls.add(declareBool("prop", i));
+        }
+        List<String> propAsserts = Lists.newArrayList();
+        for (int i = 0; i < asserts.size(); ++i) {
+            propAsserts.add(assertion("=", "prop" + i, toBool(asserts.get(i))));
+        }
+        return String.join("", propDecls) + String.join("", propAsserts);
     }
 }

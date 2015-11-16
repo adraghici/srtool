@@ -63,6 +63,7 @@ public class SRTool {
 
         if (queryResult.startsWith("sat")) {
             System.out.println("INCORRECT");
+            // System.out.println(queryResult);
             System.exit(0);
         }
 

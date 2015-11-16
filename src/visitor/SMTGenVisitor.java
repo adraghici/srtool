@@ -59,7 +59,8 @@ public class SMTGenVisitor implements Visitor {
             .map(p -> (String) p.accept(this))
             .collect(Collectors.toList());
         String condition = SMTUtil.generateCondition(asserts);
-        return String.join("", globals) + String.join("", procedures) + condition;
+
+        return String.join("", globals) + String.join("", procedures) + condition + "\n(check-sat)\n" + SMTUtil.getValues(asserts.size());
     }
 
     @Override

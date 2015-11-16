@@ -26,9 +26,7 @@ public class VCGenerator {
         String smtProcedure = visitor.visit(this.program);
         result.append(smtProcedure);
 
-        result.append("\n(check-sat)\n");
         // System.out.println(result);
-        // result.append("(get-model)");
 
         return result;
     }
