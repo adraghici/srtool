@@ -80,10 +80,10 @@ public class CallVisitor implements Visitor {
         scopes.topScope().updateVar(varRef.getVar(), 0);
         return varRef;
     }
-
-    /*
-     * Builds a map from argument names of a procedure 'proc' to the actual expressions of a given
-     * call statement 'callStmt' to allow substitution of arguments in pre/post conditions with the
+    
+    /**
+     * Builds a map from argument names of a {@link ProcedureDecl} to the actual expressions of a given
+     * {@link CallStmt} to allow substitution of arguments in pre and post conditions with the
      * actual expressions passed in the procedure call.
      */
     private Map<String, Expr> createSubstituteArgs(CallStmt callStmt, ProcedureDecl proc) {
