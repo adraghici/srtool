@@ -80,6 +80,11 @@ public class CallVisitor implements Visitor {
         scopes.topScope().updateVar(varRef.getVar(), 0);
         return varRef;
     }
+
+    @Override
+    public Node visit(OldExpr oldExpr) {
+        return new VarRefExpr((VarRef) oldExpr.getVarRef().accept(this));
+    }
     
     /**
      * Builds a map from argument names of a {@link ProcedureDecl} to the actual expressions of a given
