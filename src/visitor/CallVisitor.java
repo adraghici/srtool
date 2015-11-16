@@ -15,6 +15,7 @@ import java.util.Map;
 public class CallVisitor implements Visitor {
     private final Scopes scopes;
     private final Map<String, ProcedureDecl> procedures;
+    private boolean inCallStmt;
 
     public CallVisitor() {
         scopes = Scopes.withDefault();
@@ -37,6 +38,7 @@ public class CallVisitor implements Visitor {
 
     @Override
     public Stmt visit(CallStmt callStmt) {
+        inCallStmt = true;
         List<Stmt> stmts = Lists.newArrayList();
         ProcedureDecl proc = procedures.get(callStmt.getProcedureRef().getName());
         Map<String, Expr> substituteArgs = createSubstituteArgs(callStmt, proc);
@@ -63,6 +65,7 @@ public class CallVisitor implements Visitor {
 
         // Assign result to variable.
         stmts.add(new AssignStmt(callStmt.getVarRef(), returnVarRefExpr));
+        inCallStmt = false;
 
         return new BlockStmt(stmts);
     }
@@ -83,7 +86,10 @@ public class CallVisitor implements Visitor {
 
     @Override
     public Node visit(OldExpr oldExpr) {
-        return new VarRefExpr((VarRef) oldExpr.getVarRef().accept(this));
+        if (inCallStmt) {
+            return new VarRefExpr((VarRef) oldExpr.getVarRef().accept(this));
+        }
+        return (OldExpr) visitChildren(oldExpr);
     }
     
     /**
