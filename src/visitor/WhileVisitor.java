@@ -9,10 +9,12 @@ import ast.Node;
 import ast.NumberExpr;
 import ast.ProcedureDecl;
 import ast.Stmt;
+import ast.TraceableNode.SourceType;
 import ast.VarRef;
 import ast.WhileStmt;
 import com.google.common.collect.Lists;
 import ssa.Scopes;
+import tool.AssertCollector;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,9 +24,12 @@ import java.util.Optional;
  */
 public class WhileVisitor extends DefaultVisitor {
     private final Scopes scopes;
+    private final AssertCollector assertCollector;
 
-    public WhileVisitor() {
+    public WhileVisitor(AssertCollector assertCollector) {
         this.scopes = Scopes.withDefault();
+        this.assertCollector = assertCollector;
+        sourceType = SourceType.WHILE;
     }
 
     @Override
@@ -39,14 +44,26 @@ public class WhileVisitor extends DefaultVisitor {
     public Stmt visit(WhileStmt whileStmt) {
         List<Stmt> stmts = Lists.newArrayList();
 
-        whileStmt.getInvariants().forEach(x -> stmts.add(new AssertStmt(x.getCondition())));
+        whileStmt.getLoopInvariants().forEach(x -> stmts.add(new AssertStmt(x.getCondition())));
+        whileStmt.getCandidateInvariants().forEach(i -> {
+            AssertStmt assertStmt = new AssertStmt(i.getCondition());
+            stmts.add(assertStmt);
+            assertCollector.add(i, assertStmt);
+        });
+
         scopes.topScope().modset(whileStmt.getModified()).forEach(x -> stmts.add(new HavocStmt(new VarRef(x))));
-        whileStmt.getInvariants().forEach(x -> stmts.add(new AssumeStmt(x.getCondition())));
+        whileStmt.getLoopInvariants().forEach(x -> stmts.add(new AssumeStmt(x.getCondition())));
 
         List<Stmt> ifStmts = Lists.newArrayList();
         whileStmt.getWhileBlock().getStmts().forEach(stmt -> ifStmts.add((Stmt) stmt.accept(this)));
         whileStmt.getInvariants().forEach(x -> ifStmts.add(new AssertStmt(x.getCondition())));
         ifStmts.add(new AssumeStmt(new NumberExpr("0")));
+
+        whileStmt.getCandidateInvariants().forEach(i -> {
+            AssertStmt assertStmt = new AssertStmt(i.getCondition());
+            ifStmts.add(assertStmt);
+            assertCollector.add(i, assertStmt);
+        });
 
         stmts.add(new IfStmt(whileStmt.getCondition(), new BlockStmt(ifStmts), Optional.empty()));
 

@@ -112,7 +112,7 @@ public class PrintingVisitor extends DefaultVisitor {
         return formatWhileStatement(
             whileStmt.getCondition(),
             whileStmt.getWhileBlock(),
-            whileStmt.getInvariants());
+            whileStmt.getLoopInvariants());
     }
 
     @Override

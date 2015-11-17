@@ -4,12 +4,10 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import visitor.Visitor;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 public class IfStmt implements Condition, Stmt {
-    private List<Node> children;
     private final Expr condition;
     private final BlockStmt thenBlock;
     private final Optional<BlockStmt> elseBlock;

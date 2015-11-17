@@ -16,21 +16,24 @@ public class BMC implements VerificationStrategy {
     private Program program;
     private final ConstraintSolver solver;
     private final List<String> programStates;
-    private final ImmutableList<Visitor> VISITORS = ImmutableList.of(
-        new ShadowingVisitor(),
-        new CallVisitor(),
-        new LoopUnwindingVisitor(),
-        new ReturnVisitor());
+    private final AssertCollector assertCollector;
+    private final ImmutableList<Visitor> mutatingVisitors;
 
     public BMC(Program program) {
         this.program = program;
         solver = new ConstraintSolver();
         programStates = Lists.newArrayList();
+        assertCollector = new AssertCollector();
+        mutatingVisitors = ImmutableList.of(
+            new ShadowingVisitor(),
+            new CallVisitor(assertCollector),
+            new LoopUnwindingVisitor(),
+            new ReturnVisitor(assertCollector));
     }
 
     @Override
     public String run() throws IOException, InterruptedException {
-        VISITORS.forEach(visitor -> {
+        mutatingVisitors.forEach(visitor -> {
             program = (Program) visitor.visit(program);
             programStates.add(program.toString(visitor));
         });

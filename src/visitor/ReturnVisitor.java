@@ -1,13 +1,17 @@
 package visitor;
 
 import ast.AssertStmt;
+import ast.CandidatePostcondition;
 import ast.Expr;
 import ast.Node;
 import ast.NumberExpr;
 import ast.Postcondition;
 import ast.ProcedureDecl;
 import ast.Stmt;
+import ast.TraceableNode.SourceType;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import tool.AssertCollector;
 import tool.SMTUtil;
 
 import java.util.List;
@@ -19,6 +23,12 @@ import java.util.stream.Collectors;
  * put at the end.
  */
 public class ReturnVisitor extends DefaultVisitor {
+    private final AssertCollector assertCollector;
+
+    public ReturnVisitor(AssertCollector assertCollector) {
+        sourceType = SourceType.RETURN;
+        this.assertCollector = assertCollector;
+    }
 
     @Override
     public Node visit(ProcedureDecl procedureDecl) {
@@ -26,6 +36,7 @@ public class ReturnVisitor extends DefaultVisitor {
         stmts.addAll(
             createPostconditionAsserts(
                 procedureDecl.getPostconditions(),
+                procedureDecl.getCandidatePostconditions(),
                 procedureDecl.getReturnExpr()));
         return new ProcedureDecl(
             procedureDecl.getName(),
@@ -42,11 +53,25 @@ public class ReturnVisitor extends DefaultVisitor {
 
     public List<AssertStmt> createPostconditionAsserts(
         List<Postcondition> postconditions,
+        List<CandidatePostcondition> candidatePostconditions,
         Expr returnExpr) {
         Map<String, Expr> substitutes = Maps.newHashMap();
         substitutes.put(SMTUtil.RESULT_PLACEHOLDER, returnExpr);
-        return postconditions.stream()
+
+        List<AssertStmt> postAsserts = postconditions.stream()
             .map(p -> new AssertStmt(p.getCondition().replace(substitutes)))
             .collect(Collectors.toList());
+        List<AssertStmt> candidatePostAsserts = candidatePostconditions.stream()
+            .map(post -> {
+                AssertStmt assertStmt = new AssertStmt(post.getCondition().replace(substitutes));
+                assertCollector.add(post, assertStmt);
+                return assertStmt;
+            })
+            .collect(Collectors.toList());
+
+        List<AssertStmt> result = Lists.newArrayList(postAsserts);
+        result.addAll(candidatePostAsserts);
+
+        return result;
     }
 }

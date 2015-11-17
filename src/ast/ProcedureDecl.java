@@ -41,12 +41,27 @@ public class ProcedureDecl implements Node {
             .collect(Collectors.toList());
     }
 
+    public List<CandidatePrecondition> getCandidatePreconditions() {
+        return conditions.stream()
+            .filter(x -> x instanceof CandidatePrecondition)
+            .map(x -> (CandidatePrecondition) x)
+            .collect(Collectors.toList());
+    }
+
     public List<Postcondition> getPostconditions() {
         return conditions.stream()
             .filter(x -> x instanceof Postcondition)
             .map(x -> (Postcondition) x)
             .collect(Collectors.toList());
     }
+
+    public List<CandidatePostcondition> getCandidatePostconditions() {
+        return conditions.stream()
+            .filter(x -> x instanceof CandidatePostcondition)
+            .map(x -> (CandidatePostcondition) x)
+            .collect(Collectors.toList());
+    }
+
 
     public List<Stmt> getStmts() {
         return stmts;

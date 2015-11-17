@@ -190,7 +190,7 @@ public class SMTUtil {
             "(define-fun bvtobinary ((x (_ BitVec 32))) (_ BitVec 32) (ite (not (= x (_ bv0 32))) (_ bv0 32) (_ bv1 32)))"));
     }
 
-    public static List<Integer> failedAssertionsIndexes(String smtValues) {
+    public static List<Integer> failedAssertionIds(String smtValues) {
         Pattern pattern = Pattern.compile("\\(prop(\\d+) false\\)");
         Matcher matcher = pattern.matcher(smtValues);
 

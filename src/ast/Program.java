@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Program implements Node {
-    private List<Node> children;
     private final List<VarDeclStmt> globalDecls;
     private final List<ProcedureDecl> procedureDecls;
 

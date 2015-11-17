@@ -4,6 +4,7 @@ import ast.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import ssa.Scopes;
+import tool.AssertCollector;
 import tool.SMTUtil;
 
 import java.util.List;
@@ -16,10 +17,13 @@ public class CallVisitor extends DefaultVisitor {
     private final Scopes scopes;
     private final Map<String, ProcedureDecl> procedures;
     private boolean inCallStmt;
+    private final AssertCollector assertCollector;
 
-    public CallVisitor() {
+    public CallVisitor(AssertCollector assertCollector) {
         scopes = Scopes.withDefault();
         procedures = Maps.newHashMap();
+        sourceType = TraceableNode.SourceType.CALL;
+        this.assertCollector = assertCollector;
     }
 
     @Override
@@ -43,10 +47,16 @@ public class CallVisitor extends DefaultVisitor {
         ProcedureDecl proc = procedures.get(callStmt.getProcedureRef().getName());
         Map<String, Expr> substituteArgs = createSubstituteArgs(callStmt, proc);
 
-        // Assert preconditions.
+        // Assert preconditions and candidate preconditions.
         proc.getPreconditions()
             .forEach(pre -> stmts.add(
                 new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this))));
+        proc.getCandidatePreconditions().forEach(pre -> {
+            AssertStmt assertStmt =
+                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this));
+            stmts.add(assertStmt);
+            assertCollector.add(pre, assertStmt);
+        });
 
         // Havoc callee modset.
         scopes.topScope().modset(proc.getModified())

@@ -1,5 +1,6 @@
 package ast;
 
+import ast.TraceableNode.SourceType;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.antlr.v4.runtime.Token;
@@ -54,9 +55,15 @@ public class ASTBuilder {
         } else if (prePost.ensures() != null) {
             return new Postcondition(build(prePost.ensures().condition));
         } else if (prePost.candidateRequires() != null) {
-            return new CandidatePrecondition(build(prePost.candidateRequires().condition));
+            return new CandidatePrecondition(
+                build(prePost.candidateRequires().condition),
+                Optional.empty(),
+                SourceType.UNKNOWN);
         } else {
-            return new CandidatePostcondition(build(prePost.candidateEnsures().condition));
+            return new CandidatePostcondition(
+                build(prePost.candidateEnsures().condition),
+                Optional.empty(),
+                SourceType.UNKNOWN);
         }
     }
 
@@ -125,7 +132,10 @@ public class ASTBuilder {
         if (loopInvariant.invariant() != null) {
             return new Invariant(build(loopInvariant.invariant().condition));
         } else {
-            return new CandidateInvariant(build(loopInvariant.candidateInvariant().condition));
+            return new CandidateInvariant(
+                build(loopInvariant.candidateInvariant().condition),
+                Optional.empty(),
+                SourceType.UNKNOWN);
         }
     }
 
