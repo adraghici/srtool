@@ -1,6 +1,5 @@
 package ast;
 
-import com.google.common.collect.Lists;
 import visitor.Visitor;
 
 import java.util.List;
@@ -9,18 +8,18 @@ import java.util.stream.Collectors;
 
 public class ProcedureDecl implements Node {
     private final String name;
-    private List<Node> children;
+    private final List<VarRef> params;
+    private final List<PrePostCondition> conditions;
+    private final List<Stmt> stmts;
+    private final Expr returnExpr;
 
-    public ProcedureDecl(
-        String name,
-        List<VarRef> params,
-        List<PrePostCondition> conditions,
+    public ProcedureDecl(String name, List<VarRef> params, List<PrePostCondition> conditions,
         List<Stmt> stmts, Expr returnExpr) {
         this.name = name;
-        this.children = Lists.newArrayList(params);
-        this.children.addAll(conditions);
-        this.children.addAll(stmts);
-        this.children.add(returnExpr);
+        this.params = params;
+        this.conditions = conditions;
+        this.stmts = stmts;
+        this.returnExpr = returnExpr;
     }
 
     public String getName() {
@@ -28,45 +27,33 @@ public class ProcedureDecl implements Node {
     }
 
     public List<VarRef> getParams() {
-        return children.stream()
-            .filter(x -> x instanceof VarRef)
-            .map(x -> (VarRef) x)
-            .collect(Collectors.toList());
+        return params;
     }
 
     public List<PrePostCondition> getConditions() {
-        return children.stream()
-            .filter(x -> x instanceof PrePostCondition)
-            .map(x -> (PrePostCondition) x)
-            .collect(Collectors.toList());
+        return conditions;
     }
 
     public List<Precondition> getPreconditions() {
-        return children.stream()
+        return conditions.stream()
             .filter(x -> x instanceof Precondition)
             .map(x -> (Precondition) x)
             .collect(Collectors.toList());
     }
 
     public List<Postcondition> getPostconditions() {
-        return children.stream()
+        return conditions.stream()
             .filter(x -> x instanceof Postcondition)
             .map(x -> (Postcondition) x)
             .collect(Collectors.toList());
     }
 
     public List<Stmt> getStmts() {
-        return children.stream()
-            .filter(x -> x instanceof Stmt)
-            .map(x -> (Stmt) x)
-            .collect(Collectors.toList());
+        return stmts;
     }
 
     public Expr getReturnExpr() {
-        return children.stream()
-            .filter(x -> x instanceof Expr)
-            .map(x -> (Expr) x)
-            .collect(Collectors.toList()).get(0);
+        return returnExpr;
     }
 
     @Override
@@ -75,16 +62,6 @@ public class ProcedureDecl implements Node {
             .map(Stmt::getModified)
             .flatMap(Set::stream)
             .collect(Collectors.toSet());
-    }
-
-    @Override
-    public List<Node> getChildren() {
-        return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        this.children = Lists.newArrayList(children);
     }
 
     @Override

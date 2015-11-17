@@ -1,29 +1,18 @@
 package ast;
 
-import com.google.common.collect.Lists;
 import visitor.Visitor;
 
-import java.util.List;
 import java.util.Map;
 
 public class OldExpr implements AtomExpr {
-    private List<Node> children;
+    private final VarRef varRef;
 
     public OldExpr(VarRef varRef) {
-        this.children = Lists.newArrayList(varRef);
+        this.varRef = varRef;
     }
 
     public VarRef getVarRef() {
-        return (VarRef) children.get(0);
-    }
-
-    public List<Node> getChildren() {
-        return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        this.children = Lists.newArrayList(children);
+        return varRef;
     }
 
     @Override

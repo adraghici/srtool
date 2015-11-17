@@ -20,7 +20,7 @@ import java.util.Optional;
 /**
  * Visitor used to replace while loops with invariant assertions, randomising variables and if statements.
  */
-public class WhileVisitor implements Visitor {
+public class WhileVisitor extends DefaultVisitor {
     private final Scopes scopes;
 
     public WhileVisitor() {
@@ -30,7 +30,7 @@ public class WhileVisitor implements Visitor {
     @Override
     public Node visit(ProcedureDecl procedureDecl) {
         scopes.enterScope();
-        ProcedureDecl result = (ProcedureDecl) visitChildren(procedureDecl);
+        ProcedureDecl result = (ProcedureDecl) super.visit(procedureDecl);
         scopes.exitScope();
         return result;
     }
@@ -56,7 +56,7 @@ public class WhileVisitor implements Visitor {
     @Override
     public Node visit(BlockStmt blockStmt) {
         scopes.enterScope();
-        BlockStmt result = (BlockStmt) visitChildren(blockStmt);
+        BlockStmt result = (BlockStmt) super.visit(blockStmt);
         scopes.exitScope();
         return result;
     }

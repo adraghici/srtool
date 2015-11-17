@@ -1,134 +1,88 @@
 package visitor;
 
-import ast.*;
-import com.google.common.collect.Lists;
+import ast.AssertStmt;
+import ast.AssignStmt;
+import ast.AssumeStmt;
+import ast.BinaryExpr;
+import ast.BlockStmt;
+import ast.CallStmt;
+import ast.CandidateInvariant;
+import ast.CandidatePostcondition;
+import ast.CandidatePrecondition;
+import ast.HavocStmt;
+import ast.IfStmt;
+import ast.Invariant;
+import ast.NumberExpr;
+import ast.OldExpr;
+import ast.ParenExpr;
+import ast.Postcondition;
+import ast.Precondition;
+import ast.ProcedureDecl;
+import ast.ProcedureRef;
+import ast.Program;
+import ast.ResultExpr;
+import ast.TernaryExpr;
+import ast.UnaryExpr;
+import ast.VarDeclStmt;
+import ast.VarRef;
+import ast.VarRefExpr;
+import ast.WhileStmt;
 
-import java.util.List;
+public interface Visitor<T> {
 
-public interface Visitor {
+    T visit(Program program);
 
-    default Object visit(Program program) {
-        return visitChildren(program);
-    }
+    T visit(VarDeclStmt varDeclStmt);
 
-    default Object visit(VarDeclStmt varDeclStmt) {
-        return visitChildren(varDeclStmt);
-    }
+    T visit(ProcedureDecl procedureDecl);
 
-    default Object visit(ProcedureDecl procedureDecl) {
-        return visitChildren(procedureDecl);
-    }
+    T visit(Precondition precondition);
 
-    default Object visit(Precondition precondition) {
-        return visitChildren(precondition);
-    }
+    T visit(Postcondition postcondition);
 
-    default Object visit(Postcondition postcondition) {
-        return visitChildren(postcondition);
-    }
+    T visit(CandidatePrecondition candidatePrecondition);
 
-    default Object visit(CandidatePrecondition candidatePrecondition) {
-        return visitChildren(candidatePrecondition);
-    }
+    T visit(CandidatePostcondition candidatePostcondition);
 
-    default Object visit(CandidatePostcondition candidatePostcondition) {
-        return visitChildren(candidatePostcondition);
-    }
+    T visit(AssignStmt assignStmt);
 
-    default Object visit(AssignStmt assignStmt) {
-        return visitChildren(assignStmt);
-    }
+    T visit(AssertStmt assertStmt);
 
-    default Object visit(AssertStmt assertStmt) {
-        return visitChildren(assertStmt);
-    }
+    T visit(AssumeStmt assumeStmt);
 
-    default Object visit(AssumeStmt assumeStmt) {
-        return visitChildren(assumeStmt);
-    }
+    T visit(HavocStmt havocStmt);
 
-    default Object visit(HavocStmt havocStmt) {
-        return visitChildren(havocStmt);
-    }
+    T visit(CallStmt callStmt);
 
-    default Object visit(CallStmt callStmt) {
-        return visitChildren(callStmt);
-    }
+    T visit(IfStmt ifStmt);
 
-    default Object visit(IfStmt ifStmt) {
-        return visitChildren(ifStmt);
-    }
+    T visit(WhileStmt whileStmt);
 
-    default Object visit(WhileStmt whileStmt) {
-        return visitChildren(whileStmt);
-    }
+    T visit(BlockStmt blockStmt);
 
-    default Object visit(BlockStmt blockStmt) {
-        return visitChildren(blockStmt);
-    }
+    T visit(Invariant invariant);
 
-    default Object visit(Invariant invariant) {
-        return visitChildren(invariant);
-    }
+    T visit(CandidateInvariant candidateInvariant);
 
-    default Object visit(CandidateInvariant candidateInvariant) {
-        return visitChildren(candidateInvariant);
-    }
+    T visit(VarRef varRef);
 
-    default Object visit(VarRef varRef) {
-        return visitChildren(varRef);
-    }
+    T visit(TernaryExpr ternaryExpr);
 
-    default Object visit(TernaryExpr ternaryExpr) {
-        return visitChildren(ternaryExpr);
-    }
+    T visit(BinaryExpr binaryExpr);
 
-    default Object visit(BinaryExpr binaryExpr) {
-        return visitChildren(binaryExpr);
-    }
+    T visit(UnaryExpr unaryExpr);
 
-    default Object visit(UnaryExpr unaryExpr) {
-        return visitChildren(unaryExpr);
-    }
+    T visit(NumberExpr numberExpr);
 
-    default Object visit(NumberExpr numberExpr) {
-        return visitChildren(numberExpr);
-    }
+    T visit(VarRefExpr varRefExpr);
 
-    default Object visit(VarRefExpr varRefExpr) {
-        return visitChildren(varRefExpr);
-    }
+    T visit(ParenExpr parenExpr);
 
-    default Object visit(ParenExpr parenExpr) {
-        return visitChildren(parenExpr);
-    }
+    T visit(ResultExpr resultExpr);
 
-    default Object visit(ResultExpr resultExpr) {
-        return visitChildren(resultExpr);
-    }
+    T visit(OldExpr oldExpr);
 
-    default Object visit(OldExpr oldExpr) {
-        return visitChildren(oldExpr);
-    }
-
-    default Object visit(ProcedureRef procedureRef) {
-        return visitChildren(procedureRef);
-    }
-
-    default Object visitChildren(Node node) {
-        List<Node> newChildren = Lists.newArrayList();
-        for (Node child : node.getChildren()) {
-            Node newChild = (Node) child.accept(this);
-            if (newChild != child) {
-                newChildren.add(newChild);
-            } else {
-                newChildren.add(child);
-            }
-        }
-        node.setChildren(newChildren);
-
-        return node;
-    }
+    T visit(ProcedureRef procedureRef);
 
     String getDescription();
 }

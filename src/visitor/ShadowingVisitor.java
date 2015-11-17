@@ -7,7 +7,7 @@ import ssa.Scopes;
 /**
  * Visitor used to disambiguate variables within nested scopes.
  */
-public class ShadowingVisitor implements Visitor {
+public class ShadowingVisitor extends DefaultVisitor {
     private final Scopes scopes;
     private final Scopes globals;
 
@@ -27,7 +27,7 @@ public class ShadowingVisitor implements Visitor {
     public Node visit(ProcedureDecl procedureDecl) {
         scopes.enterScope();
         globals.enterScope(Scope.fromScope(scopes.topScope()));
-        ProcedureDecl result = (ProcedureDecl) visitChildren(procedureDecl);
+        ProcedureDecl result = (ProcedureDecl) super.visit(procedureDecl);
         globals.exitScope();
         scopes.exitScope();
         return result;
@@ -36,7 +36,7 @@ public class ShadowingVisitor implements Visitor {
     @Override
     public Node visit(BlockStmt blockStmt) {
         scopes.enterScope();
-        BlockStmt result = (BlockStmt) visitChildren(blockStmt);
+        BlockStmt result = (BlockStmt) super.visit(blockStmt);
         scopes.exitScope();
         return result;
     }

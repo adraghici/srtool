@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * Visitor used to transform postconditions using the result from the return statement to asserts
  * put at the end.
  */
-public class ReturnVisitor implements Visitor {
+public class ReturnVisitor extends DefaultVisitor {
 
     @Override
     public Node visit(ProcedureDecl procedureDecl) {

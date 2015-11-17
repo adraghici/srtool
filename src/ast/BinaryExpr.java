@@ -1,18 +1,18 @@
 package ast;
 
-import com.google.common.collect.Lists;
 import visitor.Visitor;
 
-import java.util.List;
 import java.util.Map;
 
 public class BinaryExpr implements Expr {
     private final String operator;
-    private List<Node> children;
+    private final Expr left;
+    private final Expr right;
 
     public BinaryExpr(String operator, Expr left, Expr right) {
         this.operator = operator;
-        this.children = Lists.newArrayList(left, right);
+        this.left = left;
+        this.right = right;
     }
 
     public String getOperator() {
@@ -20,21 +20,11 @@ public class BinaryExpr implements Expr {
     }
 
     public Expr getLeft() {
-        return (Expr) children.get(0);
+        return left;
     }
 
     public Expr getRight() {
-        return (Expr) children.get(1);
-    }
-
-    @Override
-    public List<Node> getChildren() {
-        return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        this.children = Lists.newArrayList(children);
+        return right;
     }
 
     @Override

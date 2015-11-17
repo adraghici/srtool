@@ -9,7 +9,7 @@ import java.util.Optional;
 /**
  * Visitor used to replace while loops with invariant assertions, randomising variables and if statements.
  */
-public class LoopUnwindingVisitor implements Visitor {
+public class LoopUnwindingVisitor extends DefaultVisitor {
     private final int depth;
 
     public LoopUnwindingVisitor() {

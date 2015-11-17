@@ -7,30 +7,20 @@ import java.util.List;
 import java.util.Map;
 
 public class UnaryExpr implements Expr {
+    private final Expr atom;
     private final List<String> operators;
-    private List<Node> children;
 
     public UnaryExpr(Expr atom, List<String> operators) {
+        this.atom = atom;
         this.operators = operators;
-        this.children = Lists.newArrayList(atom);
     }
 
     public Expr getAtom() {
-        return (Expr) children.get(0);
+        return atom;
     }
 
     public List<String> getOperators() {
         return operators;
-    }
-
-    @Override
-    public List<Node> getChildren() {
-        return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        this.children = Lists.newArrayList(children);
     }
 
     @Override

@@ -16,7 +16,7 @@ public class BMC implements VerificationStrategy {
     private Program program;
     private final ConstraintSolver solver;
     private final List<String> programStates;
-    private final ImmutableList<Visitor> TRANSFORMATION_VISITORS = ImmutableList.of(
+    private final ImmutableList<Visitor> VISITORS = ImmutableList.of(
         new ShadowingVisitor(),
         new CallVisitor(),
         new LoopUnwindingVisitor(),
@@ -30,7 +30,7 @@ public class BMC implements VerificationStrategy {
 
     @Override
     public String run() throws IOException, InterruptedException {
-        TRANSFORMATION_VISITORS.forEach(visitor -> {
+        VISITORS.forEach(visitor -> {
             program = (Program) visitor.visit(program);
             programStates.add(program.toString(visitor));
         });

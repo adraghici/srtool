@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * Visitor used to implement method calls.
  */
-public class CallVisitor implements Visitor {
+public class CallVisitor extends DefaultVisitor {
     private final Scopes scopes;
     private final Map<String, ProcedureDecl> procedures;
     private boolean inCallStmt;
@@ -25,13 +25,13 @@ public class CallVisitor implements Visitor {
     @Override
     public Node visit(Program program) {
         program.getProcedureDecls().forEach(proc -> procedures.put(proc.getName(), proc));
-        return (Node) visitChildren(program);
+        return (Node) super.visit(program);
     }
 
     @Override
     public Node visit(ProcedureDecl procedureDecl) {
         scopes.enterScope();
-        ProcedureDecl result = (ProcedureDecl) visitChildren(procedureDecl);
+        ProcedureDecl result = (ProcedureDecl) super.visit(procedureDecl);
         scopes.exitScope();
         return result;
     }
@@ -73,7 +73,7 @@ public class CallVisitor implements Visitor {
     @Override
     public Node visit(BlockStmt blockStmt) {
         scopes.enterScope();
-        BlockStmt result = (BlockStmt) visitChildren(blockStmt);
+        BlockStmt result = (BlockStmt) super.visit(blockStmt);
         scopes.exitScope();
         return result;
     }
@@ -89,7 +89,7 @@ public class CallVisitor implements Visitor {
         if (inCallStmt) {
             return new VarRefExpr((VarRef) oldExpr.getVarRef().accept(this));
         }
-        return (OldExpr) visitChildren(oldExpr);
+        return (OldExpr) super.visit(oldExpr);
     }
 
     @Override

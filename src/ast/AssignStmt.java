@@ -1,40 +1,30 @@
 package ast;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import visitor.Visitor;
 
-import java.util.List;
 import java.util.Set;
 
 public class AssignStmt implements Stmt {
-    private List<Node> children;
+    private final VarRef varRef;
+    private final Expr expr;
 
     public AssignStmt(VarRef varRef, Expr expr) {
-        this.children = Lists.newArrayList(varRef, expr);
+        this.varRef = varRef;
+        this.expr = expr;
     }
 
     public VarRef getVarRef() {
-        return (VarRef) children.get(0);
+        return varRef;
     }
 
     public Expr getExpr() {
-        return (Expr) children.get(1);
+        return expr;
     }
 
     @Override
     public Set<String> getModified() {
         return Sets.newHashSet(getVarRef().getVar());
-    }
-
-    @Override
-    public List<Node> getChildren() {
-        return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        this.children = Lists.newArrayList(children);
     }
 
     @Override

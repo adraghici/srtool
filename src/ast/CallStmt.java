@@ -1,49 +1,37 @@
 package ast;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import visitor.Visitor;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class CallStmt implements Stmt {
-    private List<Node> children;
+    private final VarRef varRef;
+    private final ProcedureRef procedureRef;
+    private final List<Expr> args;
 
     public CallStmt(VarRef varRef, ProcedureRef procedureRef, List<Expr> args) {
-        children = Lists.newArrayList(varRef, procedureRef);
-        children.addAll(args);
+        this.varRef = varRef;
+        this.procedureRef = procedureRef;
+        this.args = args;
     }
 
     public VarRef getVarRef() {
-        return (VarRef) children.get(0);
+        return varRef;
     }
 
     public ProcedureRef getProcedureRef() {
-        return (ProcedureRef) children.get(1);
+        return procedureRef;
     }
 
     public List<Expr> getArgs() {
-        return children.stream()
-            .filter(x -> x instanceof Expr)
-            .map(x -> (Expr) x)
-            .collect(Collectors.toList());
+        return args;
     }
 
     @Override
     public Set<String> getModified() {
         return Sets.newHashSet(getVarRef().getVar());
-    }
-
-    @Override
-    public List<Node> getChildren() {
-        return children;
-    }
-
-    @Override
-    public void setChildren(List<Node> children) {
-        this.children = Lists.newArrayList(children);
     }
 
     @Override

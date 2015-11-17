@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 /**
  * Visitor used to generated SMT code from an AST representation.
  */
-public class SMTGenVisitor implements Visitor {
+public class SMTGenVisitor extends DefaultVisitor {
     private final List<String> postconditions;
     private final List<String> assumptions;
     private final List<String> asserts;
