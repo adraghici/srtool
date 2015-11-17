@@ -1,5 +1,6 @@
 package tool;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 
@@ -10,7 +11,8 @@ import java.util.stream.Collectors;
 public class SMTUtil {
     public static final String RESULT_PLACEHOLDER = "\\result";
     private static ImmutableSet<String> LOGICAL_OPERATORS = ImmutableSet.of("&&", "||");
-    private static ImmutableSet<String> COMPARISON_OPERATORS = ImmutableSet.of("==", "!=", "<", ">", "<=", ">=");
+    private static ImmutableSet<String> COMPARISON_OPERATORS =
+        ImmutableSet.of("==", "!=", "<", ">", "<=", ">=");
 
     /**
      * Generate SMT code for a unary expression wrapping the argument with the given operators.
@@ -171,5 +173,18 @@ public class SMTUtil {
             propAsserts.add(assertion("=", "prop" + i, toBool(asserts.get(i))));
         }
         return String.join("", propDecls) + String.join("", propAsserts);
+    }
+
+    public static String checkSAT() {
+        return "(check-sat)\n";
+    }
+
+    public static String predefinedFunctions() {
+        return String.join("\n", ImmutableList.of("(set-logic QF_BV)", "(set-option :produce-models true)",
+            "(define-fun tobv32 ((p Bool)) (_ BitVec 32) (ite p (_ bv1 32) (_ bv0 32)))",
+            "(define-fun tobool ((p (_ BitVec 32))) Bool (ite (= p (_ bv0 32)) false true))",
+            "(define-fun bvdiv ((x (_ BitVec 32)) (y (_ BitVec 32))) (_ BitVec 32) (ite (not (= y (_ bv0 32))) (bvsdiv x y) x))",
+            "(define-fun bvid ((x (_ BitVec 32))) (_ BitVec 32) x)",
+            "(define-fun bvtobinary ((x (_ BitVec 32))) (_ BitVec 32) (ite (not (= x (_ bv0 32))) (_ bv0 32) (_ bv1 32)))"));
     }
 }
