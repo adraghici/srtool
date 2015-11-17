@@ -57,6 +57,10 @@ public class SMTGenVisitor implements Visitor {
         return asserts.size();
     }
 
+    public Map<Integer, AssertStmt> getIndexToAssert() {
+        return indexToAssert;
+    }
+
     @Override
     public String visit(Program program) {
         List<String> globals = program.getGlobalDecls().stream()
@@ -228,6 +232,11 @@ public class SMTGenVisitor implements Visitor {
     public String visit(OldExpr oldExpr) {
         String var = oldExpr.getVarRef().getVar();
         return var + globals.getId(var);
+    }
+
+    @Override
+    public String getDescription() {
+        return "SMT generation visitor";
     }
 
     private String assertion(String expr) {

@@ -2,7 +2,6 @@ package tool;
 
 import ast.ASTBuilder;
 import ast.Program;
-import com.google.common.base.Strings;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import parser.SimpleCLexer;
@@ -10,55 +9,20 @@ import parser.SimpleCParser;
 import parser.SimpleCParser.ProgramContext;
 import util.ProcessExec;
 import util.ProcessTimeoutException;
-import visitor.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 
 public class SRTool {
-
     private static final int TIMEOUT = 30000;
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        // Build the initial representation.
-        Program program = buildProgram(args[0]);
-        // printSimpleCFile(program, "INITIAL");
-
-        // Run the ShadowingVisitor.
-        ShadowingVisitor shadowingVisitor = new ShadowingVisitor();
-        program = (Program) shadowingVisitor.visit(program);
-        // printSimpleCFile(program, "SHADOWING VISITOR");
-
-        // Run the CallVisitor.
-        CallVisitor callVisitor = new CallVisitor();
-        program = (Program) callVisitor.visit(program);
-        // printSimpleCFile(program, "CALL VISITOR");
-
-        // Run the LoopUnwindingVisitor.
-        // TODO: Run the unwinding in parallel with the loop summarisation procedure.
-        // LoopUnwindingVisitor loopUnwindingVisitor = new LoopUnwindingVisitor();
-        // program = (Program) loopUnwindingVisitor.visit(program);
-        // printSimpleCFile(program, "UNWINDING VISITOR");
-
-        // Run the WhileVisitor.
-        WhileVisitor whileVisitor = new WhileVisitor();
-        program = (Program) whileVisitor.visit(program);
-        // printSimpleCFile(program, "WHILE VISITOR");
-
-        // Run the ReturnVisitor.
-        ReturnVisitor returnVisitor = new ReturnVisitor();
-        program = (Program) returnVisitor.visit(program);
-        // printSimpleCFile(program, "RETURN VISITOR");
-
-        // Generate the final SMT-LIB2 code.
-        SMTGenerator SMTGenerator = new SMTGenerator(program);
-        String smt = SMTGenerator.generateSMT();
-        // System.out.println(smt);
+        SMTModel smtModel = new Houdini(buildProgram(args[0])).run();
 
         ProcessExec process = new ProcessExec("z3", "-smt2", "-in");
         String queryResult = "";
         try {
-            queryResult = process.execute(smt, TIMEOUT);
+            queryResult = process.execute(smtModel.getCode(), TIMEOUT);
             System.err.println(queryResult);
         } catch (ProcessTimeoutException e) {
             System.out.println("UNKNOWN");
@@ -110,11 +74,5 @@ public class SRTool {
         }
 
         return ctx;
-    }
-
-    private static void printSimpleCFile(Program program, String desc) {
-        System.out.println(desc + ":\n");
-        System.out.println(new PrintingVisitor().visit(program));
-        System.out.println(String.format("%s\n", Strings.repeat("-", 100)));
     }
 }

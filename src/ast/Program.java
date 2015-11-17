@@ -1,6 +1,8 @@
 package ast;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import visitor.PrintingVisitor;
 import visitor.Visitor;
 
 import java.util.List;
@@ -50,5 +52,13 @@ public class Program implements Node {
     @Override
     public Object accept(Visitor visitor) {
         return visitor.visit(this);
+    }
+
+    public String toString(Visitor visitor) {
+        StringBuilder result = new StringBuilder();
+        result.append(visitor.getDescription() + ":\n");
+        result.append(new PrintingVisitor().visit(this));
+        result.append(String.format("%s\n", Strings.repeat("-", 100)));
+        return result.toString();
     }
 }

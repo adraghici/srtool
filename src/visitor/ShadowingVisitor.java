@@ -53,4 +53,9 @@ public class ShadowingVisitor implements Visitor {
         String var = oldExpr.getVarRef().getVar();
         return new OldExpr(new VarRef(var + globals.getId(var)));
     }
+
+    @Override
+    public String getDescription() {
+        return "Shadowing visitor";
+    }
 }

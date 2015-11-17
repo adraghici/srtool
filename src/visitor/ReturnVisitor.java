@@ -35,6 +35,11 @@ public class ReturnVisitor implements Visitor {
             new NumberExpr("not needed anymore"));
     }
 
+    @Override
+    public String getDescription() {
+        return "Return visitor";
+    }
+
     public List<AssertStmt> createPostconditionAsserts(
         List<Postcondition> postconditions,
         Expr returnExpr) {

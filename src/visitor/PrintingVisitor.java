@@ -190,6 +190,11 @@ public class PrintingVisitor implements Visitor {
         return String.format("\\old(%s)", oldExpr.getVarRef().accept(this));
     }
 
+    @Override
+    public String getDescription() {
+        return "Printing visitor";
+    }
+
     /*
      * Format Utilities.
      */

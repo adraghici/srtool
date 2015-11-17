@@ -31,4 +31,9 @@ public class LoopUnwindingVisitor implements Visitor {
 
         return result;
     }
+
+    @Override
+    public String getDescription() {
+        return "Loop unwinding visitor";
+    }
 }

@@ -91,7 +91,12 @@ public class CallVisitor implements Visitor {
         }
         return (OldExpr) visitChildren(oldExpr);
     }
-    
+
+    @Override
+    public String getDescription() {
+        return "Call visitor";
+    }
+
     /**
      * Builds a map from argument names of a {@link ProcedureDecl} to the actual expressions of a given
      * {@link CallStmt} to allow substitution of arguments in pre and post conditions with the

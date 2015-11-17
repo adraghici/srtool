@@ -12,10 +12,12 @@ public class SMTGenerator {
         this.visitor = new SMTGenVisitor();
     }
 
-    public String generateSMT() {
-        return SMTUtil.predefinedFunctions()
-            + visitor.visit(this.program)
-            + SMTUtil.checkSAT()
-            + SMTUtil.getValues(visitor.getAssertCount());
+    public SMTModel generateSMT() {
+        return new SMTModel(
+            visitor.getIndexToAssert(),
+            SMTUtil.predefinedFunctions()
+                + visitor.visit(this.program)
+                + SMTUtil.checkSAT()
+                + SMTUtil.getValues(visitor.getAssertCount()));
     }
 }

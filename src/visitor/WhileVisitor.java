@@ -66,4 +66,9 @@ public class WhileVisitor implements Visitor {
         scopes.topScope().updateVar(varRef.getVar(), 0);
         return varRef;
     }
+
+    @Override
+    public String getDescription() {
+        return "While visitor";
+    }
 }

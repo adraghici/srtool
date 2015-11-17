@@ -129,4 +129,6 @@ public interface Visitor {
 
         return node;
     }
+
+    String getDescription();
 }
