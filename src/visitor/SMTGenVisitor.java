@@ -5,7 +5,6 @@ import ast.AssignStmt;
 import ast.AssumeStmt;
 import ast.BinaryExpr;
 import ast.BlockStmt;
-import ast.Expr;
 import ast.HavocStmt;
 import ast.IfStmt;
 import ast.NumberExpr;
@@ -23,12 +22,14 @@ import ast.VarDeclStmt;
 import ast.VarRef;
 import ast.VarRefExpr;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import ssa.Scope;
 import ssa.Scopes;
 import tool.SMTUtil;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,7 @@ public class SMTGenVisitor implements Visitor {
     private final List<String> asserts;
     private final Scopes scopes;
     private final Scopes globals;
+    private final Map<Integer, AssertStmt> indexToAssert;
 
     public SMTGenVisitor() {
         postconditions = Lists.newArrayList();
@@ -48,6 +50,7 @@ public class SMTGenVisitor implements Visitor {
         asserts = Lists.newArrayList();
         scopes = Scopes.withDefault();
         globals = Scopes.empty();
+        indexToAssert = Maps.newHashMap();
     }
 
     public int getAssertCount() {
@@ -83,7 +86,6 @@ public class SMTGenVisitor implements Visitor {
         result.append(translatePreconditions(procedureDecl.getPreconditions()));
         result.append(translateStatements(procedureDecl.getStmts()));
         result.append(translatePostConditions(procedureDecl.getPostconditions()));
-        result.append(translateReturnExpression(procedureDecl.getReturnExpr()));
 
         scopes.exitScope();
         globals.exitScope();
@@ -116,6 +118,7 @@ public class SMTGenVisitor implements Visitor {
     @Override
     public String visit(AssertStmt assertStmt) {
         String condition = (String) assertStmt.getCondition().accept(this);
+        indexToAssert.put(indexToAssert.size(), assertStmt);
         return assertion(condition);
     }
 
@@ -303,14 +306,5 @@ public class SMTGenVisitor implements Visitor {
         return String.join(
             "",
             conditions.stream().map(cond -> (String) cond.accept(this)).collect(Collectors.toList()));
-    }
-
-    private String translateReturnExpression(Expr returnExpr) {
-        String returnExpression = (String) returnExpr.accept(this);
-        return String.join(
-            "",
-            postconditions.stream()
-                .map(post -> assertion(post.replace(SMTUtil.RESULT_PLACEHOLDER, returnExpression)))
-                .collect(Collectors.toList()));
     }
 }

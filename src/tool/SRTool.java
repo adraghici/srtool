@@ -45,6 +45,11 @@ public class SRTool {
         program = (Program) whileVisitor.visit(program);
         // printSimpleCFile(program, "WHILE VISITOR");
 
+        // Run the ReturnVisitor.
+        ReturnVisitor returnVisitor = new ReturnVisitor();
+        program = (Program) returnVisitor.visit(program);
+        // printSimpleCFile(program, "RETURN VISITOR");
+
         // Generate the final SMT-LIB2 code.
         SMTGenerator SMTGenerator = new SMTGenerator(program);
         String smt = SMTGenerator.generateSMT();
