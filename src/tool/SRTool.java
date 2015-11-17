@@ -7,42 +7,14 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import parser.SimpleCLexer;
 import parser.SimpleCParser;
 import parser.SimpleCParser.ProgramContext;
-import util.ProcessExec;
-import util.ProcessTimeoutException;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 
 public class SRTool {
-    private static final int TIMEOUT = 30000;
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        Houdini houdini = new Houdini(buildProgram(args[0]));
-        SMTModel smtModel = houdini.run();
-
-        ProcessExec process = new ProcessExec("z3", "-smt2", "-in");
-        String queryResult = "";
-        try {
-            queryResult = process.execute(smtModel.getCode(), TIMEOUT);
-            System.err.println(queryResult);
-        } catch (ProcessTimeoutException e) {
-            System.out.println("UNKNOWN");
-            System.exit(1);
-        }
-
-        if (queryResult.startsWith("sat")) {
-            System.out.println("INCORRECT");
-            System.exit(0);
-        }
-
-        if (!queryResult.startsWith("unsat")) {
-            System.out.println("UNKNOWN");
-            System.out.println(queryResult);
-            System.exit(1);
-        }
-
-        System.out.println("CORRECT");
-        System.exit(0);
+        System.out.println(new Houdini(buildProgram(args[0])).run());
     }
 
     private static Program buildProgram(String filename) throws IOException {

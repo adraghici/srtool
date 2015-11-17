@@ -1,8 +1,10 @@
 package tool;
 
+import java.io.IOException;
+
 /**
  * Specification for a verification technique.
  */
 public interface VerificationStrategy {
-    SMTModel run();
+    String run() throws IOException, InterruptedException;
 }

@@ -9,10 +9,12 @@ import visitor.ShadowingVisitor;
 import visitor.Visitor;
 import visitor.WhileVisitor;
 
+import java.io.IOException;
 import java.util.List;
 
 public class Houdini implements VerificationStrategy {
     private Program program;
+    private final ConstraintSolver solver;
     private final List<String> programStates;
     private final ImmutableList<Visitor> TRANSFORMATION_VISITORS = ImmutableList.of(
         new ShadowingVisitor(),
@@ -22,20 +24,26 @@ public class Houdini implements VerificationStrategy {
 
     public Houdini(Program program) {
         this.program = program;
+        solver = new ConstraintSolver();
         programStates = Lists.newArrayList();
     }
 
     @Override
-    public SMTModel run() {
+    public String run() throws IOException, InterruptedException {
         TRANSFORMATION_VISITORS.forEach(visitor -> {
             program = (Program) visitor.visit(program);
             programStates.add(program.toString(visitor));
         });
 
         SMTModel smtModel = new SMTGenerator(program).generateSMT();
-        programStates.add(smtModel.getCode());
+        String smtCode = smtModel.getCode();
+        programStates.add(smtCode);
 
-        return smtModel;
+        ConstraintSolution solution = solver.run(smtCode);
+        // TODO: Use this to loop in Houdini.
+        SMTUtil.failedAssertionsIndexes(solution.getDetails());
+
+        return solution.getDecision();
     }
 
     @Override
