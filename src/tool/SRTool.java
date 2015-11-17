@@ -17,7 +17,8 @@ public class SRTool {
     private static final int TIMEOUT = 30000;
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        SMTModel smtModel = new Houdini(buildProgram(args[0])).run();
+        Houdini houdini = new Houdini(buildProgram(args[0]));
+        SMTModel smtModel = houdini.run();
 
         ProcessExec process = new ProcessExec("z3", "-smt2", "-in");
         String queryResult = "";

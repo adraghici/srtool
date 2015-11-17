@@ -6,6 +6,8 @@ import com.google.common.collect.Lists;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SMTUtil {
@@ -186,5 +188,17 @@ public class SMTUtil {
             "(define-fun bvdiv ((x (_ BitVec 32)) (y (_ BitVec 32))) (_ BitVec 32) (ite (not (= y (_ bv0 32))) (bvsdiv x y) x))",
             "(define-fun bvid ((x (_ BitVec 32))) (_ BitVec 32) x)",
             "(define-fun bvtobinary ((x (_ BitVec 32))) (_ BitVec 32) (ite (not (= x (_ bv0 32))) (_ bv0 32) (_ bv1 32)))"));
+    }
+
+    public static List<Integer> failedAssertionsIndexes(String smtValues) {
+        Pattern pattern = Pattern.compile("\\(prop(\\d+) false\\)");
+        Matcher matcher = pattern.matcher(smtValues);
+
+        List<Integer> result = Lists.newArrayList();
+        while (matcher.find()) {
+            result.add(Integer.valueOf(matcher.group(1)));
+        }
+
+        return result;
     }
 }
