@@ -50,6 +50,10 @@ public class SMTGenVisitor implements Visitor {
         globals = Scopes.empty();
     }
 
+    public int getAssertCount() {
+        return asserts.size();
+    }
+
     @Override
     public String visit(Program program) {
         List<String> globals = program.getGlobalDecls().stream()
@@ -60,7 +64,7 @@ public class SMTGenVisitor implements Visitor {
             .collect(Collectors.toList());
         String condition = SMTUtil.generateCondition(asserts);
 
-        return String.join("", globals) + String.join("", procedures) + condition + "\n(check-sat)\n" + SMTUtil.getValues(asserts.size());
+        return String.join("", globals) + String.join("", procedures) + condition;
     }
 
     @Override

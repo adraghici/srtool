@@ -46,16 +46,15 @@ public class SRTool {
         // printSimpleCFile(program, "WHILE VISITOR");
 
         // Generate the final SMT-LIB2 code.
-        VCGenerator vcGenerator = new VCGenerator(program);
-        String vc = vcGenerator.generateVC().toString();
+        SMTGenerator SMTGenerator = new SMTGenerator(program);
+        String smt = SMTGenerator.generateSMT();
+        // System.out.println(smt);
 
-        String dir = System.getProperty("user.dir");
-        String tool = "srtool";
-        dir = dir.substring(0, dir.lastIndexOf(tool) + tool.length());
-        ProcessExec process = new ProcessExec(dir + "/z3", "-smt2", "-in");
+        ProcessExec process = new ProcessExec("z3", "-smt2", "-in");
         String queryResult = "";
         try {
-            queryResult = process.execute(vc, TIMEOUT);
+            queryResult = process.execute(smt, TIMEOUT);
+            System.err.println(queryResult);
         } catch (ProcessTimeoutException e) {
             System.out.println("UNKNOWN");
             System.exit(1);
@@ -63,7 +62,6 @@ public class SRTool {
 
         if (queryResult.startsWith("sat")) {
             System.out.println("INCORRECT");
-            // System.out.println(queryResult);
             System.exit(0);
         }
 
