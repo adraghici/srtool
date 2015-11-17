@@ -165,11 +165,9 @@ public class SMTUtil {
 
     private static String createProps(List<String> asserts) {
         List<String> propDecls = Lists.newArrayList();
-        for (int i = 0; i < asserts.size(); ++i) {
-            propDecls.add(declareBool("prop", i));
-        }
         List<String> propAsserts = Lists.newArrayList();
         for (int i = 0; i < asserts.size(); ++i) {
+            propDecls.add(declareBool("prop", i));
             propAsserts.add(assertion("=", "prop" + i, toBool(asserts.get(i))));
         }
         return String.join("", propDecls) + String.join("", propAsserts);
