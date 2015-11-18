@@ -47,7 +47,7 @@ public class WhileVisitor extends DefaultVisitor {
         whileStmt.getCandidateInvariants().forEach(i -> {
             AssertStmt assertStmt = new AssertStmt(i.getCondition(), Optional.empty());
             stmts.add(assertStmt);
-            candidateAssertCollector.add(i, assertStmt);
+            candidateAssertCollector.add(Optional.of(i), assertStmt);
         });
 
         scopes.topScope().modset(whileStmt.getModified()).forEach(x -> stmts.add(new HavocStmt(new VarRef(x))));
@@ -59,7 +59,7 @@ public class WhileVisitor extends DefaultVisitor {
         whileStmt.getCandidateInvariants().forEach(i -> {
             AssertStmt assertStmt = new AssertStmt(i.getCondition(), Optional.empty());
             ifStmts.add(assertStmt);
-            candidateAssertCollector.add(i, assertStmt);
+            candidateAssertCollector.add(Optional.of(i), assertStmt);
         });
         ifStmts.add(new AssumeStmt(new NumberExpr("0")));
 

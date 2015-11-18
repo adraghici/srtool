@@ -18,13 +18,23 @@ public class CallVisitor extends DefaultVisitor {
     private final Scopes scopes;
     private final Map<String, ProcedureDecl> procedures;
     private boolean inCallStmt;
-    private final AssertCollector candidateAssertCollector;
+    private boolean considerCandidates;
+    private final AssertCollector assertCollector;
 
-    public CallVisitor(AssertCollector candidateAssertCollector) {
+    public static CallVisitor withCandidates(AssertCollector assertCollector) {
+        return new CallVisitor(assertCollector, true);
+    }
+
+    public static CallVisitor withoutCandidates(AssertCollector assertCollector) {
+        return new CallVisitor(assertCollector, false);
+    }
+
+    private CallVisitor(AssertCollector assertCollector, boolean considerCandidates) {
         scopes = Scopes.withDefault();
         procedures = Maps.newHashMap();
         visitStage = VisitStage.DIRTY;
-        this.candidateAssertCollector = candidateAssertCollector;
+        this.considerCandidates = considerCandidates;
+        this.assertCollector = assertCollector;
     }
 
     @Override
@@ -52,12 +62,14 @@ public class CallVisitor extends DefaultVisitor {
         proc.getPreconditions()
             .forEach(pre -> stmts.add(
                 new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this), Optional.empty())));
-        proc.getCandidatePreconditions().forEach(pre -> {
-            AssertStmt assertStmt =
-                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this), Optional.empty());
-            stmts.add(assertStmt);
-            candidateAssertCollector.add(pre, assertStmt);
-        });
+        if (considerCandidates) {
+            proc.getCandidatePreconditions().forEach(pre -> {
+                AssertStmt assertStmt =
+                    new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this), Optional.empty());
+                stmts.add(assertStmt);
+                assertCollector.add(Optional.of(pre), assertStmt);
+            });
+        }
 
         // Havoc callee modset.
         scopes.topScope().modset(proc.getModified())

@@ -14,15 +14,13 @@ int foo() {
     int i;
     while (x < 5) {
       x = x + 1;
-      i = 8;
-      while (x < 3) {
-        int i;
-        x = x + 1;
+      if (x == 5) {
+        i = 8;
       }
     }
     x = x + 1;
   }
-  assert x == 2;
+  assert x == 10;
 
   return 0;
 }

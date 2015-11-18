@@ -23,11 +23,21 @@ import java.util.stream.Collectors;
  * put at the end.
  */
 public class ReturnVisitor extends DefaultVisitor {
-    private final AssertCollector candidateAssertCollector;
+    private final boolean considerCandidates;
+    private final AssertCollector assertCollector;
 
-    public ReturnVisitor(AssertCollector candidateAssertCollector) {
+    public static ReturnVisitor withCandidates(AssertCollector assertCollector) {
+        return new ReturnVisitor(assertCollector, true);
+    }
+
+    public static ReturnVisitor withoutCandidates(AssertCollector assertCollector) {
+        return new ReturnVisitor(assertCollector, false);
+    }
+
+    private ReturnVisitor(AssertCollector assertCollector, boolean considerCandidates) {
         visitStage = VisitStage.DIRTY;
-        this.candidateAssertCollector = candidateAssertCollector;
+        this.considerCandidates = considerCandidates;
+        this.assertCollector = assertCollector;
     }
 
     @Override
@@ -61,15 +71,16 @@ public class ReturnVisitor extends DefaultVisitor {
         List<AssertStmt> postAsserts = postconditions.stream()
             .map(p -> new AssertStmt(p.getCondition().replace(substitutes), Optional.empty()))
             .collect(Collectors.toList());
-        List<AssertStmt> candidatePostAsserts = candidatePostconditions.stream()
-            .map(post -> {
-                AssertStmt assertStmt = new AssertStmt(post.getCondition().replace(substitutes), Optional.empty());
-                candidateAssertCollector.add(post, assertStmt);
-                return assertStmt;
-            }).collect(Collectors.toList());
-
         List<AssertStmt> result = Lists.newArrayList(postAsserts);
-        result.addAll(candidatePostAsserts);
+        if (considerCandidates) {
+            List<AssertStmt> candidatePostAsserts = candidatePostconditions.stream()
+                .map(post -> {
+                    AssertStmt assertStmt = new AssertStmt(post.getCondition().replace(substitutes), Optional.empty());
+                    assertCollector.add(Optional.of(post), assertStmt);
+                    return assertStmt;
+                }).collect(Collectors.toList());
+            result.addAll(candidatePostAsserts);
+        }
 
         return result;
     }

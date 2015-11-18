@@ -9,20 +9,18 @@ import tool.AssertCollector;
 import tool.ConstraintSolution;
 import tool.ConstraintSolver;
 import tool.Outcome;
-import tool.SMTGenerator;
 import tool.SMTModel;
 import tool.VerificationStrategy;
-import util.SMTUtil;
+import util.ProgramUtil;
+import util.StrategyUtil;
 import visitor.CallVisitor;
 import visitor.ReturnVisitor;
 import visitor.ShadowingVisitor;
-import util.ProgramUtil;
 import visitor.Visitor;
 import visitor.WhileVisitor;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Houdini implements VerificationStrategy {
     private final Program program;
@@ -39,9 +37,9 @@ public class Houdini implements VerificationStrategy {
         candidateAssertCollector = new AssertCollector();
         initialVisitors = ImmutableList.of(new ShadowingVisitor());
         iterationVisitors = ImmutableList.of(
-            new CallVisitor(candidateAssertCollector),
+            CallVisitor.withCandidates(candidateAssertCollector),
             new WhileVisitor(candidateAssertCollector),
-            new ReturnVisitor(candidateAssertCollector));
+            ReturnVisitor.withCandidates(candidateAssertCollector));
     }
 
     @Override
@@ -50,13 +48,13 @@ public class Houdini implements VerificationStrategy {
         Program clean = ProgramUtil.clean(dirty, states);
 
         while (true) {
-            SMTModel smtModel = generateSMT(clean);
+            SMTModel smtModel = StrategyUtil.generateSMT(clean, iterationVisitors, states);
             ConstraintSolution solution = solver.run(smtModel.getCode());
 
             if (solution.getOutcome() == Outcome.CORRECT) {
                 return Outcome.CORRECT;
             } else if (solution.getOutcome() == Outcome.INCORRECT) {
-                List<AssertStmt> failed = getFailedAsserts(smtModel, solution);
+                List<AssertStmt> failed = StrategyUtil.getFailedAsserts(smtModel, solution);
                 if (nonCandidateAssertionsFailing(failed)) {
                     return Outcome.INCORRECT;
                 }
@@ -73,21 +71,7 @@ public class Houdini implements VerificationStrategy {
         return String.join("\n", states);
     }
 
-    private SMTModel generateSMT(Program program) {
-        SMTGenerator smtGenerator = new SMTGenerator(ProgramUtil.transform(program, iterationVisitors, states));
-        return smtGenerator.generateSMT();
-    }
-
     private boolean nonCandidateAssertionsFailing(List<AssertStmt> failedAsserts) {
         return !candidateAssertCollector.containsAll(failedAsserts);
-    }
-
-    /**
-     * Returns the list of asserts failed in the given model.
-     */
-    private static List<AssertStmt> getFailedAsserts(SMTModel smtModel, ConstraintSolution solution) {
-        return SMTUtil.failedAssertionIds(solution.getDetails()).stream()
-            .map(smtModel::getAssert)
-            .collect(Collectors.toList());
     }
 }
