@@ -15,7 +15,7 @@ public class SRTool {
 
     public static void main(String[] args) throws IOException, InterruptedException {
         Program program = buildProgram(args[0]);
-        VerificationStrategy strategy = new Houdini(program);
+        VerificationStrategy strategy = new BMC(program);
         System.out.println(strategy.run());
     }
 

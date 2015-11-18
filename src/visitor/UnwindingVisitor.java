@@ -5,26 +5,31 @@ import com.google.common.collect.Lists;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Visitor used to replace while loops with invariant assertions, randomising variables and if statements.
  */
-public class LoopUnwindingVisitor extends DefaultVisitor {
+public class UnwindingVisitor extends DefaultVisitor {
     private final int depth;
 
-    public LoopUnwindingVisitor() {
+    public UnwindingVisitor() {
         depth = 3;
     }
 
-    @Override public Stmt visit(WhileStmt whileStmt) {
+    @Override
+    public Stmt visit(WhileStmt whileStmt) {
         Expr whileCondition = whileStmt.getCondition();
 
-        IfStmt result = new IfStmt(whileCondition,
+        IfStmt result = new IfStmt(
+            whileCondition,
             new BlockStmt(Lists.newArrayList(new AssumeStmt(new NumberExpr("0")))),
             Optional.empty());
 
         for (int i = 0; i < depth; ++i) {
-            List<Stmt> ifStmts = Lists.newArrayList(whileStmt.getWhileBlock().getStmts());
+            List<Stmt> ifStmts = whileStmt.getWhileBlock().getStmts().stream()
+                .map(stmt -> (Stmt) stmt.accept(this))
+                .collect(Collectors.toList());
             ifStmts.add(result);
             result = new IfStmt(whileCondition, new BlockStmt(ifStmts), Optional.empty());
         }

@@ -5,7 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import util.ProgramUtil;
 import visitor.CallVisitor;
-import visitor.LoopUnwindingVisitor;
+import visitor.UnwindingVisitor;
 import visitor.ReturnVisitor;
 import visitor.ShadowingVisitor;
 import visitor.Visitor;
@@ -26,9 +26,9 @@ public class BMC implements VerificationStrategy {
         states = Lists.newArrayList();
         assertCollector = new AssertCollector();
         visitors = ImmutableList.of(
-            new ShadowingVisitor(),
             new CallVisitor(assertCollector),
-            new LoopUnwindingVisitor(),
+            new UnwindingVisitor(),
+            new ShadowingVisitor(),
             new ReturnVisitor(assertCollector));
     }
 
@@ -44,7 +44,8 @@ public class BMC implements VerificationStrategy {
     }
 
     private String generateSMT(Program program) {
-        SMTGenerator smtGenerator = new SMTGenerator(ProgramUtil.transform(program, visitors, states));
+        Program transformed = ProgramUtil.transform(program, visitors, states);
+        SMTGenerator smtGenerator = new SMTGenerator(transformed);
         return smtGenerator.generateSMT().getCode();
     }
 }

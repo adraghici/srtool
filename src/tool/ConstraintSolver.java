@@ -19,6 +19,7 @@ public class ConstraintSolver {
             } else if (details.startsWith("unsat")) {
                 outcome = Outcome.CORRECT;
             } else {
+                System.err.println(details);
                 outcome = Outcome.UNKNOWN;
             }
         } catch (ProcessTimeoutException e) {
