@@ -1,4 +1,4 @@
-package tool.strategy;
+package strategy;
 
 import ast.AssertStmt;
 import ast.Node;

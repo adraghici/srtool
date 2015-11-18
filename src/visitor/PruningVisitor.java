@@ -11,7 +11,7 @@ import ast.ProcedureDecl;
 import ast.Stmt;
 import ast.WhileStmt;
 import com.google.common.collect.Lists;
-import tool.strategy.Houdini;
+import strategy.Houdini;
 
 import java.util.List;
 import java.util.stream.Collectors;

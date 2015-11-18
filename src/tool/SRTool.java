@@ -7,7 +7,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import parser.SimpleCLexer;
 import parser.SimpleCParser;
 import parser.SimpleCParser.ProgramContext;
-import tool.strategy.Houdini;
+import strategy.Houdini;
 
 import java.io.FileInputStream;
 import java.io.IOException;

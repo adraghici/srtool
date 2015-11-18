@@ -1,4 +1,4 @@
-package tool.strategy;
+package strategy;
 
 import ast.Program;
 import com.google.common.collect.ImmutableList;
