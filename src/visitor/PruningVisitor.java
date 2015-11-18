@@ -11,13 +11,14 @@ import ast.ProcedureDecl;
 import ast.Stmt;
 import ast.WhileStmt;
 import com.google.common.collect.Lists;
+import tool.strategy.Houdini;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * Visitor needed to prune candidate preconditions, postconditions, invariants.
- * This is intended to be mainly used for {@link tool.Houdini}.
+ * This is intended to be mainly used for {@link Houdini}.
  */
 public class PruningVisitor extends DefaultVisitor {
     private final List<Node> removalCandidates;

@@ -1,10 +1,17 @@
-package tool;
+package tool.strategy;
 
 import ast.AssertStmt;
 import ast.Node;
 import ast.Program;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import tool.AssertCollector;
+import tool.ConstraintSolution;
+import tool.ConstraintSolver;
+import tool.Outcome;
+import tool.SMTGenerator;
+import tool.SMTModel;
+import tool.VerificationStrategy;
 import util.SMTUtil;
 import visitor.CallVisitor;
 import visitor.ReturnVisitor;

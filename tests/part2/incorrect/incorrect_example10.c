@@ -9,17 +9,16 @@ int foo() {
 
   int x;
   x = 0;
-  while(x < 8) {
+  while(x < 10) {
     i = 2;
     int i;
     while (x < 5) {
       x = x + 1;
-      while (x < 2) {
+      i = 8;
+      while (x < 3) {
         int i;
-        i = 7;
         x = x + 1;
       }
-      i = 8;
     }
     x = x + 1;
   }

@@ -1,25 +1,33 @@
-package tool;
+package tool.strategy;
 
 import ast.Program;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import tool.AssertCollector;
+import tool.ConstraintSolver;
+import tool.Outcome;
+import tool.SMTGenerator;
+import tool.VerificationStrategy;
 import util.ProgramUtil;
 import visitor.CallVisitor;
-import visitor.UnwindingVisitor;
 import visitor.ReturnVisitor;
 import visitor.ShadowingVisitor;
+import visitor.UnwindingVisitor;
 import visitor.Visitor;
 
 import java.io.IOException;
 import java.util.List;
 
-public class BMC implements VerificationStrategy {
+public class UnsoundBMC implements VerificationStrategy {
+    private static final int MIN_DEPTH = 1;
+    private static final int MAX_DEPTH = 100;
+    private static final int DEPTH_STEP = 2;
     private final Program program;
     private final ConstraintSolver solver;
     private final List<String> states;
     private final AssertCollector assertCollector;
 
-    public BMC(Program program) {
+    public UnsoundBMC(Program program) {
         this.program = program;
         solver = new ConstraintSolver();
         states = Lists.newArrayList();
@@ -28,8 +36,12 @@ public class BMC implements VerificationStrategy {
 
     @Override
     public Outcome run() throws IOException, InterruptedException {
-        String smtCode = generateSMT(program, 4);
-        return solver.run(smtCode).getOutcome();
+        Outcome outcome = Outcome.CORRECT;
+        for (int depth = MIN_DEPTH; depth < MAX_DEPTH && outcome == Outcome.CORRECT; depth += DEPTH_STEP) {
+            String smtCode = generateSMT(program, depth);
+            outcome = solver.run(smtCode).getOutcome();
+        }
+        return outcome;
     }
 
     @Override
