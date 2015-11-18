@@ -1,4 +1,4 @@
-// RUN: %tool "%s" > "%t" 
+// RUN: %tool "%s" > "%t"
 // RUN: %diff %CORRECT "%t"
 
 // Isn't this cute?

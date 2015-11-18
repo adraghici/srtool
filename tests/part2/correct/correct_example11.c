@@ -1,7 +1,6 @@
 // RUN: %tool "%s" > "%t" 
 // RUN: %diff %CORRECT "%t"
 
-
 // Invariant inference or full unrolling required
 
 int bar(int a)

@@ -1,7 +1,7 @@
 // RUN: %tool "%s" > "%t" 
 // RUN: %diff %CORRECT "%t"
 
-// You would need to infer invariants or fully unwind to verify this one
+// Invariant inference or full unrolling required
 
 int foo() {
 
