@@ -18,23 +18,17 @@ public class BMC implements VerificationStrategy {
     private final ConstraintSolver solver;
     private final List<String> states;
     private final AssertCollector assertCollector;
-    private final ImmutableList<Visitor> visitors;
 
     public BMC(Program program) {
         this.program = program;
         solver = new ConstraintSolver();
         states = Lists.newArrayList();
         assertCollector = new AssertCollector();
-        visitors = ImmutableList.of(
-            new CallVisitor(assertCollector),
-            new UnwindingVisitor(),
-            new ShadowingVisitor(),
-            new ReturnVisitor(assertCollector));
     }
 
     @Override
     public Outcome run() throws IOException, InterruptedException {
-        String smtCode = generateSMT(program);
+        String smtCode = generateSMT(program, 4);
         return solver.run(smtCode).getOutcome();
     }
 
@@ -43,9 +37,17 @@ public class BMC implements VerificationStrategy {
         return String.join("\n", states);
     }
 
-    private String generateSMT(Program program) {
-        Program transformed = ProgramUtil.transform(program, visitors, states);
+    private String generateSMT(Program program, int depth) {
+        Program transformed = ProgramUtil.transform(program, createVisitorsWithDepth(depth), states);
         SMTGenerator smtGenerator = new SMTGenerator(transformed);
         return smtGenerator.generateSMT().getCode();
+    }
+
+    private ImmutableList<Visitor> createVisitorsWithDepth(int depth) {
+        return ImmutableList.of(
+            new CallVisitor(assertCollector),
+            new UnwindingVisitor(depth),
+            new ShadowingVisitor(),
+            new ReturnVisitor(assertCollector));
     }
 }

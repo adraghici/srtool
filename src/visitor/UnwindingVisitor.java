@@ -13,8 +13,8 @@ import java.util.stream.Collectors;
 public class UnwindingVisitor extends DefaultVisitor {
     private final int depth;
 
-    public UnwindingVisitor() {
-        depth = 3;
+    public UnwindingVisitor(int depth) {
+        this.depth = depth;
     }
 
     @Override
