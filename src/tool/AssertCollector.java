@@ -23,7 +23,7 @@ public class AssertCollector {
 
     public void add(TraceableNode parent, AssertStmt stmt) {
         TraceableNode cleanAncestor = getCleanAncestor(parent);
-        assertOrigin.put(stmt.getOriginal(), cleanAncestor);
+        assertOrigin.put(stmt, cleanAncestor);
     }
 
     public List<Node> resolve(List<AssertStmt> stmts) {

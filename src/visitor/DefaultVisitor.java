@@ -90,14 +90,16 @@ public class DefaultVisitor implements Visitor<Object> {
     public Object visit(CandidatePrecondition candidatePrecondition) {
         return new CandidatePrecondition(
             (Expr) candidatePrecondition.getCondition().accept(this),
-            Optional.of(candidatePrecondition), visitStage);
+            Optional.of(candidatePrecondition),
+            visitStage);
     }
 
     @Override
     public Object visit(CandidatePostcondition candidatePostcondition) {
         return new CandidatePostcondition(
             (Expr) candidatePostcondition.getCondition().accept(this),
-            Optional.of(candidatePostcondition), visitStage);
+            Optional.of(candidatePostcondition),
+            visitStage);
     }
 
     @Override
@@ -172,7 +174,8 @@ public class DefaultVisitor implements Visitor<Object> {
     public Object visit(CandidateInvariant candidateInvariant) {
         return new CandidateInvariant(
             (Expr) candidateInvariant.getCondition().accept(this),
-            Optional.of(candidateInvariant), visitStage);
+            Optional.of(candidateInvariant),
+            visitStage);
     }
 
     @Override
