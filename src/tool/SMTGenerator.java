@@ -1,6 +1,7 @@
 package tool;
 
 import ast.Program;
+import util.SMTUtil;
 import visitor.SMTGenVisitor;
 
 public class SMTGenerator {

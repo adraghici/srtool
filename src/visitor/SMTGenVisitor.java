@@ -25,7 +25,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import ssa.Scope;
 import ssa.Scopes;
-import tool.SMTUtil;
+import util.SMTUtil;
 
 import java.util.Collections;
 import java.util.List;

@@ -5,7 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import ssa.Scopes;
 import tool.AssertCollector;
-import tool.SMTUtil;
+import util.SMTUtil;
 
 import java.util.List;
 import java.util.Map;

@@ -5,6 +5,7 @@ import ast.Node;
 import ast.Program;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import util.SMTUtil;
 import visitor.CallVisitor;
 import visitor.ReturnVisitor;
 import visitor.ShadowingVisitor;
@@ -70,6 +71,10 @@ public class Houdini implements VerificationStrategy {
         return smtGenerator.generateSMT();
     }
 
+    private boolean nonCandidateAssertionsFailing(List<AssertStmt> failedAsserts) {
+        return !candidateAssertCollector.containsAll(failedAsserts);
+    }
+
     /**
      * Returns the list of asserts failed in the given model.
      */
@@ -77,9 +82,5 @@ public class Houdini implements VerificationStrategy {
         return SMTUtil.failedAssertionIds(solution.getDetails()).stream()
             .map(smtModel::getAssert)
             .collect(Collectors.toList());
-    }
-
-    private boolean nonCandidateAssertionsFailing(List<AssertStmt> failedAsserts) {
-        return !candidateAssertCollector.containsAll(failedAsserts);
     }
 }
