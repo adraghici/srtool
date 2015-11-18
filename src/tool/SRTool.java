@@ -14,7 +14,9 @@ import java.io.IOException;
 public class SRTool {
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        System.out.println(new Houdini(buildProgram(args[0])).run());
+        Program program = buildProgram(args[0]);
+        VerificationStrategy strategy = new Houdini(program);
+        System.out.println(strategy.run());
     }
 
     private static Program buildProgram(String filename) throws IOException {

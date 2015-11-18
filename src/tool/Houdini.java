@@ -6,87 +6,80 @@ import ast.Program;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import visitor.CallVisitor;
-import visitor.RemovingVisitor;
 import visitor.ReturnVisitor;
 import visitor.ShadowingVisitor;
+import util.ProgramUtil;
 import visitor.Visitor;
 import visitor.WhileVisitor;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class Houdini implements VerificationStrategy {
-    private Program program;
+    private final Program program;
     private final ConstraintSolver solver;
-    private final List<String> programStates;
-    private final CandidateAssertCollector candidateAssertCollector;
-    private final ImmutableList<Visitor> mutatingVisitors;
+    private final List<String> states;
+    private final AssertCollector candidateAssertCollector;
+    private final ImmutableList<Visitor> initialVisitors;
+    private final ImmutableList<Visitor> iterationVisitors;
 
     public Houdini(Program program) {
         this.program = program;
         solver = new ConstraintSolver();
-        programStates = Lists.newArrayList();
-        candidateAssertCollector = new CandidateAssertCollector();
-        mutatingVisitors = ImmutableList.of(
+        states = Lists.newArrayList();
+        candidateAssertCollector = new AssertCollector();
+        initialVisitors = ImmutableList.of(new ShadowingVisitor());
+        iterationVisitors = ImmutableList.of(
             new CallVisitor(candidateAssertCollector),
             new WhileVisitor(candidateAssertCollector),
             new ReturnVisitor(candidateAssertCollector));
     }
 
     @Override
-    public String run() throws IOException, InterruptedException {
-        // Apply the Shadowing Visitor.
-        program = applyVisitor(new ShadowingVisitor(), program);
-
-        // Make a new (deep) copy of the Program.
-        Program cleanProgram = (Program) new RemovingVisitor(Collections.emptyList()).visit(program);
+    public Outcome run() throws IOException, InterruptedException {
+        Program dirty = ProgramUtil.transform(program, initialVisitors, states);
+        Program clean = ProgramUtil.clean(dirty, states);
 
         while (true) {
-            // Apply Call, While and Return Visitors.
-            Program currentProgram = cleanProgram;
-            for (Visitor visitor : mutatingVisitors) {
-                currentProgram = applyVisitor(visitor, currentProgram);
-            }
+            SMTModel smtModel = generateSMT(clean);
+            ConstraintSolution solution = solver.run(smtModel.getCode());
 
-            SMTModel smtModel = new SMTGenerator(currentProgram).generateSMT();
-            String smtCode = smtModel.getCode();
-            programStates.add(smtCode);
-
-            ConstraintSolution solution = solver.run(smtCode);
-            String decision = solution.getDecision();
-
-            if (decision.equals("CORRECT")) {
-                return "CORRECT";
-            } else if (decision.equals("INCORRECT")) {
-                // Find whether we have failing assertions on candidate pre/post/invariants.
-                List<AssertStmt> failedAsserts =
-                    SMTUtil.failedAssertionIds(solution.getDetails()).stream()
-                        .map(id -> smtModel.getIndexToAssert().get(id))
-                        .collect(Collectors.toList());
-
-                List<Node> failedAssertsSources = candidateAssertCollector.resolve(failedAsserts);
-                if (!candidateAssertCollector.filterNonCandidate(failedAsserts).isEmpty()) {
-                    return "INCORRECT";
+            if (solution.getOutcome() == Outcome.CORRECT) {
+                return Outcome.CORRECT;
+            } else if (solution.getOutcome() == Outcome.INCORRECT) {
+                List<AssertStmt> failed = getFailedAsserts(smtModel, solution);
+                if (nonCandidateAssertionsFailing(failed)) {
+                    return Outcome.INCORRECT;
                 }
 
-                // Remove failedAssertsSources from cleanProgram.
-                cleanProgram = applyVisitor(new RemovingVisitor(failedAssertsSources), cleanProgram);
+                List<Node> failedCandidates = candidateAssertCollector.resolve(failed);
+                clean = ProgramUtil.prune(clean, failedCandidates, states);
+                candidateAssertCollector.clear();
             }
-
-            candidateAssertCollector.clear();
         }
-    }
-
-    private Program applyVisitor(Visitor visitor, Program program) {
-        Program resultedProgram = (Program) visitor.visit(program);
-        programStates.add(resultedProgram.toString(visitor));
-        return resultedProgram;
     }
 
     @Override
     public String toString() {
-        return String.join("\n", programStates);
+        return String.join("\n", states);
+    }
+
+    private SMTModel generateSMT(Program program) {
+        SMTGenerator smtGenerator = new SMTGenerator(ProgramUtil.transform(program, iterationVisitors, states));
+        return smtGenerator.generateSMT();
+    }
+
+    /**
+     * Returns the list of asserts failed in the given model.
+     */
+    private static List<AssertStmt> getFailedAsserts(SMTModel smtModel, ConstraintSolution solution) {
+        return SMTUtil.failedAssertionIds(solution.getDetails()).stream()
+            .map(smtModel::getAssert)
+            .collect(Collectors.toList());
+    }
+
+    private boolean nonCandidateAssertionsFailing(List<AssertStmt> failedAsserts) {
+        return !candidateAssertCollector.containsAll(failedAsserts);
     }
 }

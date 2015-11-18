@@ -26,7 +26,6 @@ import ast.Program;
 import ast.ResultExpr;
 import ast.Stmt;
 import ast.TernaryExpr;
-import ast.TraceableNode.SourceType;
 import ast.UnaryExpr;
 import ast.VarDeclStmt;
 import ast.VarRef;
@@ -42,7 +41,7 @@ import java.util.stream.Collectors;
  * Visitor used to traverse the whole AST and return a new copy of it.
  */
 public class DefaultVisitor implements Visitor<Object> {
-    protected SourceType sourceType = SourceType.UNKNOWN;
+    protected VisitStage visitStage = VisitStage.DIRTY;
 
     @Override
     public Object visit(Program program) {
@@ -91,16 +90,14 @@ public class DefaultVisitor implements Visitor<Object> {
     public Object visit(CandidatePrecondition candidatePrecondition) {
         return new CandidatePrecondition(
             (Expr) candidatePrecondition.getCondition().accept(this),
-            Optional.of(candidatePrecondition),
-            sourceType);
+            Optional.of(candidatePrecondition), visitStage);
     }
 
     @Override
     public Object visit(CandidatePostcondition candidatePostcondition) {
         return new CandidatePostcondition(
             (Expr) candidatePostcondition.getCondition().accept(this),
-            Optional.of(candidatePostcondition),
-            sourceType);
+            Optional.of(candidatePostcondition), visitStage);
     }
 
     @Override
@@ -112,7 +109,9 @@ public class DefaultVisitor implements Visitor<Object> {
 
     @Override
     public Object visit(AssertStmt assertStmt) {
-        return new AssertStmt((Expr) assertStmt.getCondition().accept(this), assertStmt.getOriginal());
+        return new AssertStmt(
+            (Expr) assertStmt.getCondition().accept(this),
+            Optional.of(assertStmt.getOriginal()));
     }
 
     @Override
@@ -173,8 +172,7 @@ public class DefaultVisitor implements Visitor<Object> {
     public Object visit(CandidateInvariant candidateInvariant) {
         return new CandidateInvariant(
             (Expr) candidateInvariant.getCondition().accept(this),
-            Optional.of(candidateInvariant),
-            sourceType);
+            Optional.of(candidateInvariant), visitStage);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package ast;
 
+import visitor.VisitStage;
 import visitor.Visitor;
 
 import java.util.Optional;
@@ -7,15 +8,15 @@ import java.util.Optional;
 public class CandidatePostcondition implements PrePostCondition, TraceableNode {
     private final Expr condition;
     private final Optional<CandidatePostcondition> source;
-    private final SourceType sourceType;
+    private final VisitStage visitStage;
 
     public CandidatePostcondition(
         Expr condition,
         Optional<CandidatePostcondition> source,
-        SourceType sourceType) {
+        VisitStage visitStage) {
         this.condition = condition;
         this.source = source;
-        this.sourceType = sourceType;
+        this.visitStage = visitStage;
     }
 
     @Override
@@ -28,9 +29,8 @@ public class CandidatePostcondition implements PrePostCondition, TraceableNode {
         return source;
     }
 
-    @Override
-    public SourceType getSourceType() {
-        return sourceType;
+    public VisitStage getVisitStage() {
+        return visitStage;
     }
 
     @Override

@@ -1,7 +1,6 @@
 package visitor;
 
 import ast.*;
-import ast.TraceableNode.SourceType;
 import ssa.Scope;
 import ssa.Scopes;
 
@@ -15,7 +14,7 @@ public class ShadowingVisitor extends DefaultVisitor {
     public ShadowingVisitor() {
         this.scopes = Scopes.withDefault();
         globals = Scopes.empty();
-        sourceType = SourceType.SHADOWING;
+        visitStage = VisitStage.DIRTY;
     }
 
     @Override

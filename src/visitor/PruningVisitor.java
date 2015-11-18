@@ -9,18 +9,21 @@ import ast.Node;
 import ast.PrePostCondition;
 import ast.ProcedureDecl;
 import ast.Stmt;
-import ast.TraceableNode.SourceType;
 import ast.WhileStmt;
 import com.google.common.collect.Lists;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RemovingVisitor extends DefaultVisitor {
+/**
+ * Visitor needed to prune candidate preconditions, postconditions, invariants.
+ * This is intended to be mainly used for {@link tool.Houdini}.
+ */
+public class PruningVisitor extends DefaultVisitor {
     private final List<Node> removalCandidates;
 
-    public RemovingVisitor(List<Node> removalCandidates) {
-        sourceType = SourceType.REMOVING;
+    public PruningVisitor(List<Node> removalCandidates) {
+        visitStage = VisitStage.CLEAN;
         this.removalCandidates = removalCandidates;
     }
 

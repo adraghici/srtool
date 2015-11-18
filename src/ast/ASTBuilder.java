@@ -1,6 +1,6 @@
 package ast;
 
-import ast.TraceableNode.SourceType;
+import visitor.VisitStage;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.antlr.v4.runtime.Token;
@@ -58,12 +58,12 @@ public class ASTBuilder {
             return new CandidatePrecondition(
                 build(prePost.candidateRequires().condition),
                 Optional.empty(),
-                SourceType.UNKNOWN);
+                VisitStage.DIRTY);
         } else {
             return new CandidatePostcondition(
                 build(prePost.candidateEnsures().condition),
                 Optional.empty(),
-                SourceType.UNKNOWN);
+                VisitStage.DIRTY);
         }
     }
 
@@ -94,7 +94,7 @@ public class ASTBuilder {
     }
 
     private static AssertStmt build(SimpleCParser.AssertStmtContext assertStmt) {
-        return new AssertStmt(build(assertStmt.condition), null);
+        return new AssertStmt(build(assertStmt.condition), Optional.empty());
     }
 
     private static AssumeStmt build(SimpleCParser.AssumeStmtContext assumeStmt) {
@@ -135,7 +135,7 @@ public class ASTBuilder {
             return new CandidateInvariant(
                 build(loopInvariant.candidateInvariant().condition),
                 Optional.empty(),
-                SourceType.UNKNOWN);
+                VisitStage.DIRTY);
         }
     }
 

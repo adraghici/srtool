@@ -2,13 +2,15 @@ package ast;
 
 import visitor.Visitor;
 
+import java.util.Optional;
+
 public class AssertStmt implements Condition, Stmt {
     private final Expr condition;
     private final AssertStmt original;
 
-    public AssertStmt(Expr condition, AssertStmt original) {
+    public AssertStmt(Expr condition, Optional<AssertStmt> original) {
         this.condition = condition;
-        this.original = original;
+        this.original = original.orElse(this);
     }
 
     @Override
@@ -22,6 +24,6 @@ public class AssertStmt implements Condition, Stmt {
     }
 
     public AssertStmt getOriginal() {
-        return original == null ? this : original;
+        return original;
     }
 }

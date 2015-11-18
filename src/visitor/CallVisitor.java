@@ -4,11 +4,12 @@ import ast.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import ssa.Scopes;
-import tool.CandidateAssertCollector;
+import tool.AssertCollector;
 import tool.SMTUtil;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Visitor used to implement method calls.
@@ -17,12 +18,12 @@ public class CallVisitor extends DefaultVisitor {
     private final Scopes scopes;
     private final Map<String, ProcedureDecl> procedures;
     private boolean inCallStmt;
-    private final CandidateAssertCollector candidateAssertCollector;
+    private final AssertCollector candidateAssertCollector;
 
-    public CallVisitor(CandidateAssertCollector candidateAssertCollector) {
+    public CallVisitor(AssertCollector candidateAssertCollector) {
         scopes = Scopes.withDefault();
         procedures = Maps.newHashMap();
-        sourceType = TraceableNode.SourceType.CALL;
+        visitStage = VisitStage.DIRTY;
         this.candidateAssertCollector = candidateAssertCollector;
     }
 
@@ -50,10 +51,10 @@ public class CallVisitor extends DefaultVisitor {
         // Assert preconditions and candidate preconditions.
         proc.getPreconditions()
             .forEach(pre -> stmts.add(
-                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this), null)));
+                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this), Optional.empty())));
         proc.getCandidatePreconditions().forEach(pre -> {
             AssertStmt assertStmt =
-                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this), null);
+                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this), Optional.empty());
             stmts.add(assertStmt);
             candidateAssertCollector.add(pre, assertStmt);
         });

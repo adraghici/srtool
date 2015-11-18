@@ -16,7 +16,7 @@ public class SMTGenerator {
         return new SMTModel(
             visitor.getIndexToAssert(),
             SMTUtil.predefinedFunctions()
-                + visitor.visit(this.program)
+                + visitor.visit(program)
                 + SMTUtil.checkSAT()
                 + SMTUtil.getValues(visitor.getAssertCount()));
     }

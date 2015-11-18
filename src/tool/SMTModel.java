@@ -13,8 +13,8 @@ public class SMTModel {
         this.indexToAssert = indexToAsserts;
     }
 
-    public Map<Integer, AssertStmt> getIndexToAssert() {
-        return indexToAssert;
+    public AssertStmt getAssert(int id) {
+        return indexToAssert.get(id);
     }
 
     public String getCode() {

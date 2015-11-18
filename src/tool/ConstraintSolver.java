@@ -11,20 +11,20 @@ public class ConstraintSolver {
     public ConstraintSolution run(String smtConstraint) throws IOException, InterruptedException {
         ProcessExec process = new ProcessExec("z3", "-smt2", "-in");
         String details = "";
-        String decision = "";
+        Outcome outcome = Outcome.UNKNOWN;
         try {
             details = process.execute(smtConstraint, TIMEOUT);
             if (details.startsWith("sat")) {
-                decision = "INCORRECT";
+                outcome = Outcome.INCORRECT;
             } else if (details.startsWith("unsat")) {
-                decision = "CORRECT";
+                outcome = Outcome.CORRECT;
             } else {
-                decision = "UNKNOWN";
+                outcome = Outcome.UNKNOWN;
             }
         } catch (ProcessTimeoutException e) {
-            decision = "UNKNOWN";
+            outcome = Outcome.UNKNOWN;
         } finally {
-            return new ConstraintSolution(decision, details);
+            return new ConstraintSolution(outcome, details);
         }
     }
 }

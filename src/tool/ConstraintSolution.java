@@ -1,19 +1,19 @@
 package tool;
 
 public class ConstraintSolution {
-    private final String decision;
+    private final Outcome outcome;
     private final String details;
 
-    public ConstraintSolution(String decision, String details) {
-        this.decision = decision;
+    public ConstraintSolution(Outcome outcome, String details) {
+        this.outcome = outcome;
         this.details = details;
+    }
+
+    public Outcome getOutcome() {
+        return outcome;
     }
 
     public String getDetails() {
         return details;
-    }
-
-    public String getDecision() {
-        return decision;
     }
 }
