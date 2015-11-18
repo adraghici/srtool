@@ -6,7 +6,6 @@ import ast.Program;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import visitor.CallVisitor;
-import visitor.DefaultVisitor;
 import visitor.RemovingVisitor;
 import visitor.ReturnVisitor;
 import visitor.ShadowingVisitor;
@@ -14,6 +13,7 @@ import visitor.Visitor;
 import visitor.WhileVisitor;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,34 +21,36 @@ public class Houdini implements VerificationStrategy {
     private Program program;
     private final ConstraintSolver solver;
     private final List<String> programStates;
-    private final AssertCollector assertCollector;
+    private final CandidateAssertCollector candidateAssertCollector;
     private final ImmutableList<Visitor> mutatingVisitors;
 
     public Houdini(Program program) {
         this.program = program;
         solver = new ConstraintSolver();
         programStates = Lists.newArrayList();
-        assertCollector = new AssertCollector();
+        candidateAssertCollector = new CandidateAssertCollector();
         mutatingVisitors = ImmutableList.of(
-            new CallVisitor(assertCollector),
-            new WhileVisitor(assertCollector),
-            new ReturnVisitor(assertCollector));
+            new CallVisitor(candidateAssertCollector),
+            new WhileVisitor(candidateAssertCollector),
+            new ReturnVisitor(candidateAssertCollector));
     }
 
     @Override
     public String run() throws IOException, InterruptedException {
-
         // Apply the Shadowing Visitor.
         program = applyVisitor(new ShadowingVisitor(), program);
 
         // Make a new (deep) copy of the Program.
-        Program oldProgram = (Program) new DefaultVisitor().visit(program);
+        Program cleanProgram = (Program) new RemovingVisitor(Collections.emptyList()).visit(program);
 
         while (true) {
             // Apply Call, While and Return Visitors.
-            mutatingVisitors.forEach(visitor -> program = applyVisitor(visitor, program));
+            Program currentProgram = cleanProgram;
+            for (Visitor visitor : mutatingVisitors) {
+                currentProgram = applyVisitor(visitor, currentProgram);
+            }
 
-            SMTModel smtModel = new SMTGenerator(program).generateSMT();
+            SMTModel smtModel = new SMTGenerator(currentProgram).generateSMT();
             String smtCode = smtModel.getCode();
             programStates.add(smtCode);
 
@@ -59,21 +61,21 @@ public class Houdini implements VerificationStrategy {
                 return "CORRECT";
             } else if (decision.equals("INCORRECT")) {
                 // Find whether we have failing assertions on candidate pre/post/invariants.
-                List<AssertStmt> assertStmts =
+                List<AssertStmt> failedAsserts =
                     SMTUtil.failedAssertionIds(solution.getDetails()).stream()
                         .map(id -> smtModel.getIndexToAssert().get(id))
                         .collect(Collectors.toList());
 
-                List<Node> nodes = assertCollector.resolve(assertStmts);
-                if (nodes.isEmpty()) {
+                List<Node> failedAssertsSources = candidateAssertCollector.resolve(failedAsserts);
+                if (!candidateAssertCollector.filterNonCandidate(failedAsserts).isEmpty()) {
                     return "INCORRECT";
                 }
 
-                // Remove nodes from oldProgram.
-                program = (Program) oldProgram.accept(new RemovingVisitor(nodes));
+                // Remove failedAssertsSources from cleanProgram.
+                cleanProgram = applyVisitor(new RemovingVisitor(failedAssertsSources), cleanProgram);
             }
 
-            assertCollector.clear();
+            candidateAssertCollector.clear();
         }
     }
 

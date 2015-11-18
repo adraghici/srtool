@@ -14,7 +14,7 @@ import ast.VarRef;
 import ast.WhileStmt;
 import com.google.common.collect.Lists;
 import ssa.Scopes;
-import tool.AssertCollector;
+import tool.CandidateAssertCollector;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,11 +24,11 @@ import java.util.Optional;
  */
 public class WhileVisitor extends DefaultVisitor {
     private final Scopes scopes;
-    private final AssertCollector assertCollector;
+    private final CandidateAssertCollector candidateAssertCollector;
 
-    public WhileVisitor(AssertCollector assertCollector) {
+    public WhileVisitor(CandidateAssertCollector candidateAssertCollector) {
         this.scopes = Scopes.withDefault();
-        this.assertCollector = assertCollector;
+        this.candidateAssertCollector = candidateAssertCollector;
         sourceType = SourceType.WHILE;
     }
 
@@ -44,11 +44,11 @@ public class WhileVisitor extends DefaultVisitor {
     public Stmt visit(WhileStmt whileStmt) {
         List<Stmt> stmts = Lists.newArrayList();
 
-        whileStmt.getLoopInvariants().forEach(x -> stmts.add(new AssertStmt(x.getCondition())));
+        whileStmt.getInvariants().forEach(i -> stmts.add(new AssertStmt(i.getCondition(), null)));
         whileStmt.getCandidateInvariants().forEach(i -> {
-            AssertStmt assertStmt = new AssertStmt(i.getCondition());
+            AssertStmt assertStmt = new AssertStmt(i.getCondition(), null);
             stmts.add(assertStmt);
-            assertCollector.add(i, assertStmt);
+            candidateAssertCollector.add(i, assertStmt);
         });
 
         scopes.topScope().modset(whileStmt.getModified()).forEach(x -> stmts.add(new HavocStmt(new VarRef(x))));
@@ -56,14 +56,13 @@ public class WhileVisitor extends DefaultVisitor {
 
         List<Stmt> ifStmts = Lists.newArrayList();
         whileStmt.getWhileBlock().getStmts().forEach(stmt -> ifStmts.add((Stmt) stmt.accept(this)));
-        whileStmt.getInvariants().forEach(x -> ifStmts.add(new AssertStmt(x.getCondition())));
-        ifStmts.add(new AssumeStmt(new NumberExpr("0")));
-
+        whileStmt.getInvariants().forEach(i -> ifStmts.add(new AssertStmt(i.getCondition(), null)));
         whileStmt.getCandidateInvariants().forEach(i -> {
-            AssertStmt assertStmt = new AssertStmt(i.getCondition());
+            AssertStmt assertStmt = new AssertStmt(i.getCondition(), null);
             ifStmts.add(assertStmt);
-            assertCollector.add(i, assertStmt);
+            candidateAssertCollector.add(i, assertStmt);
         });
+        ifStmts.add(new AssumeStmt(new NumberExpr("0")));
 
         stmts.add(new IfStmt(whileStmt.getCondition(), new BlockStmt(ifStmts), Optional.empty()));
 

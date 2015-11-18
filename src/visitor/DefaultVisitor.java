@@ -112,7 +112,7 @@ public class DefaultVisitor implements Visitor<Object> {
 
     @Override
     public Object visit(AssertStmt assertStmt) {
-        return new AssertStmt((Expr) assertStmt.getCondition().accept(this));
+        return new AssertStmt((Expr) assertStmt.getCondition().accept(this), assertStmt.getOriginal());
     }
 
     @Override

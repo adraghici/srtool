@@ -11,7 +11,7 @@ import ast.Stmt;
 import ast.TraceableNode.SourceType;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import tool.AssertCollector;
+import tool.CandidateAssertCollector;
 import tool.SMTUtil;
 
 import java.util.List;
@@ -23,11 +23,11 @@ import java.util.stream.Collectors;
  * put at the end.
  */
 public class ReturnVisitor extends DefaultVisitor {
-    private final AssertCollector assertCollector;
+    private final CandidateAssertCollector candidateAssertCollector;
 
-    public ReturnVisitor(AssertCollector assertCollector) {
+    public ReturnVisitor(CandidateAssertCollector candidateAssertCollector) {
         sourceType = SourceType.RETURN;
-        this.assertCollector = assertCollector;
+        this.candidateAssertCollector = candidateAssertCollector;
     }
 
     @Override
@@ -59,15 +59,14 @@ public class ReturnVisitor extends DefaultVisitor {
         substitutes.put(SMTUtil.RESULT_PLACEHOLDER, returnExpr);
 
         List<AssertStmt> postAsserts = postconditions.stream()
-            .map(p -> new AssertStmt(p.getCondition().replace(substitutes)))
+            .map(p -> new AssertStmt(p.getCondition().replace(substitutes), null))
             .collect(Collectors.toList());
         List<AssertStmt> candidatePostAsserts = candidatePostconditions.stream()
             .map(post -> {
-                AssertStmt assertStmt = new AssertStmt(post.getCondition().replace(substitutes));
-                assertCollector.add(post, assertStmt);
+                AssertStmt assertStmt = new AssertStmt(post.getCondition().replace(substitutes), null);
+                candidateAssertCollector.add(post, assertStmt);
                 return assertStmt;
-            })
-            .collect(Collectors.toList());
+            }).collect(Collectors.toList());
 
         List<AssertStmt> result = Lists.newArrayList(postAsserts);
         result.addAll(candidatePostAsserts);

@@ -1,5 +1,6 @@
 package visitor;
 
+import ast.BlockStmt;
 import ast.CandidateInvariant;
 import ast.CandidatePostcondition;
 import ast.CandidatePrecondition;
@@ -7,6 +8,8 @@ import ast.LoopInvariant;
 import ast.Node;
 import ast.PrePostCondition;
 import ast.ProcedureDecl;
+import ast.Stmt;
+import ast.TraceableNode.SourceType;
 import ast.WhileStmt;
 import com.google.common.collect.Lists;
 
@@ -17,6 +20,7 @@ public class RemovingVisitor extends DefaultVisitor {
     private final List<Node> removalCandidates;
 
     public RemovingVisitor(List<Node> removalCandidates) {
+        sourceType = SourceType.REMOVING;
         this.removalCandidates = removalCandidates;
     }
 
@@ -24,10 +28,12 @@ public class RemovingVisitor extends DefaultVisitor {
         List<CandidatePrecondition> remainingCandidatePreconditions =
             procedureDecl.getCandidatePreconditions().stream()
                 .filter(p -> !removalCandidates.contains(p))
+                .map(p -> (CandidatePrecondition) super.visit(p))
                 .collect(Collectors.toList());
         List<CandidatePostcondition> remainingCandidatePostconditions =
             procedureDecl.getCandidatePostconditions().stream()
                 .filter(p -> !removalCandidates.contains(p))
+                .map(p -> (CandidatePostcondition) super.visit(p))
                 .collect(Collectors.toList());
 
         List<PrePostCondition> conditions = Lists.newArrayList();
@@ -36,11 +42,14 @@ public class RemovingVisitor extends DefaultVisitor {
         conditions.addAll(procedureDecl.getPostconditions());
         conditions.addAll(remainingCandidatePostconditions);
 
+        List<Stmt> stmts = procedureDecl.getStmts().stream()
+            .map(stmt -> (Stmt) stmt.accept(this))
+            .collect(Collectors.toList());
         return new ProcedureDecl(
             procedureDecl.getName(),
             procedureDecl.getParams(),
             conditions,
-            procedureDecl.getStmts(),
+            stmts,
             procedureDecl.getReturnExpr());
     }
 
@@ -48,12 +57,14 @@ public class RemovingVisitor extends DefaultVisitor {
         List<CandidateInvariant> remainingCandidateInvariants =
             whileStmt.getCandidateInvariants().stream()
                 .filter(i -> !removalCandidates.contains(i))
+                .map(i -> (CandidateInvariant) super.visit(i))
                 .collect(Collectors.toList());
 
-        List<LoopInvariant> invariants = Lists.newArrayList();
-        invariants.addAll(whileStmt.getInvariants());
-        invariants.addAll(remainingCandidateInvariants);
+        List<LoopInvariant> loopInvariants = Lists.newArrayList();
+        loopInvariants.addAll(whileStmt.getInvariants());
+        loopInvariants.addAll(remainingCandidateInvariants);
 
-        return new WhileStmt(whileStmt.getCondition(), whileStmt.getWhileBlock(), invariants);
+        BlockStmt whileBlock = (BlockStmt) whileStmt.getWhileBlock().accept(this);
+        return new WhileStmt(whileStmt.getCondition(), whileBlock, loopInvariants);
     }
 }

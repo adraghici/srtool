@@ -16,19 +16,19 @@ public class BMC implements VerificationStrategy {
     private Program program;
     private final ConstraintSolver solver;
     private final List<String> programStates;
-    private final AssertCollector assertCollector;
+    private final CandidateAssertCollector candidateAssertCollector;
     private final ImmutableList<Visitor> mutatingVisitors;
 
     public BMC(Program program) {
         this.program = program;
         solver = new ConstraintSolver();
         programStates = Lists.newArrayList();
-        assertCollector = new AssertCollector();
+        candidateAssertCollector = new CandidateAssertCollector();
         mutatingVisitors = ImmutableList.of(
             new ShadowingVisitor(),
-            new CallVisitor(assertCollector),
+            new CallVisitor(candidateAssertCollector),
             new LoopUnwindingVisitor(),
-            new ReturnVisitor(assertCollector));
+            new ReturnVisitor(candidateAssertCollector));
     }
 
     @Override

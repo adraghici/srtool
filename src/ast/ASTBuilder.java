@@ -94,7 +94,7 @@ public class ASTBuilder {
     }
 
     private static AssertStmt build(SimpleCParser.AssertStmtContext assertStmt) {
-        return new AssertStmt(build(assertStmt.condition));
+        return new AssertStmt(build(assertStmt.condition), null);
     }
 
     private static AssumeStmt build(SimpleCParser.AssumeStmtContext assumeStmt) {

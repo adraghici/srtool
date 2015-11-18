@@ -4,7 +4,7 @@ import ast.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import ssa.Scopes;
-import tool.AssertCollector;
+import tool.CandidateAssertCollector;
 import tool.SMTUtil;
 
 import java.util.List;
@@ -17,13 +17,13 @@ public class CallVisitor extends DefaultVisitor {
     private final Scopes scopes;
     private final Map<String, ProcedureDecl> procedures;
     private boolean inCallStmt;
-    private final AssertCollector assertCollector;
+    private final CandidateAssertCollector candidateAssertCollector;
 
-    public CallVisitor(AssertCollector assertCollector) {
+    public CallVisitor(CandidateAssertCollector candidateAssertCollector) {
         scopes = Scopes.withDefault();
         procedures = Maps.newHashMap();
         sourceType = TraceableNode.SourceType.CALL;
-        this.assertCollector = assertCollector;
+        this.candidateAssertCollector = candidateAssertCollector;
     }
 
     @Override
@@ -50,12 +50,12 @@ public class CallVisitor extends DefaultVisitor {
         // Assert preconditions and candidate preconditions.
         proc.getPreconditions()
             .forEach(pre -> stmts.add(
-                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this))));
+                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this), null)));
         proc.getCandidatePreconditions().forEach(pre -> {
             AssertStmt assertStmt =
-                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this));
+                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this), null);
             stmts.add(assertStmt);
-            assertCollector.add(pre, assertStmt);
+            candidateAssertCollector.add(pre, assertStmt);
         });
 
         // Havoc callee modset.
