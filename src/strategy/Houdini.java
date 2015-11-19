@@ -43,7 +43,7 @@ public class Houdini implements VerificationStrategy {
     }
 
     @Override
-    public Outcome run() throws IOException, InterruptedException {
+    public Outcome call() throws IOException, InterruptedException {
         Program dirty = ProgramUtil.transform(program, initialVisitors, states);
         Program clean = ProgramUtil.clean(dirty, states);
 

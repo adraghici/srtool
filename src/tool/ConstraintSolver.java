@@ -6,7 +6,7 @@ import util.ProcessTimeoutException;
 import java.io.IOException;
 
 public class ConstraintSolver {
-    private static final int TIMEOUT = 30000;
+    private static final int TIMEOUT = Integer.MAX_VALUE;
 
     public ConstraintSolution run(String smtConstraint) throws IOException, InterruptedException {
         ProcessExec process = new ProcessExec("z3", "-smt2", "-in");

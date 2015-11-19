@@ -1,54 +1,60 @@
 package tool;
 
-import ast.ASTBuilder;
 import ast.Program;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CommonTokenStream;
-import parser.SimpleCLexer;
-import parser.SimpleCParser;
-import parser.SimpleCParser.ProgramContext;
+import strategy.BMC;
 import strategy.Houdini;
+import util.ParserUtil;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public class SRTool {
+    private static final int TIMEOUT = 30;
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        Program program = buildProgram(args[0]);
-        VerificationStrategy strategy = new Houdini(program);
-        System.out.println(strategy.run());
+        Program program = ParserUtil.buildProgram(args[0]);
+        System.out.println(computeOutcome(program));
     }
 
-    private static Program buildProgram(String filename) throws IOException {
-        ANTLRInputStream input = new ANTLRInputStream(new FileInputStream(filename));
-        ProgramContext ctx = getProgramContext(input);
-        Program program = ASTBuilder.build((ProgramContext) ctx.getChild(0).getParent());
-        return program;
-    }
+    private static Outcome computeOutcome(Program program) throws InterruptedException {
+        Houdini houdini = new Houdini(program);
+        BMC bmc = new BMC(program);
 
-    private static ProgramContext getProgramContext(ANTLRInputStream input) {
-        SimpleCLexer lexer = new SimpleCLexer(input);
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        SimpleCParser parser = new SimpleCParser(tokens);
-        ProgramContext ctx = parser.program();
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        Future<Outcome> bmcFuture = executor.submit(bmc);
+        Future<Outcome> houdiniFuture = executor.submit(houdini);
 
-        if(parser.getNumberOfSyntaxErrors() > 0) {
-            System.exit(1);
-        }
+        executor.shutdown();
+        executor.awaitTermination(TIMEOUT, TimeUnit.SECONDS);
+        executor.shutdownNow();
 
-        Typechecker tc = new Typechecker();
-        tc.visit(ctx);
-        tc.resolve();
+        Optional<Outcome> houdiniOutcome = Optional.empty();
+        Optional<Outcome> bmcOutcome = Optional.empty();
 
-        if(tc.hasErrors()) {
-            System.err.println("Errors were detected when typechecking the file:");
-            for(String err : tc.getErrors()) {
-                System.err.println("  " + err);
+        Outcome outcome = Outcome.UNKNOWN;
+        try {
+            houdiniOutcome = Optional.of(houdiniFuture.get());
+        } catch (ExecutionException e) {
+        } finally {
+            if (houdiniOutcome.isPresent() && houdiniOutcome.get() == Outcome.CORRECT) {
+                return Outcome.CORRECT;
             }
-            System.exit(1);
         }
 
-        return ctx;
+        try {
+            bmcOutcome = Optional.of(bmcFuture.get());
+        } catch (ExecutionException e) {
+        } finally {
+            if (bmcOutcome.isPresent() && bmcOutcome.get() != Outcome.UNKNOWN) {
+                outcome = bmcOutcome.get();
+            }
+        }
+
+        return outcome;
     }
 }

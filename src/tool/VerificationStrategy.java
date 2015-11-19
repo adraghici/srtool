@@ -1,10 +1,9 @@
 package tool;
 
-import java.io.IOException;
+import java.util.concurrent.Callable;
 
 /**
  * Specification for a verification technique.
  */
-public interface VerificationStrategy {
-    Outcome run() throws IOException, InterruptedException;
+public interface VerificationStrategy extends Callable<Outcome> {
 }

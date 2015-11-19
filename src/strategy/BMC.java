@@ -23,7 +23,7 @@ import java.util.List;
 public class BMC implements VerificationStrategy {
     private static final int MIN_DEPTH = 5;
     private static final int MAX_DEPTH = 100;
-    private static final int DEPTH_STEP = 3;
+    private static final int DEPTH_STEP = 10;
     private final Program program;
     private final ConstraintSolver solver;
     private final List<String> states;
@@ -37,7 +37,7 @@ public class BMC implements VerificationStrategy {
     }
 
     @Override
-    public Outcome run() throws IOException, InterruptedException {
+    public Outcome call() throws IOException, InterruptedException {
         for (int depth = MIN_DEPTH; depth <= MAX_DEPTH; depth += DEPTH_STEP) {
             SMTModel smtModel = StrategyUtil.generateSMT(program, createVisitorsWithDepth(depth), states);
             ConstraintSolution solution = solver.run(smtModel.getCode());
