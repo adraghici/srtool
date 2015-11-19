@@ -39,6 +39,10 @@ public class BMC implements VerificationStrategy {
     @Override
     public Outcome call() throws IOException, InterruptedException {
         for (int depth = MIN_DEPTH; depth <= MAX_DEPTH; depth += DEPTH_STEP) {
+            if (Thread.currentThread().isInterrupted()) {
+                return Outcome.UNKNOWN;
+            }
+
             SMTModel smtModel = StrategyUtil.generateSMT(program, createVisitorsWithDepth(depth), states);
             ConstraintSolution solution = solver.run(smtModel.getCode());
 

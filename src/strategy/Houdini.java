@@ -48,6 +48,10 @@ public class Houdini implements VerificationStrategy {
         Program clean = ProgramUtil.clean(dirty, states);
 
         while (true) {
+            if (Thread.currentThread().isInterrupted()) {
+                return Outcome.UNKNOWN;
+            }
+
             SMTModel smtModel = StrategyUtil.generateSMT(clean, iterationVisitors, states);
             ConstraintSolution solution = solver.run(smtModel.getCode());
 
