@@ -20,7 +20,7 @@ int foo() {
     }
     x = x + 1;
   }
-  assert x == 10;
+  assert x == 2;
 
   return 0;
 }
