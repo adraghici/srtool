@@ -91,7 +91,7 @@ public class PrintingVisitor extends DefaultVisitor {
     }
 
     @Override
-    public Object visit(CallStmt callStmt) {
+    public String visit(CallStmt callStmt) {
         return indent(
             String.format(
                 "%s = %s;",

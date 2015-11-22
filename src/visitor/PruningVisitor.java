@@ -28,7 +28,7 @@ public class PruningVisitor extends DefaultVisitor {
         this.removalCandidates = removalCandidates;
     }
 
-    @Override public Object visit(ProcedureDecl procedureDecl) {
+    @Override public ProcedureDecl visit(ProcedureDecl procedureDecl) {
         List<CandidatePrecondition> remainingCandidatePreconditions =
             procedureDecl.getCandidatePreconditions().stream()
                 .filter(p -> !removalCandidates.contains(p))
@@ -57,7 +57,7 @@ public class PruningVisitor extends DefaultVisitor {
             procedureDecl.getReturnExpr());
     }
 
-    @Override public Object visit(WhileStmt whileStmt) {
+    @Override public WhileStmt visit(WhileStmt whileStmt) {
         List<CandidateInvariant> remainingCandidateInvariants =
             whileStmt.getCandidateInvariants().stream()
                 .filter(i -> !removalCandidates.contains(i))
