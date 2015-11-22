@@ -23,7 +23,7 @@ import java.util.List;
 public class BMC implements VerificationStrategy {
     private static final int MIN_DEPTH = 5;
     private static final int MAX_DEPTH = 100;
-    private static final int DEPTH_STEP = 10;
+    private static final int DEPTH_STEP = 5;
     private final Program program;
     private final ConstraintSolver solver;
     private final List<String> states;

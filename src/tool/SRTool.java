@@ -14,7 +14,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class SRTool {
-    private static final int TIMEOUT = 30;
+    private static final int OVERALL_TIMEOUT = 165000;
+    private static final int TIMEOUT_SLICES = 15;
     private static final int THREADS = 2;
 
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -29,32 +30,40 @@ public class SRTool {
         ExecutorService executor = Executors.newFixedThreadPool(THREADS);
         Future<Outcome> bmcFuture = executor.submit(bmc);
         Future<Outcome> houdiniFuture = executor.submit(houdini);
-
-        executor.shutdown();
-        executor.awaitTermination(TIMEOUT, TimeUnit.SECONDS);
-        executor.shutdownNow();
-
         Optional<Outcome> houdiniOutcome = Optional.empty();
         Optional<Outcome> bmcOutcome = Optional.empty();
+
         Outcome outcome = Outcome.UNKNOWN;
+        executor.shutdown();
+        for (int slice = 0; slice < TIMEOUT_SLICES; ++slice) {
+            int timeout = OVERALL_TIMEOUT / TIMEOUT_SLICES;
+            executor.awaitTermination(timeout, TimeUnit.MILLISECONDS);
 
-        try {
-            houdiniOutcome = Optional.of(houdiniFuture.get());
-        } catch (ExecutionException e) {
-        } finally {
-            if (houdiniOutcome.isPresent() && houdiniOutcome.get() == Outcome.CORRECT) {
-                return Outcome.CORRECT;
+            if (houdiniFuture.isDone() && !houdiniOutcome.isPresent()) {
+                try {
+                    houdiniOutcome = Optional.of(houdiniFuture.get());
+                } catch (ExecutionException e) {
+                } finally {
+                    if (houdiniOutcome.isPresent() && houdiniOutcome.get() == Outcome.CORRECT) {
+                        outcome = Outcome.CORRECT;
+                        break;
+                    }
+                }
+            }
+
+            if (bmcFuture.isDone() && !bmcOutcome.isPresent()) {
+                try {
+                    bmcOutcome = Optional.of(bmcFuture.get());
+                } catch (ExecutionException e) {
+                } finally {
+                    if (bmcOutcome.isPresent() && bmcOutcome.get() != Outcome.UNKNOWN) {
+                        outcome = bmcOutcome.get();
+                        break;
+                    }
+                }
             }
         }
-
-        try {
-            bmcOutcome = Optional.of(bmcFuture.get());
-        } catch (ExecutionException e) {
-        } finally {
-            if (bmcOutcome.isPresent() && bmcOutcome.get() != Outcome.UNKNOWN) {
-                outcome = bmcOutcome.get();
-            }
-        }
+        executor.shutdownNow();
 
         return outcome;
     }
