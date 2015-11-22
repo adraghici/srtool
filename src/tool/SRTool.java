@@ -14,8 +14,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class SRTool {
-    private static final int OVERALL_TIMEOUT = 165000;
-    private static final int TIMEOUT_SLICES = 15;
+    private static final int OVERALL_TIMEOUT = 165;
+    private static final int TIMEOUT_SLICES = 33;
     private static final int THREADS = 2;
 
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -36,8 +36,7 @@ public class SRTool {
         Outcome outcome = Outcome.UNKNOWN;
         executor.shutdown();
         for (int slice = 0; slice < TIMEOUT_SLICES; ++slice) {
-            int timeout = OVERALL_TIMEOUT / TIMEOUT_SLICES;
-            executor.awaitTermination(timeout, TimeUnit.MILLISECONDS);
+            executor.awaitTermination(OVERALL_TIMEOUT / TIMEOUT_SLICES, TimeUnit.SECONDS);
 
             if (houdiniFuture.isDone() && !houdiniOutcome.isPresent()) {
                 try {
