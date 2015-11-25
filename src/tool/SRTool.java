@@ -25,31 +25,34 @@ import static tool.Strategy.Name.UNSOUND_BMC;
 
 public class SRTool {
     private static final int OVERALL_TIMEOUT = 160000;
-    private static final int TIMEOUT_SLICES = 320;
+    private static final int TIMEOUT_SLICES = 80;
     private static final int THREADS = 4;
     private static final Map<Strategy.Name, Function<Outcome, Outcome>> STRATEGY_OUTCOMES = defineStrategyOutcomes();
 
-    public static void main(String[] args) throws IOException, InterruptedException {
+    public static void main(String[] args) throws IOException {
         Program program = ParserUtil.buildProgram(args[0]);
         System.out.println(computeOutcome(program));
     }
 
-    private static Outcome computeOutcome(Program program) throws InterruptedException {
+    private static Outcome computeOutcome(Program program) {
         ExecutorService executor = Executors.newFixedThreadPool(THREADS);
         Map<Strategy, Future<Outcome>> futures = submitVerificationTasks(executor, createStrategies(program));
         executor.shutdown();
 
-        for (int slice = 0; slice < TIMEOUT_SLICES; ++slice) {
-            executor.awaitTermination(OVERALL_TIMEOUT / TIMEOUT_SLICES, TimeUnit.MILLISECONDS);
-            for (Strategy strategy : futures.keySet()) {
-                Outcome outcome = queryStrategy(strategy.getName(), futures.get(strategy));
-                if (outcome != Outcome.UNKNOWN) {
-                    executor.shutdownNow();
-                    return outcome;
+        try {
+            for (int slice = 0; slice < TIMEOUT_SLICES; ++slice) {
+                executor.awaitTermination(OVERALL_TIMEOUT / TIMEOUT_SLICES, TimeUnit.MILLISECONDS);
+                for (Strategy strategy : futures.keySet()) {
+                    Outcome outcome = queryStrategy(strategy.getName(), futures.get(strategy));
+                    if (outcome != Outcome.UNKNOWN) {
+                        return outcome;
+                    }
                 }
             }
+        } catch (InterruptedException e) {
+        } finally {
+            executor.shutdownNow();
         }
-        executor.shutdownNow();
 
         return Outcome.UNKNOWN;
     }

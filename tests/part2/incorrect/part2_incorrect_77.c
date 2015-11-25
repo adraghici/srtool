@@ -1,0 +1,26 @@
+// RUN: %tool "%s" > "%t" 
+// RUN: %diff %INCORRECT "%t"
+
+int x;
+int y;
+int z;
+
+int theproc() requires x + y == z, ensures \result == 52 {
+  while(x > 0) candidate_invariant 0,
+		 invariant x + y == z,
+		 invariant x + y == z + z - z,
+		 invariant x + y - (x + y) * x + y == z + z - z,
+		 candidate_invariant x ^ y == z + z | z,
+		 candidate_invariant x & y == z + z & z,
+		 candidate_invariant x * y == z + z - z,
+		 candidate_invariant x % y == z + z ^ z,
+		 candidate_invariant x / y == z ^ z - z,
+		 candidate_invariant x - y == z + + + z - z,
+		 candidate_invariant x + !y == !!z + z - z
+ {
+      x = x - 1;
+      y = y + 1;
+    }
+  assert x + y == z;
+  return 52;
+}
