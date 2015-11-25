@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 public class StrategyUtil {
     public static final int BMC_START_DEPTH = 5;
-    public static final int BMC_STEP = 3;
+    public static final int BMC_STEP = 1;
 
     /**
      * Returns the list of asserts failed in the given model.
