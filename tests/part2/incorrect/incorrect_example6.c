@@ -1,8 +1,6 @@
 // RUN: %tool "%s" > "%t"
 // RUN: %diff %INCORRECT "%t"
 
-
-
 int min(int x, int y)
   ensures \result == (y < x ? y : x)
 {

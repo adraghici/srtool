@@ -5,5 +5,6 @@ import java.util.concurrent.Callable;
 /**
  * Specification for a verification technique.
  */
-public interface VerificationStrategy extends Callable<Outcome> {
+public interface Strategy extends Callable<Outcome> {
+    public enum Name { HOUDINI, SOUND_BMC, UNSOUND_BMC }
 }

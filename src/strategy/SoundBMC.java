@@ -1,9 +1,11 @@
 package strategy;
 
 import ast.AssertStmt;
+import ast.Node;
 import ast.Program;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import tool.AssertCollector;
 import tool.ConstraintSolution;
 import tool.ConstraintSolver;
@@ -19,21 +21,24 @@ import visitor.Visitor;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
-public class BMC implements VerificationStrategy {
+public class SoundBMC implements VerificationStrategy {
     private static final int MIN_DEPTH = 5;
     private static final int MAX_DEPTH = 100;
     private static final int DEPTH_STEP = 3;
     private final Program program;
     private final ConstraintSolver solver;
     private final List<String> states;
-    private final AssertCollector unwindingAssertCollector;
+    private final AssertCollector assertCollector;
+    private final Set<Node> unwindingAsserts;
 
-    public BMC(Program program) {
+    public SoundBMC(Program program) {
         this.program = program;
         solver = new ConstraintSolver();
         states = Lists.newArrayList();
-        unwindingAssertCollector = new AssertCollector();
+        assertCollector = new AssertCollector();
+        unwindingAsserts = Sets.newHashSet();
     }
 
     @Override
@@ -51,9 +56,12 @@ public class BMC implements VerificationStrategy {
             }
 
             List<AssertStmt> failed = StrategyUtil.getFailedAsserts(smtModel, solution);
-            if (!unwindingAssertionFailing(failed)) {
+            List<Node> failedAsserts = assertCollector.resolve(failed);
+            if (originalAssertsFailing(failedAsserts)) {
                 return Outcome.INCORRECT;
             }
+
+            assertCollector.clear();
         }
         return Outcome.UNKNOWN;
     }
@@ -63,15 +71,15 @@ public class BMC implements VerificationStrategy {
         return String.join("\n", states);
     }
 
-    private boolean unwindingAssertionFailing(List<AssertStmt> failedAsserts) {
-        return unwindingAssertCollector.containsAny(failedAsserts);
+    private boolean originalAssertsFailing(List<Node> failedAsserts) {
+        return failedAsserts.isEmpty() || !failedAsserts.stream().allMatch(unwindingAsserts::contains);
     }
 
     private ImmutableList<Visitor> createVisitorsWithDepth(int depth) {
         return ImmutableList.of(
-            CallVisitor.withoutCandidates(unwindingAssertCollector),
-            new UnwindingVisitor(unwindingAssertCollector, depth),
-            new ShadowingVisitor(),
-            ReturnVisitor.withoutCandidates(unwindingAssertCollector));
+            new CallVisitor(assertCollector),
+            new UnwindingVisitor(assertCollector, unwindingAsserts, depth),
+            new ShadowingVisitor(assertCollector),
+            new ReturnVisitor(assertCollector));
     }
 }

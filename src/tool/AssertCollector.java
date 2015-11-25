@@ -2,35 +2,36 @@ package tool;
 
 import ast.AssertStmt;
 import ast.Node;
-import ast.TraceableNode;
-import com.google.common.collect.Maps;
-import visitor.VisitStage;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Sets;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 /**
- * Collector used to aggregate assert statements and trace back to the point where they were originally
- * created.
+ * Collector used to aggregate statements and trace back to the point where they were originally created.
  */
 public class AssertCollector {
-    private final Map<AssertStmt, Optional<TraceableNode>> assertOrigin;
+    private final Set<Node> visited;
+    private final BiMap<Node, Node> origin;
 
     public AssertCollector() {
-        assertOrigin = Maps.newHashMap();
+        visited = Sets.newHashSet();
+        origin = HashBiMap.create();
     }
 
-    public void add(Optional<TraceableNode> parent, AssertStmt stmt) {
-        assertOrigin.put(stmt, parent.map(AssertCollector::getCleanAncestor));
+    public void add(Node parent, AssertStmt stmt) {
+        if (!visited.contains(parent)) {
+            return;
+        }
+
+        origin.put(stmt, origin.get(parent));
     }
 
     public List<Node> resolve(List<AssertStmt> stmts) {
-        return stmts.stream()
-            .filter(stmt -> assertOrigin.containsKey(stmt.getOriginal()))
-            .map(stmt -> assertOrigin.get(stmt.getOriginal()).get())
-            .collect(Collectors.toList());
+        // TODO
+        return null;
     }
 
     public boolean containsAny(List<AssertStmt> stmts) {
@@ -42,18 +43,10 @@ public class AssertCollector {
     }
 
     public void clear() {
-        assertOrigin.clear();
+        origin.clear();
     }
 
     private boolean contains(AssertStmt stmt) {
-        return assertOrigin.containsKey(stmt.getOriginal());
-    }
-
-    private static TraceableNode getCleanAncestor(TraceableNode node) {
-        TraceableNode parent = node;
-        while (parent.getSource().isPresent() && parent.getVisitStage() != VisitStage.CLEAN) {
-            parent = parent.getSource().get();
-        }
-        return parent;
+        return origin.containsKey(stmt);
     }
 }
