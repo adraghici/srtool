@@ -32,6 +32,7 @@ import ast.VarRef;
 import ast.VarRefExpr;
 import ast.WhileStmt;
 import com.google.common.collect.Lists;
+import tool.AssertCollector;
 
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +42,15 @@ import java.util.stream.Collectors;
  * Visitor used to traverse the whole AST and return a new copy of it.
  */
 public class DefaultVisitor implements Visitor<Object> {
-    protected VisitStage visitStage = VisitStage.DIRTY;
+    protected final AssertCollector assertCollector;
+
+    public DefaultVisitor() {
+        assertCollector = new AssertCollector();
+    }
+
+    public DefaultVisitor(AssertCollector assertCollector) {
+        this.assertCollector = assertCollector;
+    }
 
     @Override
     public Object visit(Program program) {
@@ -78,28 +87,28 @@ public class DefaultVisitor implements Visitor<Object> {
 
     @Override
     public Object visit(Precondition precondition) {
-        return new Precondition((Expr) precondition.getCondition().accept(this));
+        Precondition pre = new Precondition((Expr) precondition.getCondition().accept(this));
+        assertCollector.add(precondition, pre);
+        return pre;
     }
 
     @Override
     public Object visit(Postcondition postcondition) {
-        return new Postcondition((Expr) postcondition.getCondition().accept(this));
+        Postcondition post = new Postcondition((Expr) postcondition.getCondition().accept(this));
+        assertCollector.add(postcondition, post);
+        return post;
     }
 
     @Override
     public Object visit(CandidatePrecondition candidatePrecondition) {
         return new CandidatePrecondition(
-            (Expr) candidatePrecondition.getCondition().accept(this),
-            Optional.of(candidatePrecondition),
-            visitStage);
+            (Expr) candidatePrecondition.getCondition().accept(this));
     }
 
     @Override
     public Object visit(CandidatePostcondition candidatePostcondition) {
         return new CandidatePostcondition(
-            (Expr) candidatePostcondition.getCondition().accept(this),
-            Optional.of(candidatePostcondition),
-            visitStage);
+            (Expr) candidatePostcondition.getCondition().accept(this));
     }
 
     @Override
@@ -111,9 +120,9 @@ public class DefaultVisitor implements Visitor<Object> {
 
     @Override
     public Object visit(AssertStmt assertStmt) {
-        return new AssertStmt(
-            (Expr) assertStmt.getCondition().accept(this),
-            Optional.of(assertStmt.getOriginal()));
+        AssertStmt stmt = new AssertStmt((Expr) assertStmt.getCondition().accept(this));
+        assertCollector.add(assertStmt, stmt);
+        return stmt;
     }
 
     @Override
@@ -167,15 +176,14 @@ public class DefaultVisitor implements Visitor<Object> {
 
     @Override
     public Object visit(Invariant invariant) {
-        return new Invariant((Expr) invariant.getCondition().accept(this));
+        Invariant inv = new Invariant((Expr) invariant.getCondition().accept(this));
+        assertCollector.add(invariant, inv);
+        return inv;
     }
 
     @Override
     public Object visit(CandidateInvariant candidateInvariant) {
-        return new CandidateInvariant(
-            (Expr) candidateInvariant.getCondition().accept(this),
-            Optional.of(candidateInvariant),
-            visitStage);
+        return new CandidateInvariant((Expr) candidateInvariant.getCondition().accept(this));
     }
 
     @Override

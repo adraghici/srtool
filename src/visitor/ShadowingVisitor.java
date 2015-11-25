@@ -1,8 +1,14 @@
 package visitor;
 
-import ast.*;
+import ast.BlockStmt;
+import ast.Node;
+import ast.OldExpr;
+import ast.ProcedureDecl;
+import ast.VarDeclStmt;
+import ast.VarRef;
 import ssa.Scope;
 import ssa.Scopes;
+import tool.AssertCollector;
 
 /**
  * Visitor used to disambiguate variables within nested scopes.
@@ -11,10 +17,10 @@ public class ShadowingVisitor extends DefaultVisitor {
     private final Scopes scopes;
     private final Scopes globals;
 
-    public ShadowingVisitor() {
+    public ShadowingVisitor(AssertCollector assertCollector) {
+        super(assertCollector);
         this.scopes = Scopes.withDefault();
         globals = Scopes.empty();
-        visitStage = VisitStage.DIRTY;
     }
 
     @Override

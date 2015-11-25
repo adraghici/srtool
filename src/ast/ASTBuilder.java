@@ -1,6 +1,5 @@
 package ast;
 
-import visitor.VisitStage;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.antlr.v4.runtime.Token;
@@ -56,14 +55,10 @@ public class ASTBuilder {
             return new Postcondition(build(prePost.ensures().condition));
         } else if (prePost.candidateRequires() != null) {
             return new CandidatePrecondition(
-                build(prePost.candidateRequires().condition),
-                Optional.empty(),
-                VisitStage.DIRTY);
+                build(prePost.candidateRequires().condition));
         } else {
             return new CandidatePostcondition(
-                build(prePost.candidateEnsures().condition),
-                Optional.empty(),
-                VisitStage.DIRTY);
+                build(prePost.candidateEnsures().condition));
         }
     }
 
@@ -94,7 +89,7 @@ public class ASTBuilder {
     }
 
     private static AssertStmt build(SimpleCParser.AssertStmtContext assertStmt) {
-        return new AssertStmt(build(assertStmt.condition), Optional.empty());
+        return new AssertStmt(build(assertStmt.condition));
     }
 
     private static AssumeStmt build(SimpleCParser.AssumeStmtContext assumeStmt) {
@@ -133,9 +128,7 @@ public class ASTBuilder {
             return new Invariant(build(loopInvariant.invariant().condition));
         } else {
             return new CandidateInvariant(
-                build(loopInvariant.candidateInvariant().condition),
-                Optional.empty(),
-                VisitStage.DIRTY);
+                build(loopInvariant.candidateInvariant().condition));
         }
     }
 

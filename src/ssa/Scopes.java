@@ -55,7 +55,7 @@ public class Scopes {
      */
     public int increaseVar(String var) {
         int id = Iterables.getLast(scopes).increaseVar(var);
-        Lists.reverse(scopes.subList(0, scopes.size() - 1)).stream()
+        Lists.reverse(scopes.subList(1, scopes.size() - 1)).stream()
             .filter(scope -> scope.hasVar(var))
             .forEach(scope -> scope.updateVar(var, id));
         return id;

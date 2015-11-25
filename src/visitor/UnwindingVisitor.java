@@ -1,41 +1,79 @@
 package visitor;
 
-import ast.*;
+import ast.AssertStmt;
+import ast.AssumeStmt;
+import ast.BlockStmt;
+import ast.Expr;
+import ast.IfStmt;
+import ast.Node;
+import ast.NumberExpr;
+import ast.Stmt;
+import ast.WhileStmt;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import tool.AssertCollector;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Visitor used to replace while loops with invariant assertions, randomising variables and if statements.
+ * Visitor used to unwind loops. The sound version will additionally collect unwinding assertions.
  */
 public class UnwindingVisitor extends DefaultVisitor {
+    private final boolean sound;
     private final int depth;
-    private final AssertCollector unwindingAssertCollector;
+    private final Set<Node> unwindingAsserts;
 
-    public UnwindingVisitor(AssertCollector unwindingAssertCollector, int depth) {
+    public static UnwindingVisitor createUnsound(int depth) {
+        return new UnwindingVisitor(depth);
+    }
+
+    public static UnwindingVisitor createSound(
+        AssertCollector assertCollector,
+        Set<Node> unwindingAsserts,
+        int depth) {
+        return new UnwindingVisitor(assertCollector, unwindingAsserts, depth);
+    }
+
+    private UnwindingVisitor(int depth) {
+        sound = false;
         this.depth = depth;
-        this.unwindingAssertCollector = unwindingAssertCollector;
+        this.unwindingAsserts = Sets.newHashSet();
+    }
+
+    private UnwindingVisitor(AssertCollector assertCollector, Set<Node> unwindingAsserts, int depth) {
+        super(assertCollector);
+        sound = true;
+        this.depth = depth;
+        this.unwindingAsserts = unwindingAsserts;
     }
 
     @Override
     public Stmt visit(WhileStmt whileStmt) {
-        Expr whileCondition = whileStmt.getCondition();
         NumberExpr falseExpr = new NumberExpr("0");
-        AssertStmt unwindingAssertStmt = new AssertStmt(falseExpr, Optional.empty());
-        unwindingAssertCollector.add(Optional.empty(), unwindingAssertStmt);
+        AssertStmt unwindingAssert = new AssertStmt(falseExpr);
+        unwindingAsserts.add(unwindingAssert);
+        assertCollector.addOrigin(unwindingAssert);
+
+        List<Stmt> soundBlockStmts = Lists.newArrayList(unwindingAssert, new AssumeStmt(falseExpr));
+        List<Stmt> unsoundBlockStmts = Lists.newArrayList(new AssumeStmt(falseExpr));
+        List<Stmt> blockStmts = sound ? soundBlockStmts : unsoundBlockStmts;
         IfStmt result = new IfStmt(
-            whileCondition,
-            new BlockStmt(Lists.newArrayList(
-                unwindingAssertStmt,
-                new AssumeStmt(falseExpr))),
+            whileStmt.getCondition(),
+            new BlockStmt(blockStmts),
             Optional.empty());
 
         List<Stmt> invariantAsserts = whileStmt.getInvariants().stream()
-            .map(inv -> new AssertStmt(inv.getCondition(), Optional.empty()))
+            .map(inv -> {
+                AssertStmt stmt = new AssertStmt(inv.getCondition());
+                assertCollector.addOrigin(inv);
+                assertCollector.add(inv, stmt);
+                return stmt;
+            })
             .collect(Collectors.toList());
+
         for (int i = 0; i < depth; ++i) {
             List<Stmt> ifStmts = whileStmt.getWhileBlock().getStmts().stream()
                 .map(stmt -> (Stmt) stmt.accept(this))
@@ -44,12 +82,20 @@ public class UnwindingVisitor extends DefaultVisitor {
             stmts.addAll(ifStmts);
             stmts.addAll(invariantAsserts);
             stmts.add(result);
-            result = new IfStmt(whileCondition, new BlockStmt(stmts), Optional.empty());
+            result = new IfStmt(whileStmt.getCondition(), new BlockStmt(stmts), Optional.empty());
         }
 
         List<Stmt> stms = Lists.newArrayList(invariantAsserts);
         stms.add(result);
         return new BlockStmt(stms);
+    }
+
+    @Override
+    public Object visit(AssertStmt assertStmt) {
+        AssertStmt stmt = new AssertStmt((Expr) assertStmt.getCondition().accept(this));
+        assertCollector.addOrigin(assertStmt);
+        assertCollector.add(assertStmt, stmt);
+        return stmt;
     }
 
     @Override

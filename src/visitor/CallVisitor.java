@@ -9,7 +9,6 @@ import util.SMTUtil;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Visitor used to implement method calls.
@@ -18,23 +17,11 @@ public class CallVisitor extends DefaultVisitor {
     private final Scopes scopes;
     private final Map<String, ProcedureDecl> procedures;
     private boolean inCallStmt;
-    private boolean considerCandidates;
-    private final AssertCollector assertCollector;
 
-    public static CallVisitor withCandidates(AssertCollector assertCollector) {
-        return new CallVisitor(assertCollector, true);
-    }
-
-    public static CallVisitor withoutCandidates(AssertCollector assertCollector) {
-        return new CallVisitor(assertCollector, false);
-    }
-
-    private CallVisitor(AssertCollector assertCollector, boolean considerCandidates) {
+    public CallVisitor(AssertCollector assertCollector) {
+        super(assertCollector);
         scopes = Scopes.withDefault();
         procedures = Maps.newHashMap();
-        visitStage = VisitStage.DIRTY;
-        this.considerCandidates = considerCandidates;
-        this.assertCollector = assertCollector;
     }
 
     @Override
@@ -58,18 +45,12 @@ public class CallVisitor extends DefaultVisitor {
         ProcedureDecl proc = procedures.get(callStmt.getProcedureRef().getName());
         Map<String, Expr> substituteArgs = createSubstituteArgs(callStmt, proc);
 
-        // Assert preconditions and candidate preconditions.
-        proc.getPreconditions()
-            .forEach(pre -> stmts.add(
-                new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this), Optional.empty())));
-        if (considerCandidates) {
-            proc.getCandidatePreconditions().forEach(pre -> {
-                AssertStmt assertStmt =
-                    new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this), Optional.empty());
-                stmts.add(assertStmt);
-                assertCollector.add(Optional.of(pre), assertStmt);
-            });
-        }
+        // Assert preconditions.
+        proc.getPreconditions().forEach(pre -> {
+            AssertStmt assertStmt = new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this));
+            stmts.add(assertStmt);
+            assertCollector.add(pre, assertStmt);
+        });
 
         // Havoc callee modset.
         scopes.topScope().modset(proc.getModified())

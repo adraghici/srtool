@@ -2,51 +2,45 @@ package tool;
 
 import ast.AssertStmt;
 import ast.Node;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
- * Collector used to aggregate statements and trace back to the point where they were originally created.
+ * Collector used to aggregate assert statements and trace back to the point where they were originally
+ * created.
  */
 public class AssertCollector {
     private final Set<Node> visited;
-    private final BiMap<Node, Node> origin;
+    private final Map<Node, Node> origin;
 
     public AssertCollector() {
         visited = Sets.newHashSet();
-        origin = HashBiMap.create();
+        origin = Maps.newHashMap();
     }
 
-    public void add(Node parent, AssertStmt stmt) {
-        if (!visited.contains(parent)) {
-            return;
-        }
+    public void addOrigin(Node node) {
+        origin.put(node, node);
+        visited.add(node);
+    }
 
-        origin.put(stmt, origin.get(parent));
+    public void add(Node parent, Node node) {
+        if (visited.contains(parent)) {
+            origin.put(node, origin.get(parent));
+            visited.add(node);
+        }
     }
 
     public List<Node> resolve(List<AssertStmt> stmts) {
-        // TODO
-        return null;
-    }
-
-    public boolean containsAny(List<AssertStmt> stmts) {
-        return stmts.stream().anyMatch(this::contains);
-    }
-
-    public boolean containsAll(List<AssertStmt> stmts) {
-        return stmts.stream().allMatch(this::contains);
+        return stmts.stream().filter(origin::containsKey).map(origin::get).collect(Collectors.toList());
     }
 
     public void clear() {
+        visited.clear();
         origin.clear();
-    }
-
-    private boolean contains(AssertStmt stmt) {
-        return origin.containsKey(stmt);
     }
 }

@@ -23,12 +23,10 @@ import java.util.Optional;
  */
 public class WhileVisitor extends DefaultVisitor {
     private final Scopes scopes;
-    private final AssertCollector candidateAssertCollector;
 
-    public WhileVisitor(AssertCollector candidateAssertCollector) {
+    public WhileVisitor(AssertCollector assertCollector) {
+        super(assertCollector);
         this.scopes = Scopes.withDefault();
-        this.candidateAssertCollector = candidateAssertCollector;
-        visitStage = VisitStage.DIRTY;
     }
 
     @Override
@@ -43,11 +41,10 @@ public class WhileVisitor extends DefaultVisitor {
     public Stmt visit(WhileStmt whileStmt) {
         List<Stmt> stmts = Lists.newArrayList();
 
-        whileStmt.getInvariants().forEach(i -> stmts.add(new AssertStmt(i.getCondition(), Optional.empty())));
-        whileStmt.getCandidateInvariants().forEach(i -> {
-            AssertStmt assertStmt = new AssertStmt(i.getCondition(), Optional.empty());
+        whileStmt.getInvariants().forEach(i -> {
+            AssertStmt assertStmt = new AssertStmt(i.getCondition());
             stmts.add(assertStmt);
-            candidateAssertCollector.add(Optional.of(i), assertStmt);
+            assertCollector.add(i, assertStmt);
         });
 
         scopes.topScope().modset(whileStmt.getModified()).forEach(x -> stmts.add(new HavocStmt(new VarRef(x))));
@@ -55,11 +52,10 @@ public class WhileVisitor extends DefaultVisitor {
 
         List<Stmt> ifStmts = Lists.newArrayList();
         whileStmt.getWhileBlock().getStmts().forEach(stmt -> ifStmts.add((Stmt) stmt.accept(this)));
-        whileStmt.getInvariants().forEach(i -> ifStmts.add(new AssertStmt(i.getCondition(), Optional.empty())));
-        whileStmt.getCandidateInvariants().forEach(i -> {
-            AssertStmt assertStmt = new AssertStmt(i.getCondition(), Optional.empty());
+        whileStmt.getInvariants().forEach(i -> {
+            AssertStmt assertStmt = new AssertStmt(i.getCondition());
             ifStmts.add(assertStmt);
-            candidateAssertCollector.add(Optional.of(i), assertStmt);
+            assertCollector.add(i, assertStmt);
         });
         ifStmts.add(new AssumeStmt(new NumberExpr("0")));
 

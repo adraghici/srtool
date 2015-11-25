@@ -7,4 +7,6 @@ import java.util.concurrent.Callable;
  */
 public interface Strategy extends Callable<Outcome> {
     public enum Name { HOUDINI, SOUND_BMC, UNSOUND_BMC }
+
+    public Name getName();
 }

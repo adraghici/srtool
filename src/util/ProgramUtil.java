@@ -2,11 +2,12 @@ package util;
 
 import ast.Node;
 import ast.Program;
+import tool.AssertCollector;
 import visitor.PruningVisitor;
 import visitor.Visitor;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class ProgramUtil {
     /**
@@ -24,15 +25,13 @@ public class ProgramUtil {
     /**
      * Returns a new program obtained by pruning specific nodes in the given one.
      */
-    public static Program prune(Program program, List<Node> nodes, List<String> states) {
-        return transform(program, new PruningVisitor(nodes), states);
-    }
-
-    /**
-     * Returns a clean stage copy of the given program
-     */
-    public static Program clean(Program program, List<String> states) {
-        return transform(program, new PruningVisitor(Collections.emptyList()), states);
+    public static Program prune(
+        Program program,
+        List<Node> nodes,
+        Set<Node> artificialConditions,
+        AssertCollector assertCollector,
+        List<String> states) {
+        return transform(program, new PruningVisitor(nodes, artificialConditions, assertCollector), states);
     }
 
     /**
