@@ -21,7 +21,11 @@ import visitor.Visitor;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
+/**
+ * Sound BMC is always reliable as long as it finishes executing, as reflected in the interpretation.
+ */
 public class SoundBMC implements Strategy {
     private final Program program;
     private final ConstraintSolver solver;
@@ -63,6 +67,11 @@ public class SoundBMC implements Strategy {
     @Override
     public Name getName() {
         return Name.SOUND_BMC;
+    }
+
+    @Override
+    public Function<Outcome, Outcome> getInterpretation() {
+        return Function.identity();
     }
 
     @Override

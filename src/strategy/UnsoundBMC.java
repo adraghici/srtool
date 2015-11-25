@@ -18,7 +18,11 @@ import visitor.Visitor;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Function;
 
+/**
+ * Unsound BMC may return false positives, as reflected in the interpretation.
+ */
 public class UnsoundBMC implements Strategy {
     private final Program program;
     private final ConstraintSolver solver;
@@ -49,6 +53,11 @@ public class UnsoundBMC implements Strategy {
     @Override
     public Name getName() {
         return Name.UNSOUND_BMC;
+    }
+
+    @Override
+    public Function<Outcome, Outcome> getInterpretation() {
+        return outcome -> outcome == Outcome.INCORRECT ? outcome : Outcome.UNKNOWN;
     }
 
     @Override

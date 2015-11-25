@@ -23,7 +23,11 @@ import visitor.WhileVisitor;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
+/**
+ * Houdini may return false negatives, as reflected in the interpretation.
+ */
 public class Houdini implements Strategy {
     private final Program program;
     private final ConstraintSolver solver;
@@ -78,6 +82,11 @@ public class Houdini implements Strategy {
     @Override
     public Name getName() {
         return Name.HOUDINI;
+    }
+
+    @Override
+    public Function<Outcome, Outcome> getInterpretation() {
+        return outcome -> outcome == Outcome.CORRECT ? outcome : Outcome.UNKNOWN;
     }
 
     @Override
