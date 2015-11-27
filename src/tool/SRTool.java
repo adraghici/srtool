@@ -2,8 +2,8 @@ package tool;
 
 import ast.Program;
 import com.google.common.collect.Maps;
-import strategy.Houdini;
 import strategy.BMC;
+import strategy.Houdini;
 import util.ParserUtil;
 
 import java.io.IOException;
@@ -70,8 +70,9 @@ public class SRTool {
 
     private static NavigableMap<Integer, Strategy> createOrderedStrategies(Program program) {
         NavigableMap<Integer, Strategy> orderedStrategies = Maps.newTreeMap();
-        orderedStrategies.put(0, new Houdini(program));
-        orderedStrategies.put(1, new BMC(program));
+        orderedStrategies.put(0, Houdini.basic(program));
+        orderedStrategies.put(1, Houdini.withInvariantInferece(program));
+        orderedStrategies.put(2, new BMC(program));
         return orderedStrategies;
     }
 }

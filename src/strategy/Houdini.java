@@ -5,9 +5,9 @@ import ast.Program;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import tool.NodeCollector;
 import tool.ConstraintSolution;
 import tool.ConstraintSolver;
+import tool.NodeCollector;
 import tool.Outcome;
 import tool.SMTModel;
 import tool.Strategy;
@@ -15,6 +15,7 @@ import util.ProgramUtil;
 import util.StrategyUtil;
 import visitor.CallVisitor;
 import visitor.CandidateVisitor;
+import visitor.InvariantGenVisitor;
 import visitor.ReturnVisitor;
 import visitor.ShadowingVisitor;
 import visitor.Visitor;
@@ -30,6 +31,7 @@ import java.util.function.Function;
  */
 public class Houdini implements Strategy {
     private final Program program;
+    private final boolean inferInvariants;
     private final ConstraintSolver solver;
     private final List<String> states;
     private final NodeCollector nodeCollector;
@@ -37,8 +39,17 @@ public class Houdini implements Strategy {
     private final List<Visitor> initialVisitors;
     private final List<Visitor> iterationVisitors;
 
-    public Houdini(Program program) {
+    public static Houdini withInvariantInferece(Program program) {
+        return new Houdini(program, true);
+    }
+
+    public static Houdini basic(Program program) {
+        return new Houdini(program, false);
+    }
+
+    public Houdini(Program program, boolean inferInvariants) {
         this.program = program;
+        this.inferInvariants = inferInvariants;
         solver = new ConstraintSolver();
         states = Lists.newArrayList();
         nodeCollector = new NodeCollector();
@@ -70,6 +81,8 @@ public class Houdini implements Strategy {
 
                 nodeCollector.clear();
                 clean = ProgramUtil.prune(clean, failedConditions, artificialConditions, nodeCollector, states);
+            } else {
+                return Outcome.UNKNOWN;
             }
         }
     }
@@ -94,9 +107,13 @@ public class Houdini implements Strategy {
     }
 
     private ImmutableList<Visitor> createInitialVisitors() {
-        return ImmutableList.of(
-            new ShadowingVisitor(nodeCollector),
-            new CandidateVisitor(nodeCollector, artificialConditions));
+        List<Visitor> visitors = Lists.newArrayList();
+        if (inferInvariants) {
+            visitors.add(new InvariantGenVisitor());
+        }
+        visitors.add(new ShadowingVisitor(nodeCollector));
+        visitors.add(new CandidateVisitor(nodeCollector, artificialConditions));
+        return ImmutableList.copyOf(visitors);
     }
 
     private ImmutableList<Visitor> createIterationVisitors() {

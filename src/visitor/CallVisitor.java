@@ -25,13 +25,13 @@ public class CallVisitor extends DefaultVisitor {
     }
 
     @Override
-    public Node visit(Program program) {
+    public Program visit(Program program) {
         program.getProcedureDecls().forEach(proc -> procedures.put(proc.getName(), proc));
-        return (Node) super.visit(program);
+        return (Program) super.visit(program);
     }
 
     @Override
-    public Node visit(ProcedureDecl procedureDecl) {
+    public ProcedureDecl visit(ProcedureDecl procedureDecl) {
         scopes.enterScope();
         ProcedureDecl result = (ProcedureDecl) super.visit(procedureDecl);
         scopes.exitScope();
@@ -82,7 +82,7 @@ public class CallVisitor extends DefaultVisitor {
     }
 
     @Override
-    public Node visit(BlockStmt blockStmt) {
+    public BlockStmt visit(BlockStmt blockStmt) {
         scopes.enterScope();
         BlockStmt result = (BlockStmt) super.visit(blockStmt);
         scopes.exitScope();
@@ -90,13 +90,13 @@ public class CallVisitor extends DefaultVisitor {
     }
 
     @Override
-    public Node visit(VarRef varRef) {
+    public VarRef visit(VarRef varRef) {
         scopes.topScope().updateVar(varRef.getVar(), 0);
         return varRef;
     }
 
     @Override
-    public Node visit(OldExpr oldExpr) {
+    public Expr visit(OldExpr oldExpr) {
         if (inCallStmt) {
             return new VarRefExpr((VarRef) oldExpr.getVarRef().accept(this));
         }
