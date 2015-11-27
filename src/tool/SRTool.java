@@ -15,7 +15,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class SRTool {
-    private static final int OVERALL_TIMEOUT = 160000;
+    private static final int OVERALL_TIMEOUT = 165000;
     private static final int TIMEOUT_SLICES = 40;
     private static final int THREADS = 4;
 
@@ -55,7 +55,6 @@ public class SRTool {
             try {
                 return strategies.get(rank).getInterpretation().apply(strategyFuture.get());
             } catch (InterruptedException | ExecutionException e) {
-                e.printStackTrace();
             }
         }
         return Outcome.UNKNOWN;
