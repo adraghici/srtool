@@ -13,7 +13,7 @@ import ast.VarRef;
 import ast.WhileStmt;
 import com.google.common.collect.Lists;
 import ssa.Scopes;
-import tool.AssertCollector;
+import tool.NodeCollector;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,8 +24,8 @@ import java.util.Optional;
 public class WhileVisitor extends DefaultVisitor {
     private final Scopes scopes;
 
-    public WhileVisitor(AssertCollector assertCollector) {
-        super(assertCollector);
+    public WhileVisitor(NodeCollector nodeCollector) {
+        super(nodeCollector);
         this.scopes = Scopes.withDefault();
     }
 
@@ -44,7 +44,7 @@ public class WhileVisitor extends DefaultVisitor {
         whileStmt.getInvariants().forEach(i -> {
             AssertStmt assertStmt = new AssertStmt(i.getCondition());
             stmts.add(assertStmt);
-            assertCollector.add(i, assertStmt);
+            nodeCollector.add(i, assertStmt);
         });
 
         scopes.topScope().modset(whileStmt.getModified()).forEach(x -> stmts.add(new HavocStmt(new VarRef(x))));
@@ -55,7 +55,7 @@ public class WhileVisitor extends DefaultVisitor {
         whileStmt.getInvariants().forEach(i -> {
             AssertStmt assertStmt = new AssertStmt(i.getCondition());
             ifStmts.add(assertStmt);
-            assertCollector.add(i, assertStmt);
+            nodeCollector.add(i, assertStmt);
         });
         ifStmts.add(new AssumeStmt(new NumberExpr("0")));
 

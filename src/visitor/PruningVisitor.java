@@ -12,7 +12,7 @@ import ast.Stmt;
 import ast.WhileStmt;
 import com.google.common.collect.Lists;
 import strategy.Houdini;
-import tool.AssertCollector;
+import tool.NodeCollector;
 
 import java.util.List;
 import java.util.Set;
@@ -27,8 +27,8 @@ public class PruningVisitor extends DefaultVisitor {
     private final Set<Node> artificialConditions;
 
     public PruningVisitor(
-        List<Node> removalCandidates, Set<Node> artificialConditions, AssertCollector assertCollector) {
-        super(assertCollector);
+        List<Node> removalCandidates, Set<Node> artificialConditions, NodeCollector nodeCollector) {
+        super(nodeCollector);
         this.removalCandidates = removalCandidates;
         this.artificialConditions = artificialConditions;
     }
@@ -78,7 +78,7 @@ public class PruningVisitor extends DefaultVisitor {
         Precondition pre = new Precondition(precondition.getCondition());
         if (artificialConditions.contains(precondition)) {
             artificialConditions.add(pre);
-            assertCollector.addOrigin(pre);
+            nodeCollector.addOrigin(pre);
         }
         return pre;
     }
@@ -88,7 +88,7 @@ public class PruningVisitor extends DefaultVisitor {
         Postcondition post = new Postcondition(postcondition.getCondition());
         if (artificialConditions.contains(postcondition)) {
             artificialConditions.add(post);
-            assertCollector.addOrigin(post);
+            nodeCollector.addOrigin(post);
         }
         return post;
     }
@@ -98,7 +98,7 @@ public class PruningVisitor extends DefaultVisitor {
         Invariant inv = new Invariant(invariant.getCondition());
         if (artificialConditions.contains(invariant)) {
             artificialConditions.add(inv);
-            assertCollector.addOrigin(inv);
+            nodeCollector.addOrigin(inv);
         }
         return inv;
     }

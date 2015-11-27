@@ -4,7 +4,7 @@ import ast.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import ssa.Scopes;
-import tool.AssertCollector;
+import tool.NodeCollector;
 import util.SMTUtil;
 
 import java.util.List;
@@ -18,8 +18,8 @@ public class CallVisitor extends DefaultVisitor {
     private final Map<String, ProcedureDecl> procedures;
     private boolean inCallStmt;
 
-    public CallVisitor(AssertCollector assertCollector) {
-        super(assertCollector);
+    public CallVisitor(NodeCollector nodeCollector) {
+        super(nodeCollector);
         scopes = Scopes.withDefault();
         procedures = Maps.newHashMap();
     }
@@ -49,7 +49,7 @@ public class CallVisitor extends DefaultVisitor {
         proc.getPreconditions().forEach(pre -> {
             AssertStmt assertStmt = new AssertStmt((Expr) pre.getCondition().replace(substituteArgs).accept(this));
             stmts.add(assertStmt);
-            assertCollector.add(pre, assertStmt);
+            nodeCollector.add(pre, assertStmt);
         });
 
         // Havoc callee modset.
@@ -72,6 +72,13 @@ public class CallVisitor extends DefaultVisitor {
         inCallStmt = false;
 
         return new BlockStmt(stmts);
+    }
+
+    @Override
+    public WhileStmt visit(WhileStmt whileStmt) {
+        nodeCollector.addOrigin(whileStmt);
+        WhileStmt loop = (WhileStmt) super.visit(whileStmt);
+        return loop;
     }
 
     @Override

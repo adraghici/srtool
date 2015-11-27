@@ -2,7 +2,7 @@ package util;
 
 import ast.Node;
 import ast.Program;
-import tool.AssertCollector;
+import tool.NodeCollector;
 import visitor.PruningVisitor;
 import visitor.Visitor;
 
@@ -29,9 +29,9 @@ public class ProgramUtil {
         Program program,
         List<Node> nodes,
         Set<Node> artificialConditions,
-        AssertCollector assertCollector,
+        NodeCollector nodeCollector,
         List<String> states) {
-        return transform(program, new PruningVisitor(nodes, artificialConditions, assertCollector), states);
+        return transform(program, new PruningVisitor(nodes, artificialConditions, nodeCollector), states);
     }
 
     /**

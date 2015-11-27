@@ -1,6 +1,5 @@
 package tool;
 
-import ast.AssertStmt;
 import ast.Node;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -14,11 +13,11 @@ import java.util.stream.Collectors;
  * Collector used to aggregate assert statements and trace back to the point where they were originally
  * created.
  */
-public class AssertCollector {
+public class NodeCollector {
     private final Set<Node> visited;
     private final Map<Node, Node> origin;
 
-    public AssertCollector() {
+    public NodeCollector() {
         visited = Sets.newHashSet();
         origin = Maps.newHashMap();
     }
@@ -35,7 +34,11 @@ public class AssertCollector {
         }
     }
 
-    public List<Node> resolve(List<AssertStmt> stmts) {
+    public Node resolve(Node stmt) {
+        return origin.get(stmt);
+    }
+
+    public List<Node> resolve(List<? extends Node> stmts) {
         return stmts.stream().filter(origin::containsKey).map(origin::get).collect(Collectors.toList());
     }
 

@@ -10,10 +10,11 @@ import ast.NumberExpr;
 import ast.Stmt;
 import ast.WhileStmt;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import tool.AssertCollector;
+import strategy.BMC;
+import tool.NodeCollector;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,39 +24,34 @@ import java.util.stream.Collectors;
  */
 public class UnwindingVisitor extends DefaultVisitor {
     private final boolean sound;
-    private final int depth;
     private final Set<Node> unwindingAsserts;
+    private final Map<Node, Integer> unwindingDepths;
+    private final Map<Node, Node> assertLocations;
 
-    public static UnwindingVisitor createUnsound(int depth) {
-        return new UnwindingVisitor(depth);
-    }
-
-    public static UnwindingVisitor createSound(
-        AssertCollector assertCollector,
+    public UnwindingVisitor(
+        NodeCollector nodeCollector,
+        Map<Node, Integer> unwindingDepths,
         Set<Node> unwindingAsserts,
-        int depth) {
-        return new UnwindingVisitor(assertCollector, unwindingAsserts, depth);
-    }
-
-    private UnwindingVisitor(int depth) {
-        sound = false;
-        this.depth = depth;
-        this.unwindingAsserts = Sets.newHashSet();
-    }
-
-    private UnwindingVisitor(AssertCollector assertCollector, Set<Node> unwindingAsserts, int depth) {
-        super(assertCollector);
-        sound = true;
-        this.depth = depth;
+        Map<Node, Node> assertLocations,
+        boolean sound) {
+        super(nodeCollector);
+        this.sound = sound;
         this.unwindingAsserts = unwindingAsserts;
+        this.unwindingDepths = unwindingDepths;
+        this.assertLocations = assertLocations;
     }
 
     @Override
     public Stmt visit(WhileStmt whileStmt) {
+        Node loop = nodeCollector.resolve(whileStmt);
+        unwindingDepths.putIfAbsent(loop, BMC.INITIAL_DEPTH);
+        int depth = unwindingDepths.get(loop);
+
         NumberExpr falseExpr = new NumberExpr("0");
         AssertStmt unwindingAssert = new AssertStmt(falseExpr);
         unwindingAsserts.add(unwindingAssert);
-        assertCollector.addOrigin(unwindingAssert);
+        nodeCollector.addOrigin(unwindingAssert);
+        assertLocations.put(unwindingAssert, nodeCollector.resolve(whileStmt));
 
         List<Stmt> soundBlockStmts = Lists.newArrayList(unwindingAssert, new AssumeStmt(falseExpr));
         List<Stmt> unsoundBlockStmts = Lists.newArrayList(new AssumeStmt(falseExpr));
@@ -68,8 +64,8 @@ public class UnwindingVisitor extends DefaultVisitor {
         List<Stmt> invariantAsserts = whileStmt.getInvariants().stream()
             .map(inv -> {
                 AssertStmt stmt = new AssertStmt(inv.getCondition());
-                assertCollector.addOrigin(inv);
-                assertCollector.add(inv, stmt);
+                nodeCollector.addOrigin(inv);
+                nodeCollector.add(inv, stmt);
                 return stmt;
             })
             .collect(Collectors.toList());
@@ -93,8 +89,8 @@ public class UnwindingVisitor extends DefaultVisitor {
     @Override
     public Object visit(AssertStmt assertStmt) {
         AssertStmt stmt = new AssertStmt((Expr) assertStmt.getCondition().accept(this));
-        assertCollector.addOrigin(assertStmt);
-        assertCollector.add(assertStmt, stmt);
+        nodeCollector.addOrigin(assertStmt);
+        nodeCollector.add(assertStmt, stmt);
         return stmt;
     }
 

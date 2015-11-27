@@ -3,8 +3,7 @@ package tool;
 import ast.Program;
 import com.google.common.collect.Maps;
 import strategy.Houdini;
-import strategy.SoundBMC;
-import strategy.UnsoundBMC;
+import strategy.BMC;
 import util.ParserUtil;
 
 import java.io.IOException;
@@ -56,6 +55,7 @@ public class SRTool {
             try {
                 return strategies.get(rank).getInterpretation().apply(strategyFuture.get());
             } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
             }
         }
         return Outcome.UNKNOWN;
@@ -71,8 +71,7 @@ public class SRTool {
     private static NavigableMap<Integer, Strategy> createOrderedStrategies(Program program) {
         NavigableMap<Integer, Strategy> orderedStrategies = Maps.newTreeMap();
         orderedStrategies.put(0, new Houdini(program));
-        orderedStrategies.put(1, new SoundBMC(program));
-        orderedStrategies.put(2, new UnsoundBMC(program));
+        orderedStrategies.put(1, new BMC(program));
         return orderedStrategies;
     }
 }

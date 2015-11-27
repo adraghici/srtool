@@ -32,7 +32,7 @@ import ast.VarRef;
 import ast.VarRefExpr;
 import ast.WhileStmt;
 import com.google.common.collect.Lists;
-import tool.AssertCollector;
+import tool.NodeCollector;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,14 +42,14 @@ import java.util.stream.Collectors;
  * Visitor used to traverse the whole AST and return a new copy of it.
  */
 public class DefaultVisitor implements Visitor<Object> {
-    protected final AssertCollector assertCollector;
+    protected final NodeCollector nodeCollector;
 
     public DefaultVisitor() {
-        assertCollector = new AssertCollector();
+        nodeCollector = new NodeCollector();
     }
 
-    public DefaultVisitor(AssertCollector assertCollector) {
-        this.assertCollector = assertCollector;
+    public DefaultVisitor(NodeCollector nodeCollector) {
+        this.nodeCollector = nodeCollector;
     }
 
     @Override
@@ -88,14 +88,14 @@ public class DefaultVisitor implements Visitor<Object> {
     @Override
     public Object visit(Precondition precondition) {
         Precondition pre = new Precondition((Expr) precondition.getCondition().accept(this));
-        assertCollector.add(precondition, pre);
+        nodeCollector.add(precondition, pre);
         return pre;
     }
 
     @Override
     public Object visit(Postcondition postcondition) {
         Postcondition post = new Postcondition((Expr) postcondition.getCondition().accept(this));
-        assertCollector.add(postcondition, post);
+        nodeCollector.add(postcondition, post);
         return post;
     }
 
@@ -121,7 +121,7 @@ public class DefaultVisitor implements Visitor<Object> {
     @Override
     public Object visit(AssertStmt assertStmt) {
         AssertStmt stmt = new AssertStmt((Expr) assertStmt.getCondition().accept(this));
-        assertCollector.add(assertStmt, stmt);
+        nodeCollector.add(assertStmt, stmt);
         return stmt;
     }
 
@@ -163,7 +163,9 @@ public class DefaultVisitor implements Visitor<Object> {
         List<LoopInvariant> invariants = whileStmt.getLoopInvariants().stream()
             .map(i -> (LoopInvariant) i.accept(this))
             .collect(Collectors.toList());
-        return new WhileStmt(condition, whileBlock, invariants);
+        WhileStmt loop = new WhileStmt(condition, whileBlock, invariants);
+        nodeCollector.add(whileStmt, loop);
+        return loop;
     }
 
     @Override
@@ -177,7 +179,7 @@ public class DefaultVisitor implements Visitor<Object> {
     @Override
     public Object visit(Invariant invariant) {
         Invariant inv = new Invariant((Expr) invariant.getCondition().accept(this));
-        assertCollector.add(invariant, inv);
+        nodeCollector.add(invariant, inv);
         return inv;
     }
 

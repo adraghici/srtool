@@ -8,7 +8,7 @@ import ast.VarDeclStmt;
 import ast.VarRef;
 import ssa.Scope;
 import ssa.Scopes;
-import tool.AssertCollector;
+import tool.NodeCollector;
 
 /**
  * Visitor used to disambiguate variables within nested scopes.
@@ -17,8 +17,8 @@ public class ShadowingVisitor extends DefaultVisitor {
     private final Scopes scopes;
     private final Scopes globals;
 
-    public ShadowingVisitor(AssertCollector assertCollector) {
-        super(assertCollector);
+    public ShadowingVisitor(NodeCollector nodeCollector) {
+        super(nodeCollector);
         this.scopes = Scopes.withDefault();
         globals = Scopes.empty();
     }

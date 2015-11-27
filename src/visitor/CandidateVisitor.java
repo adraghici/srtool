@@ -7,7 +7,7 @@ import ast.Invariant;
 import ast.Node;
 import ast.Postcondition;
 import ast.Precondition;
-import tool.AssertCollector;
+import tool.NodeCollector;
 
 import java.util.Set;
 
@@ -18,8 +18,8 @@ import java.util.Set;
 public class CandidateVisitor extends DefaultVisitor {
     private final Set<Node> artificialConditions;
 
-    public CandidateVisitor(AssertCollector assertCollector, Set<Node> artificialConditions) {
-        super(assertCollector);
+    public CandidateVisitor(NodeCollector nodeCollector, Set<Node> artificialConditions) {
+        super(nodeCollector);
         this.artificialConditions = artificialConditions;
     }
 
@@ -27,7 +27,7 @@ public class CandidateVisitor extends DefaultVisitor {
     public Precondition visit(CandidatePrecondition candidatePrecondition) {
         Precondition precondition = new Precondition(candidatePrecondition.getCondition());
         artificialConditions.add(precondition);
-        assertCollector.addOrigin(precondition);
+        nodeCollector.addOrigin(precondition);
         return precondition;
     }
 
@@ -35,7 +35,7 @@ public class CandidateVisitor extends DefaultVisitor {
     public Postcondition visit(CandidatePostcondition candidatePostcondition) {
         Postcondition postcondition = new Postcondition(candidatePostcondition.getCondition());
         artificialConditions.add(postcondition);
-        assertCollector.addOrigin(postcondition);
+        nodeCollector.addOrigin(postcondition);
         return postcondition;
     }
 
@@ -43,7 +43,7 @@ public class CandidateVisitor extends DefaultVisitor {
     public Invariant visit(CandidateInvariant candidateInvariant) {
         Invariant invariant = new Invariant(candidateInvariant.getCondition());
         artificialConditions.add(invariant);
-        assertCollector.addOrigin(invariant);
+        nodeCollector.addOrigin(invariant);
         return invariant;
     }
 

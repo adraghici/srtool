@@ -9,7 +9,7 @@ import ast.PrePostCondition;
 import ast.ProcedureDecl;
 import ast.Stmt;
 import com.google.common.collect.Maps;
-import tool.AssertCollector;
+import tool.NodeCollector;
 import util.SMTUtil;
 
 import java.util.List;
@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
  * put at the end.
  */
 public class ReturnVisitor extends DefaultVisitor {
-    public ReturnVisitor(AssertCollector assertCollector) {
-        super(assertCollector);
+    public ReturnVisitor(NodeCollector nodeCollector) {
+        super(nodeCollector);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class ReturnVisitor extends DefaultVisitor {
         return postconditions.stream()
             .map(p -> {
                 AssertStmt assertStmt = new AssertStmt(p.getCondition().replace(substitutes));
-                assertCollector.add(p, assertStmt);
+                nodeCollector.add(p, assertStmt);
                 return assertStmt;
             })
             .collect(Collectors.toList());

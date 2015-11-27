@@ -5,7 +5,7 @@ import ast.Program;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import tool.AssertCollector;
+import tool.NodeCollector;
 import tool.ConstraintSolution;
 import tool.ConstraintSolver;
 import tool.Outcome;
@@ -32,24 +32,19 @@ public class Houdini implements Strategy {
     private final Program program;
     private final ConstraintSolver solver;
     private final List<String> states;
-    private final AssertCollector assertCollector;
+    private final NodeCollector nodeCollector;
     private final Set<Node> artificialConditions;
-    private final ImmutableList<Visitor> initialVisitors;
-    private final ImmutableList<Visitor> iterationVisitors;
+    private final List<Visitor> initialVisitors;
+    private final List<Visitor> iterationVisitors;
 
     public Houdini(Program program) {
         this.program = program;
         solver = new ConstraintSolver();
         states = Lists.newArrayList();
-        assertCollector = new AssertCollector();
+        nodeCollector = new NodeCollector();
         artificialConditions = Sets.newHashSet();
-        initialVisitors = ImmutableList.of(
-            new ShadowingVisitor(assertCollector),
-            new CandidateVisitor(assertCollector, artificialConditions));
-        iterationVisitors = ImmutableList.of(
-            new CallVisitor(assertCollector),
-            new WhileVisitor(assertCollector),
-            new ReturnVisitor(assertCollector));
+        initialVisitors = createInitialVisitors();
+        iterationVisitors = createIterationVisitors();
     }
 
     @Override
@@ -67,14 +62,14 @@ public class Houdini implements Strategy {
             if (solution.getOutcome() == Outcome.CORRECT) {
                 return Outcome.CORRECT;
             } else if (solution.getOutcome() == Outcome.INCORRECT) {
-                List<Node> failedConditions = assertCollector.resolve(StrategyUtil.getFailedAsserts(smtModel, solution));
+                List<Node> failedConditions = nodeCollector.resolve(StrategyUtil.getFailedAsserts(smtModel, solution));
 
                 if (nonCandidateConditionsFailing(failedConditions)) {
                     return Outcome.INCORRECT;
                 }
 
-                assertCollector.clear();
-                clean = ProgramUtil.prune(clean, failedConditions, artificialConditions, assertCollector, states);
+                nodeCollector.clear();
+                clean = ProgramUtil.prune(clean, failedConditions, artificialConditions, nodeCollector, states);
             }
         }
     }
@@ -96,5 +91,18 @@ public class Houdini implements Strategy {
 
     private boolean nonCandidateConditionsFailing(List<Node> failedConditions) {
         return failedConditions.isEmpty() || !failedConditions.stream().allMatch(artificialConditions::contains);
+    }
+
+    private ImmutableList<Visitor> createInitialVisitors() {
+        return ImmutableList.of(
+            new ShadowingVisitor(nodeCollector),
+            new CandidateVisitor(nodeCollector, artificialConditions));
+    }
+
+    private ImmutableList<Visitor> createIterationVisitors() {
+        return ImmutableList.of(
+            new CallVisitor(nodeCollector),
+            new WhileVisitor(nodeCollector),
+            new ReturnVisitor(nodeCollector));
     }
 }
