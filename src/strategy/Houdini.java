@@ -24,6 +24,7 @@ import visitor.WhileVisitor;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 /**
@@ -31,6 +32,7 @@ import java.util.function.Function;
  */
 public class Houdini implements Strategy {
     private final Program program;
+    private long timeout;
     private final boolean inferInvariants;
     private final ConstraintSolver solver;
     private final List<String> states;
@@ -39,16 +41,17 @@ public class Houdini implements Strategy {
     private final List<Visitor> initialVisitors;
     private final List<Visitor> iterationVisitors;
 
-    public static Houdini withInvariantInferece(Program program) {
-        return new Houdini(program, true);
+    public static Houdini withInvariantInference(Program program, long timeout) {
+        return new Houdini(program, timeout, true);
     }
 
-    public static Houdini basic(Program program) {
-        return new Houdini(program, false);
+    public static Houdini basic(Program program, long timeout) {
+        return new Houdini(program, timeout, false);
     }
 
-    public Houdini(Program program, boolean inferInvariants) {
+    public Houdini(Program program, long timeout, boolean inferInvariants) {
         this.program = program;
+        this.timeout = timeout;
         this.inferInvariants = inferInvariants;
         solver = new ConstraintSolver();
         states = Lists.newArrayList();
@@ -59,7 +62,7 @@ public class Houdini implements Strategy {
     }
 
     @Override
-    public Outcome call() throws IOException, InterruptedException {
+    public Outcome call() throws IOException, InterruptedException, TimeoutException {
         Program clean = ProgramUtil.transform(program, initialVisitors, states);
 
         while (true) {
@@ -68,7 +71,7 @@ public class Houdini implements Strategy {
             }
 
             SMTModel smtModel = StrategyUtil.generateSMT(clean, iterationVisitors, states);
-            ConstraintSolution solution = solver.run(smtModel.getCode());
+            ConstraintSolution solution = solver.run(smtModel.getCode(), this, timeout);
 
             if (solution.getOutcome() == Outcome.CORRECT) {
                 return Outcome.CORRECT;
@@ -95,6 +98,11 @@ public class Houdini implements Strategy {
     @Override
     public Function<Outcome, Outcome> getInterpretation() {
         return outcome -> outcome == Outcome.CORRECT ? outcome : Outcome.UNKNOWN;
+    }
+
+    @Override
+    public void decreaseTimeout(long difference) {
+        timeout -= difference;
     }
 
     @Override

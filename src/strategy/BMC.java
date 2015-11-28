@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ public class BMC implements Strategy {
     public static final int DEPTH_STEP = 3;
 
     private final Program program;
+    private long timeout;
     private final ConstraintSolver solver;
     private final List<String> states;
     private final NodeCollector nodeCollector;
@@ -41,8 +43,9 @@ public class BMC implements Strategy {
     private final Map<Node, Integer> unwindingDepths;
     private final Map<Node, Node> assertLocations;
 
-    public BMC(Program program) {
+    public BMC(Program program, long timeout) {
         this.program = program;
+        this.timeout = timeout;
         solver = new ConstraintSolver();
         states = Lists.newArrayList();
         nodeCollector = new NodeCollector();
@@ -52,7 +55,7 @@ public class BMC implements Strategy {
     }
 
     @Override
-    public Outcome call() throws IOException, InterruptedException {
+    public Outcome call() throws IOException, InterruptedException, TimeoutException {
         List<Node> failedLoops = Lists.newArrayList();
 
         while (true) {
@@ -64,7 +67,7 @@ public class BMC implements Strategy {
 
             // Unsound BMC.
             SMTModel smtModel = StrategyUtil.generateSMT(program, createUnsoundVisitors(), states);
-            ConstraintSolution solution = solver.run(smtModel.getCode());
+            ConstraintSolution solution = solver.run(smtModel.getCode(), this, timeout);
             if (solution.getOutcome() == Outcome.INCORRECT) {
                 return Outcome.INCORRECT;
             }
@@ -72,7 +75,7 @@ public class BMC implements Strategy {
 
             // Sound BMC.
             smtModel = StrategyUtil.generateSMT(program, createSoundVisitors(), states);
-            solution = solver.run(smtModel.getCode());
+            solution = solver.run(smtModel.getCode(), this, timeout);
             if (solution.getOutcome() == Outcome.CORRECT) {
                 return Outcome.CORRECT;
             }
@@ -96,6 +99,11 @@ public class BMC implements Strategy {
     @Override
     public Function<Outcome, Outcome> getInterpretation() {
         return Function.identity();
+    }
+
+    @Override
+    public void decreaseTimeout(long difference) {
+        timeout -= difference;
     }
 
     @Override

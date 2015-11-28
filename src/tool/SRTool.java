@@ -22,6 +22,7 @@ public class SRTool {
     public static void main(String[] args) throws IOException {
         Program program = ParserUtil.buildProgram(args[0]);
         System.out.println(computeOutcome(program));
+        System.exit(0);
     }
 
     private static Outcome computeOutcome(Program program) {
@@ -33,15 +34,18 @@ public class SRTool {
 
         try {
             for (int slice = 0; slice < TIMEOUT_SLICES; ++slice) {
-                executor.awaitTermination(OVERALL_TIMEOUT / TIMEOUT_SLICES, TimeUnit.MILLISECONDS);
+                long timeout = OVERALL_TIMEOUT / TIMEOUT_SLICES;
+                executor.awaitTermination(timeout, TimeUnit.MILLISECONDS);
+
                 for (int rank : futures.navigableKeySet()) {
-                    Outcome outcome = queryStrategy(strategies, rank, futures.get(rank));
+                    Outcome outcome = queryStrategy(strategies, rank, futures.get(rank), timeout);
                     if (outcome != Outcome.UNKNOWN) {
                         return outcome;
                     }
                 }
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
         } finally {
             executor.shutdownNow();
         }
@@ -50,12 +54,12 @@ public class SRTool {
     }
 
     private static Outcome queryStrategy(
-        NavigableMap<Integer, Strategy> strategies, int rank, Future<Outcome> strategyFuture) {
+        NavigableMap<Integer, Strategy> strategies, int rank, Future<Outcome> strategyFuture, long timeout)
+        throws InterruptedException, ExecutionException {
+        Strategy strategy = strategies.get(rank);
+        strategy.decreaseTimeout(timeout);
         if (strategyFuture.isDone()) {
-            try {
-                return strategies.get(rank).getInterpretation().apply(strategyFuture.get());
-            } catch (InterruptedException | ExecutionException e) {
-            }
+            return strategy.getInterpretation().apply(strategyFuture.get());
         }
         return Outcome.UNKNOWN;
     }
@@ -69,9 +73,9 @@ public class SRTool {
 
     private static NavigableMap<Integer, Strategy> createOrderedStrategies(Program program) {
         NavigableMap<Integer, Strategy> orderedStrategies = Maps.newTreeMap();
-        orderedStrategies.put(0, Houdini.basic(program));
-        orderedStrategies.put(1, Houdini.withInvariantInferece(program));
-        orderedStrategies.put(2, new BMC(program));
+        orderedStrategies.put(0, Houdini.basic(program, OVERALL_TIMEOUT));
+        orderedStrategies.put(1, Houdini.withInvariantInference(program, OVERALL_TIMEOUT));
+        orderedStrategies.put(2, new BMC(program, OVERALL_TIMEOUT));
         return orderedStrategies;
     }
 }

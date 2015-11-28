@@ -2,6 +2,7 @@ package util;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.concurrent.TimeoutException;
 
 public class ProcessExec {
 
@@ -32,7 +33,7 @@ public class ProcessExec {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public String execute(String stdin, int timeout) throws ProcessTimeoutException, IOException, InterruptedException {
+	public String execute(String stdin, long timeout) throws IOException, TimeoutException, InterruptedException {
 		
 		stdout = null;
 		stderr = null;
@@ -81,7 +82,7 @@ public class ProcessExec {
 		
 		if(timedout)
 		{
-			throw new ProcessTimeoutException("Timeout!");
+			throw new TimeoutException("SMT solver timeout.");
 		}
 		stdout = stdoutStream.toString();
 		stderr = stderrStream.toString();
