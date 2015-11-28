@@ -86,7 +86,7 @@ public class ProcessExec {
 		}
 		stdout = stdoutStream.toString();
 		stderr = stderrStream.toString();
-		return stdout;
+		return stderr;
 	}
 	
 	private static class Worker extends Thread {
