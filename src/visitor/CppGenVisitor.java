@@ -111,12 +111,44 @@ public class CppGenVisitor extends DefaultVisitor {
 
     @Override
     public String visit(AssertStmt assertStmt) {
-        return indent(String.format("assert %s;", assertStmt.getCondition().accept(this)));
+        return indent(String.format("assert(%s);", assertStmt.getCondition().accept(this)));
     }
 
     @Override
     public String visit(AssumeStmt assumeStmt) {
         StringBuilder result = new StringBuilder();
+        // Check if assume if of the form var == expr or expr == var and use that expr instead of
+        // random input.
+        Expr condition = assumeStmt.getCondition();
+        if (condition instanceof UnaryExpr) {
+            condition = ((UnaryExpr) condition).getAtom();
+        }
+
+        if (condition instanceof ParenExpr) {
+            condition = ((ParenExpr) condition).getExpr();
+        }
+
+        if (condition instanceof BinaryExpr) {
+            if (((BinaryExpr) condition).getOperator().equals("==")) {
+                Expr left = ((BinaryExpr) condition).getLeft();
+                Expr right = ((BinaryExpr) condition).getRight();
+
+                if (left instanceof UnaryExpr) {
+                    left = ((UnaryExpr) left).getAtom();
+                }
+
+                if (right instanceof UnaryExpr) {
+                    right = ((UnaryExpr) right).getAtom();
+                }
+
+                if (left instanceof VarRefExpr) {
+                    return indent(String.format("%s = %s;", ((VarRefExpr) left).getVarRef().getVar(), right.accept(this)));
+                } else if (right instanceof VarRefExpr) {
+                    return indent(String.format("%s = %s;", ((VarRefExpr) right).getVarRef().getVar(), left.accept(this)));
+                }
+            }
+        }
+
         result.append(indent(String.format("if (!(%s))\n", assumeStmt.getCondition().accept(this))));
         result.append(indent("{\n"));
         // Simply return in case assume does not hold on random input and try again later.
@@ -127,7 +159,7 @@ public class CppGenVisitor extends DefaultVisitor {
 
     @Override
     public String visit(HavocStmt havocStmt) {
-        return indent(String.format("havoc %s;", havocStmt.getVarRef().accept(this)));
+        return indent(String.format("%s = %s;", havocStmt.getVarRef().accept(this), generateRandom()));
     }
 
     @Override
@@ -304,32 +336,32 @@ public class CppGenVisitor extends DefaultVisitor {
     private String formatWhileStatement(
         Expr condition, BlockStmt whileBlock, List<LoopInvariant> loopInvariants) {
         StringBuilder result = new StringBuilder();
-        String invariants = "\n" + String.join(
-            ",\n",
-            loopInvariants.stream()
-                .map(inv -> indent((inv instanceof Invariant
-                    ? "  invariant " : "  candidate_invariant ") + inv.accept(this)))
-                .collect(Collectors.toList()));
-        if (loopInvariants.isEmpty()) {
-            invariants = "";
-        }
+
         result.append(indent(String.format(
-            "while (%s)%s\n%s", condition.accept(this), invariants, whileBlock.accept(this))));
+            "while (%s)\n%s", condition.accept(this), whileBlock.accept(this))));
         return result.toString();
     }
 
     private String generateCppIncludes() {
-        return "#include <iostream>\n" + "#include <assert.h>\n" + "#include <stdlib.h>";
+        return
+            "#include <iostream>\n" +
+            "#include <assert.h>\n" +
+            "#include <stdlib.h>\n";
     }
 
     private String generateCppMain(List<ProcedureDecl> procedureDecls) {
         StringBuilder result = new StringBuilder();
-        result.append("\nint main()\n");
+        result.append("\nint main(int argc, char** argv)\n");
         result.append("{\n");
-        result.append("    srand(time(NULL));\n");
+        result.append("    srand(atoi(argv[1]));\n");
         for (ProcedureDecl procedureDecl : procedureDecls) {
-            // TODO: deal with functions having parameters later on.
-            result.append("    " + procedureDecl.getName() + "();\n");
+            // Declare and randomize input for procedure.
+            for (VarRef param : procedureDecl.getParams()) {
+                result.append(String.format("    int %s = %s;\n", param.getVar(), generateRandom()));
+            }
+            result.append(String.format("    " +
+                procedureDecl.getName() +
+                "(%s);\n", String.join(", ", procedureDecl.getParams().stream().map(x -> x.getVar()).collect(Collectors.toList()))));
         }
         result.append("    return 0;\n");
         result.append("}\n");

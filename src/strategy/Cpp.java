@@ -31,8 +31,15 @@ public class Cpp implements Strategy {
 
         int min = valuesRangeVisitor.getMinValue();
         int max = valuesRangeVisitor.getMaxValue();
+        int seed = 0;
 
-        String cppProgram = (String) program.accept(new CppGenVisitor(min, max));
+        if (min == max) {
+            min = min / 2;
+        }
+
+        // Heuristic: random values chosen will be between min and 2 * max.
+        String cppProgram = (String) program.accept(new CppGenVisitor(min, 2 * max));
+        // System.out.println(cppProgram);
 
         cleanCppDirectory();
         createCppDirectory();
@@ -44,7 +51,9 @@ public class Cpp implements Strategy {
                 return Outcome.UNKNOWN;
             }
 
-            runCppProgram();
+            // Run the C++ executable (if present) with an increasing seed.
+            runCppProgram(seed++);
+
             if (!processExec.stderr.isEmpty()) {
                 return Outcome.INCORRECT;
             }
@@ -86,8 +95,8 @@ public class Cpp implements Strategy {
         }
     }
 
-    private void runCppProgram() throws IOException, InterruptedException {
-        processExec = new ProcessExec("./c++/main");
+    private void runCppProgram(int seed) throws IOException, InterruptedException {
+        processExec = new ProcessExec("./c++/main", Integer.toString(seed));
         try {
             processExec.execute("", Integer.MAX_VALUE);
         } catch (ProcessTimeoutException e) {
