@@ -34,6 +34,7 @@ public class Cpp implements Strategy {
 
         String cppProgram = (String) program.accept(new CppGenVisitor(min, max));
 
+        cleanCppDirectory();
         createCppDirectory();
         writeCppProgram(cppProgram);
         compileCppProgram();
@@ -45,7 +46,7 @@ public class Cpp implements Strategy {
 
             runCppProgram();
             if (!processExec.stderr.isEmpty()) {
-                // return Outcome.INCORRECT;
+                return Outcome.INCORRECT;
             }
         }
     }
@@ -87,6 +88,15 @@ public class Cpp implements Strategy {
 
     private void runCppProgram() throws IOException, InterruptedException {
         processExec = new ProcessExec("./c++/main");
+        try {
+            processExec.execute("", Integer.MAX_VALUE);
+        } catch (ProcessTimeoutException e) {
+
+        }
+    }
+
+    private void cleanCppDirectory() throws IOException, InterruptedException {
+        processExec = new ProcessExec("rm", "-rf", "c++");
         try {
             processExec.execute("", Integer.MAX_VALUE);
         } catch (ProcessTimeoutException e) {
