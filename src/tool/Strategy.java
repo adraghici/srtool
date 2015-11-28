@@ -7,7 +7,8 @@ import java.util.function.Function;
  * Specification for a verification technique.
  */
 public interface Strategy extends Callable<Outcome> {
-    enum Name { HOUDINI, BMC }
+    public enum Name { CPP, HOUDINI, BMC }
+
 
     /**
      * Get the name of the strategy.

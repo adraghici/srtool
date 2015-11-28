@@ -3,6 +3,7 @@ package tool;
 import ast.Program;
 import com.google.common.collect.Maps;
 import strategy.BMC;
+import strategy.Cpp;
 import strategy.Houdini;
 import util.ParserUtil;
 
@@ -73,9 +74,11 @@ public class SRTool {
 
     private static NavigableMap<Integer, Strategy> createOrderedStrategies(Program program) {
         NavigableMap<Integer, Strategy> orderedStrategies = Maps.newTreeMap();
+
         orderedStrategies.put(0, Houdini.basic(program, OVERALL_TIMEOUT));
         orderedStrategies.put(1, Houdini.withInvariantInference(program, OVERALL_TIMEOUT));
         orderedStrategies.put(2, new BMC(program, OVERALL_TIMEOUT));
+        orderedStrategies.put(3, new Cpp(program));
         return orderedStrategies;
     }
 }
