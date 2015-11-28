@@ -78,6 +78,7 @@ public class SRTool {
         orderedStrategies.put(1, Houdini.withInvariantInference(program, OVERALL_TIMEOUT));
         orderedStrategies.put(2, new BMC(program, OVERALL_TIMEOUT));
         orderedStrategies.put(3, new Cpp(program));
+
         return orderedStrategies;
     }
 }
