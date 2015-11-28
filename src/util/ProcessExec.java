@@ -29,7 +29,7 @@ public class ProcessExec {
 	 * @param stdin Piped to the process.
 	 * @param timeout Time to wait in milliseconds.
 	 * @return The stdout of the process. 
-	 * @throws ProcessTimeoutException If timeout occurs. 
+	 * @throws TimeoutException If timeout occurs.
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */

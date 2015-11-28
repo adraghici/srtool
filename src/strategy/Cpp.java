@@ -4,7 +4,6 @@ import ast.Program;
 import tool.Outcome;
 import tool.Strategy;
 import util.ProcessExec;
-import util.ProcessTimeoutException;
 import visitor.CppGenVisitor;
 import visitor.ValuesRangeVisitor;
 
@@ -13,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
 public class Cpp implements Strategy {
@@ -70,11 +70,14 @@ public class Cpp implements Strategy {
         return outcome -> outcome == Outcome.INCORRECT ? outcome : Outcome.UNKNOWN;
     }
 
+    @Override
+    public void decreaseTimeout(long difference) { }
+
     private void createCppDirectory() throws IOException, InterruptedException {
         processExec = new ProcessExec("mkdir", "-p", "c++");
         try {
             processExec.execute("", Integer.MAX_VALUE);
-        } catch (ProcessTimeoutException e) {
+        } catch (TimeoutException e) {
 
         }
     }
@@ -90,7 +93,7 @@ public class Cpp implements Strategy {
         processExec = new ProcessExec("g++", "c++/main.cpp", "-o", "c++/main");
         try {
             processExec.execute("", Integer.MAX_VALUE);
-        } catch (ProcessTimeoutException e) {
+        } catch (TimeoutException e) {
 
         }
     }
@@ -99,7 +102,7 @@ public class Cpp implements Strategy {
         processExec = new ProcessExec("./c++/main", Integer.toString(seed));
         try {
             processExec.execute("", Integer.MAX_VALUE);
-        } catch (ProcessTimeoutException e) {
+        } catch (TimeoutException e) {
 
         }
     }
@@ -108,7 +111,7 @@ public class Cpp implements Strategy {
         processExec = new ProcessExec("rm", "-rf", "c++");
         try {
             processExec.execute("", Integer.MAX_VALUE);
-        } catch (ProcessTimeoutException e) {
+        } catch (TimeoutException e) {
 
         }
     }
