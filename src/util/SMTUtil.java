@@ -187,7 +187,7 @@ public class SMTUtil {
             "(define-fun tobool ((p (_ BitVec 32))) Bool (ite (= p (_ bv0 32)) false true))",
             "(define-fun bvdiv ((x (_ BitVec 32)) (y (_ BitVec 32))) (_ BitVec 32) (ite (not (= y (_ bv0 32))) (bvsdiv x y) x))",
             "(define-fun bvid ((x (_ BitVec 32))) (_ BitVec 32) x)",
-            "(define-fun bvtobinary ((x (_ BitVec 32))) (_ BitVec 32) (ite (not (= x (_ bv0 32))) (_ bv0 32) (_ bv1 32)))"));
+            "(define-fun bvtobinary ((x (_ BitVec 32))) (_ BitVec 32) (ite (not (= x (_ bv0 32))) (_ bv0 32) (_ bv1 32)))\n"));
     }
 
     public static List<Integer> failedAssertionIds(String smtValues) {
