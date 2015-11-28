@@ -3,6 +3,7 @@ package tool;
 import ast.Program;
 import com.google.common.collect.Maps;
 import strategy.BMC;
+import strategy.Cpp;
 import strategy.Houdini;
 import util.ParserUtil;
 
@@ -72,6 +73,7 @@ public class SRTool {
         orderedStrategies.put(0, Houdini.basic(program));
         orderedStrategies.put(1, Houdini.withInvariantInferece(program));
         orderedStrategies.put(2, new BMC(program));
+        orderedStrategies.put(3, new Cpp(program));
         return orderedStrategies;
     }
 }

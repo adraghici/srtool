@@ -7,7 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ProcedureDecl implements Node {
-    private final String name;
+    private String name;
     private final List<VarRef> params;
     private final List<PrePostCondition> conditions;
     private final List<Stmt> stmts;
@@ -24,6 +24,10 @@ public class ProcedureDecl implements Node {
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public List<VarRef> getParams() {
