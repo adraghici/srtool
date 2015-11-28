@@ -74,7 +74,6 @@ public class SRTool {
 
     private static NavigableMap<Integer, Strategy> createOrderedStrategies(Program program) {
         NavigableMap<Integer, Strategy> orderedStrategies = Maps.newTreeMap();
-
         orderedStrategies.put(0, Houdini.basic(program, OVERALL_TIMEOUT));
         orderedStrategies.put(1, Houdini.withInvariantInference(program, OVERALL_TIMEOUT));
         orderedStrategies.put(2, new BMC(program, OVERALL_TIMEOUT));
