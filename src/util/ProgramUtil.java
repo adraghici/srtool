@@ -40,7 +40,7 @@ public class ProgramUtil {
      */
     private static Program transform(Program program, Visitor visitor, List<String> states) {
         Program result = (Program) visitor.visit(program);
-        states.add(result.toString(visitor));
+        // states.add(result.toString(visitor));
         return result;
     }
 }

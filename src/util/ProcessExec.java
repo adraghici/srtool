@@ -5,11 +5,9 @@ import java.io.IOException;
 import java.util.concurrent.TimeoutException;
 
 public class ProcessExec {
+	private static int INITIAL_BUFFER_LENGTH = 2048;
 
-	private static int initialBufferLength = 2048;
-	
-	private ProcessBuilder processBuilder;
-	
+	private final ProcessBuilder processBuilder;
 	public String stdout = null;
 	public String stderr = null;
 	
@@ -34,7 +32,6 @@ public class ProcessExec {
 	 * @throws InterruptedException
 	 */
 	public String execute(String stdin, long timeout) throws IOException, TimeoutException, InterruptedException {
-		
 		stdout = null;
 		stderr = null;
 		
@@ -43,16 +40,14 @@ public class ProcessExec {
 		Thread thread3=null;
 		Process process = processBuilder.start();
 		
-		ByteArrayOutputStream stdoutStream = new ByteArrayOutputStream(initialBufferLength);
-		ByteArrayOutputStream stderrStream = new ByteArrayOutputStream(initialBufferLength);
+		ByteArrayOutputStream stdoutStream = new ByteArrayOutputStream(INITIAL_BUFFER_LENGTH);
+		ByteArrayOutputStream stderrStream = new ByteArrayOutputStream(INITIAL_BUFFER_LENGTH);
 		ByteArrayInputStream stdinStream = new ByteArrayInputStream(stdin.getBytes());
 		
 		thread1 = FileUtil.copy(process.getInputStream(), stdoutStream);
 		thread2 = FileUtil.copy(process.getErrorStream(), stderrStream);
 		thread3 = FileUtil.copy(stdinStream, process.getOutputStream());
 		
-		// Adapted from: 
-		// http://stackoverflow.com/questions/808276/how-to-add-a-timeout-value-when-using-javas-runtime-exec
 		Worker worker = new Worker(process);
 		worker.start();
 		boolean timedout = false;

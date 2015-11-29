@@ -16,8 +16,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class SRTool {
-    private static final int OVERALL_TIMEOUT = 170000;
-    private static final int TIMEOUT_SLICES = 34;
+    private static final int OVERALL_TIMEOUT = 155000;
+    private static final int TIMEOUT_SLICES = 50;
     private static final int THREADS = 4;
 
     public static void main(String[] args) throws IOException {
@@ -46,7 +46,6 @@ public class SRTool {
                 }
             }
         } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
         } finally {
             executor.shutdownNow();
         }
