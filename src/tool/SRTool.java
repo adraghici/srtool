@@ -18,8 +18,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class SRTool {
-    private static final int OVERALL_TIMEOUT = 155000;
-    private static final int TIMEOUT_SLICES = 50;
+    private static final int OVERALL_TIMEOUT = 150000;
+    private static final int TIMEOUT_SLICES = 20;
     private static final int THREADS = 4;
 
     public static void main(String[] args) throws IOException {
