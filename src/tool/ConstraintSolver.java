@@ -1,5 +1,7 @@
 package tool;
 
+import strategy.Outcome;
+import strategy.Strategy;
 import util.ProcessExec;
 
 import java.io.IOException;

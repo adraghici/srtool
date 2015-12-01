@@ -1,10 +1,8 @@
 package strategy;
 
 import ast.Program;
-import tool.Outcome;
-import tool.Strategy;
 import util.ProcessExec;
-import visitor.CppGenVisitor;
+import visitor.FuzzingVisitor;
 import visitor.ValuesRangeVisitor;
 
 import java.io.BufferedWriter;
@@ -15,11 +13,11 @@ import java.io.Writer;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-public class Cpp implements Strategy {
+public class Fuzzing implements Strategy {
     private final Program program;
     private ProcessExec processExec;
 
-    public Cpp(Program program) {
+    public Fuzzing(Program program) {
         this.program = program;
     }
 
@@ -38,8 +36,7 @@ public class Cpp implements Strategy {
         }
 
         // Heuristic: random values chosen will be between min and 2 * max.
-        String cppProgram = (String) program.accept(new CppGenVisitor(min, 2 * max));
-        // System.out.println(cppProgram);
+        String cppProgram = (String) program.accept(new FuzzingVisitor(min, 2 * max));
 
         cleanCppDirectory();
         createCppDirectory();

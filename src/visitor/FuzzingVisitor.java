@@ -37,12 +37,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class CppGenVisitor extends DefaultVisitor {
+public class FuzzingVisitor extends DefaultVisitor {
     private int min;
     private int max;
     private final Scopes scopes;
 
-    public CppGenVisitor(int min, int max) {
+    public FuzzingVisitor(int min, int max) {
         this.min = min;
         this.max = max;
         this.scopes = Scopes.withDefault();

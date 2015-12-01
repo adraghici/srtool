@@ -1,4 +1,6 @@
-package tool;
+package strategy;
+
+import strategy.Outcome;
 
 import java.util.concurrent.Callable;
 import java.util.function.Function;

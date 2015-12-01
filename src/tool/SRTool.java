@@ -3,8 +3,10 @@ package tool;
 import ast.Program;
 import com.google.common.collect.Maps;
 import strategy.BMC;
-import strategy.Cpp;
+import strategy.Fuzzing;
 import strategy.Houdini;
+import strategy.Outcome;
+import strategy.Strategy;
 import util.ParserUtil;
 
 import java.io.IOException;
@@ -76,7 +78,7 @@ public class SRTool {
         orderedStrategies.put(0, Houdini.basic(program, OVERALL_TIMEOUT));
         orderedStrategies.put(1, Houdini.withInvariantInference(program, OVERALL_TIMEOUT));
         orderedStrategies.put(2, new BMC(program, OVERALL_TIMEOUT));
-        orderedStrategies.put(3, new Cpp(program));
+        orderedStrategies.put(3, new Fuzzing(program));
 
         return orderedStrategies;
     }
